@@ -1,0 +1,28 @@
+{
+  "name": "vsm-box",
+  "version": "0.0.1",
+  "description": "Webcomponent for building and showing VSM-sentences",
+  "main": "src/VsmBox.js",
+  "scripts": {
+    "test": "mocha \"src/**/*.test.js\" --check-leaks"
+  },
+  "keywords": [
+    "VSM",
+    "ontology",
+    "identifier",
+    "term",
+    "syntax",
+    "sentence",
+    "connector"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/vsmjs/vsm-box"
+  },
+  "author": "Steven Vercruysse (http://stcruy.com)",
+  "license": "CC-BY-NC-SA-4.0",
+  "bugs": {
+    "url": "https://github.com/vsmjs/vsm-box/issues"
+  },
+  "homepage": "https://github.com/vsmjs/vsm-box#readme"
+}
