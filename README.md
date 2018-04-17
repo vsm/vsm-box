@@ -9,7 +9,7 @@
 <br>
 
 ## FYI
-This project's configuration (webpack + npm + Vue + testing + linting) will follow:  
+This project's configuration (webpack + npm + Vue + testing + linting) will be as described in:  
 &nbsp;&nbsp; [github.com/stcruy/building-a-reusable-vue-web-component](https://github.com/stcruy/building-a-reusable-vue-web-component),  
 
 in order to build `vsm-box` as:  
