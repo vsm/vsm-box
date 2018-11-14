@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8"/>
+
+  <title>vsm-box: using the slim build</title>
+
+  <style>
+    body { font-family: sans-serif;  font-size: 14px;  margin: 0; }
+    a, a:visited { color: #FF0000; }
+    #app { padding: 20px 0 18px 50px;  background-color: #FFEEDD;  min-height: 180px; }
+  </style>
+
+  <script src="https://unpkg.com/document-register-element@1.7.2/build/document-register-element.js"></script>
+  <script src="https://unpkg.com/vue@2.5.16/dist/vue.min.js"></script>
+  <script src="https://unpkg.com/vue-custom-element@2.1.0/dist/vue-custom-element.js"></script>
+
+  <script src="../dist/vsm-box.min.js"></script>
+</head>
+
+
+<body>
+
+  <div id="app">
+    <p> Demo with &nbsp;'vsm-box.min.js'&nbsp; (Vue/etc-dependent web component),<br>
+        which does not include Vue or webcomponent-related dependencies. </p>
+    <p> So these are added separately,
+        in &lt;script&gt;s in the &lt;head&gt; section. </p><br>
+
+    // TODO
+    <vsm-box
+      id="vsm-box1"
+      :initial-count="init"
+      :data-source.prop="myDataSource"
+      @inc="incReported">
+    </vsm-box>
+    <br>
+    <vsm-box :initial-count="8" v-if="addNr2"></vsm-box>
+  </div>
+
+
+  <!-- Here we override a vsm-box / vsm-autocomplete's default styling -->
+  <style>
+    #vsm-box1 span { font-size: 16px; color: green; }
+    #vsm-box1 span.smaller { font-size: 10px; }
+    .vsm-box .vsm-autocomplete .item-type-literal { color: #800; }
+  </style>
+
+
+  <script>
+    // Register the webcomponent with Vue. (Both were loaded via a <script>-tag).
+    Vue.customElement('vsm-box', VsmBox.default);
+
+    // Activate Vue on (only) the #app element and its children.
+    new Vue({
+      el: '#app',
+
+      data : {
+        init: 10,
+        addNr2: false,
+        // Demo use 1): give an Object as a prop.
+        // + Note that the _web-component_'s html-attr ":data-source.prop=..."
+        //   differs from a plain Vue-component's attribute ":data-source=...".
+        //   (See https://karol-f.github.io/vue-custom-element/#/demos/binding).
+        // + Note 2, however: when using the 'vsm-box' package directly
+        //   in another Vue project (which makes it use 'vsm-box.min.js'
+        //   as well, because our package.json's 'main'-property defines so),
+        //   then our Vue-component is _not_ wrapped into a web-component,
+        //   and one can simply use ":data-source=..." there.
+        myDataSource: class {
+          static getValue() {
+            return 39;
+          }
+        }
+      },
+
+      methods: {
+        // Demo use 2): attach an event listener.
+        // + Note: we must access `$emit()`'s args via `events.detail[]`. So it
+        //   differs for a webpacked webcomponent, vs. for a pure Vue-component.
+        incReported: (event) => {
+          console.log(event.detail[0]);
+          console.log(event.detail[1]);
+        }
+      },
+
+      created: function() {
+        // Demo use 3): change a prop on the webcomponent. We see it react to it.
+        // + Unlike in the code with the standalone webcomponent,
+        //   here we can change the prop it *from within the Vue code*.
+        // + (We could also change it from the outside, via `vm.$refs[elemID]
+        //   ._props.initialCount`. But that's a bad way, because the prop is
+        //   linked to (and so could change along with) the data->`init` above).
+        setTimeout(() => {
+          var orig = this.init;
+          this.init = 99;
+          setTimeout(() => { this.init = orig }, 1000);  // Restore.
+        }, 1000);
+
+        // Demo use 4): add one more component.
+        // + Unlike in the code with the standalone webcomponent, here we can
+        //   think in a data-driven way! We add by toggling a `v-if` directive.
+        //   + Or we could have done it by using a `v-for` directive, based on
+        //     a list of child-components, which we can dynamically grow).
+        setTimeout(() => { this.addNr2 = true }, 3000);
+      }
+    });
+  </script>
+
+</body>
+</html>

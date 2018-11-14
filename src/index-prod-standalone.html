@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8"/>
+
+  <title>vsm-box: using the standalone build</title>
+
+  <style>
+    body { font-family: sans-serif;  font-size: 14px;  margin: 0; }
+    a, a:visited { color: #FF0000; }
+    #colorBox { padding: 20px 0 18px 50px;  background-color: #FFEEDD;  min-height: 180px; }
+  </style>
+
+  <script src="../dist/vsm-box.standalone.min.js"></script>
+</head>
+
+
+<body>
+
+  <div id="colorBox">
+    <p> Demo with &nbsp;'vsm-box.standalone.min.js'&nbsp; (standalone web component),<br>
+        which comes bundled with all necessary dependencies, including Vue. </p>
+
+    <!--
+      vsm-box is not inside a Vue '#app'-elem. here, so we can not use
+      `v-bind:...` to sync variables to it. But we can still:
+      - set the `initialCount` as an ordinary String-prop  (it can not be an
+        integer here, see also `toString()` further below);  and we can
+      - bind an Object to the `dataSource` prop, as show below in 'demo use 1'.
+      + Note: no Vue-app wrapper-elem is needed here, for the standalone version.
+    -->
+    // TODO
+    <vsm-box
+      id="vsm-box1"
+      initial-count="20">
+    </vsm-box>
+    <br>
+  </div>
+
+
+  <!-- Here we override a vsm-box / vsm-autocomplete's default styling -->
+  <style>
+    #vsm-box1 span { font-size: 16px; color: green; }
+    #vsm-box1 span.smaller { font-size: 10px; }
+    .vsm-box .vsm-autocomplete .item-type-literal { color: #800; }
+  </style>
+
+
+  <script>
+
+    // Demo use 1): attach an Object as a prop.
+    var el = document.getElementById('vsm-box1');
+    el.dataSource = class {
+      static getValue() {
+        return 39;
+      }
+    }
+
+    // Demo use 2): attach a `@...`-like event listener to the webcomponent.
+    // + Note: we must access `$emit()`'s args via `events.detail[]`. So this is
+    //   different for a webpacked webcomponent, vs. for a pure Vue-component.
+    el.addEventListener('inc', (event) => {
+      console.log(event.detail[0]);
+      console.log(event.detail[1]);
+    });
+
+    // Demo use 3): (see https://karol-f.github.io/vue-custom-element/) :
+    // change a prop on the webcomponent. We'll see it react to it.
+    setTimeout(() => {
+      var orig = el.initialCount.toString();  // We must work with Strings props.
+      el.initialCount = "99";
+      setTimeout(() => { el.initialCount = orig }, 1000);  // Restore.
+    }, 1000);
+
+    // Demo use 4): dynamically add one more webcomponent. Vue will render it.
+    setTimeout(() => {
+      var el = document.createElement('vsm-box');
+      el.initialCount = 8;
+      document.getElementById('colorBox').appendChild(el);
+    }, 3000);
+  </script>
+
+</body>
+</html>

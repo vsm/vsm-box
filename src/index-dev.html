@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8"/>
+
+  <title>vsm-box</title>
+
+  <style>
+    body { font-family: sans-serif;  font-size: 14px;  margin: 0; }
+    a, a:visited { color: #FF0000; }
+    #app { padding: 20px 0 18px 50px;  background-color: #FFEEDD;  min-height: 180px; }
+    [v-cloak] { display: none; }
+  </style>
+
+  <!-- For faster reloads, we include Vue.js in the webpack bundle, during dev.
+  <script src="https://unpkg.com/vue"></script> -->
+</head>
+
+
+<body>
+  <!-- -><div style="margin: 5px 0 0 10px; position: absolute; left: 50px; top: 20px"><!-- -->
+  <div id="app" v-cloak>
+    <vsm-box
+      :vsm-dictionary="vsmDictionary"
+      :autofocus="true"
+      :placeholder="placeholder"
+      :initial-value="initialValue"
+      :max-string-lengths="maxStringLengths"
+      :item-literal-content="itemLiteralContent"
+      :advanced-search="advancedSearch"
+      :allow-class-null="allowClassNull"
+      :sizes="sizes"
+      @change="onChange"
+    >
+    </vsm-box>
+    <div
+      v-html="report"
+      class="reporter"
+    >
+    </div>
+  </div>
+
+
+  <style>
+    .reporter {
+      color: #bbb;
+      font-size: 13px;
+      margin: 12px 0 0 0;
+      white-space: nowrap;
+      overflow: visible;
+      text-overflow: ellipsis;
+      /*width: 500px;
+      max-height: 200px;
+      overflow-y: scroll;/**/
+    }
+
+    /* One can override CSS-styling of a vsm-box, with CSS that comes _after_
+       the Vue-activated '#app' element. Like this: /
+    .vsm-box {
+      border: 5px solid #ddd !important;
+    }
+    .vsm-box .terms {
+      padding: 4px;
+    }
+    .vsm-box .term,
+    .vsm-box .term input {
+      font-family: courier, sans-serif;
+      font-size: 30px;
+      line-height: normal;
+    }
+    .vsm-box .term {
+      border-width: 3px;
+      padding: 2px 5px 0;
+    }
+    .vsm-box .term.inp .item {
+      font-size: 8px;
+      line-height: 10px;
+    }
+    .vsm-box .term.inp .item:not(.item-state-active).item-type-literal {
+      color: #a33;
+    }
+    .vsm-box .term.inp .list {
+      margin: 12px 0 0 -8px;
+      border: 3px solid #aab;
+    }
+    .vsm-box .terms {
+      background-color: #ffa;
+    }
+    .vsm-box .term.inp input {
+      background-color: #ffe;
+    }
+    /**/
+  </style>
+
+</body>
+</html>
