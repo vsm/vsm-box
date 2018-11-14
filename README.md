@@ -689,6 +689,7 @@ These three props determine:
   value.
 
 This is how they combine:
+
 |allow-class-null | advanced-search | item-literal-content* | => itemLiteral's appearance | effect of Enter | effect of advancedSearch return value |
 |-|-|-|-|-|-|
 |  false |  false |  false |no itemLiteral  | | |
