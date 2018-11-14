@@ -176,7 +176,7 @@ which look like:
 Notes:
 + For tridents, the `pos` array tells the index of the referred-to subject-,
   relation-, and object-term, respectively.
-+ For didents, the -1 tells which term it omits.
++ For didents, the `-1` tells which term it omits.
 + A list-connector's `pos` array can have any length >= 2.
 + A reference-connector's `pos` array tells the index of 0: child, and 1: the
   parent (=referred-to) term, respectively.
@@ -475,6 +475,8 @@ VsmBox
 
 ## VsmBox's emitted events
 
+- ...
+
 
 <br>
 <br>
@@ -606,6 +608,13 @@ VsmBox
   - Click: shows ThePopup.
   - Hover: shows ThePopup after a delay.
   - Unhover: removes ThePopup after a delay, if shown.
+
+
+<br>
+
+### User interaction on the VSM-connector panel
+
+- ...
 
 
 <br>
