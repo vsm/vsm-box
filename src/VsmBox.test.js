@@ -15,8 +15,7 @@ describe('VsmBox', () => {
 
   const di1 = { id: 'A', name: 'Name 1' };
   const di2 = { id: 'B', name: 'Name 2' };
-  const di3 = { id: 'C', name: 'Name 3',
-    f_aci: (item, strs) => Object.assign(strs, { str: `--${strs.str}--` }) };
+  const di3 = { id: 'C', name: 'Name 3' };
 
   const e1 = { id: 'A:01', dictID: 'A', terms: [{ str: 'a'   }] };
   const e2 = { id: 'A:02', dictID: 'A', terms: [{ str: 'ab'  }] };
@@ -53,13 +52,17 @@ describe('VsmBox', () => {
   // functions below can access, without needing it as an arg. for each call.
   var w;
 
+  const sizes = {
+  };
+
   // Each test uses `make()` to create a VsmBox test-component with custom props.
   const make = (props, listeners) => {
     w = mount(VsmBox, {
       propsData: Object.assign(
         { vsmDictionary: dict  // Add at least the required prop (overridable).
         },
-        props                  // Insert test-specific props from the argument.
+        props,                 // Insert test-specific props from the argument.
+        { sizes: Object.assign({}, sizes, props.sizes) } // Use&override sizes.
       ),
       listeners: listeners || {  // Add a set of listeners, by default:
         'change':  o => o  ///D(`called with ${JSON.stringify(o)}.`),
@@ -140,7 +143,7 @@ describe('VsmBox', () => {
 
 
     //// This would need 'TheTerms.test.js''s `getRuler()`-mock in order to work.
-    //it.only('passes the `sizes` prop down to TheTerms', cb => {
+    //it('passes the `sizes` prop down to TheTerms', cb => {
     //  make({ initialValue: {terms: [{}]}, sizes: {defaultEditWidth: 10} });
     //  Vue.nextTick(() => {
     //    H(w);
@@ -209,12 +212,10 @@ describe('VsmBox', () => {
       make({ vsmDictionary: dict2, initialValue: { terms: terms1, conns: [] } });
       vueTick(() => {
         calledWith.should.deep.equal([ // (Or some permutation of this, in fact).
-          {
-            idts: [{ id: 'A:1', str: 'aa' }, { id: 'D:1', str: 'dd' }],
+          { idts: [{ id: 'A:1', str: 'aa' }, { id: 'D:1', str: 'dd' }],
             options: { z: true }
           },
-          {
-            idts: [{ id: 'B:1' }, { id: 'C:1', str: 'cc' }],
+          { idts: [{ id: 'B:1' }, { id: 'C:1', str: 'cc' }],
             options: { z: ['x', 'y'] }
           }
         ]);
@@ -230,8 +231,7 @@ describe('VsmBox', () => {
         ];
         w.setProps({ initialValue: { terms: terms2, conns: [] } });
         calledWith.should.deep.equal([
-          {
-            idts: [{ id: 'E:1', str: 'ee' }],
+          { idts: [{ id: 'E:1', str: 'ee' }],
             options: { z: true }
           }
         ]);
@@ -254,30 +254,20 @@ describe('VsmBox', () => {
       var terms1 = [
         { str: 'aaa' },
         { },
-        {
-          type: 'EC',
+        { type: 'EC',
           queryOptions: {
             filter: { dictID: ['A', 'B'] },
             sort:   { dictID: ['C'] }
           }
         },
-        {
-          type: 'EL',
-          queryOptions: {
-            z: ['x', 'y']
-          }
+        { type: 'EL',
+          queryOptions: { z: ['x', 'y'] }
         },
-        {
-          str: 'notEditType',  // Not-Edit-type terms are skipped, because they..
+        { str: 'notEditType',  // Not-Edit-type terms are skipped, because they..
           queryOptions: {      // ..probably won't need autocomplete anymore.
-            sort: { dictID: ['X-not', 'Y-not'] }
-          }
+            sort: { dictID: ['X-not', 'Y-not'] } }
         },
-        {
-          queryOptions: {
-            sort: { dictID: ['D', 'E'] }
-          }
-        }
+        { queryOptions: { sort: { dictID: ['D', 'E'] } } }
       ];
 
       make({ vsmDictionary: dict2, initialValue: { terms: terms1, conns: [] } });
@@ -288,11 +278,7 @@ describe('VsmBox', () => {
 
         // Part 2: updating the `initialValue` prop makes it preload again.
         var terms2 = [
-          {
-            queryOptions: {
-              filter: { dictID: ['F', 'G'] }
-            }
-          }
+          { queryOptions: { filter: { dictID: ['F', 'G'] } } }
         ];
         w.setProps({ initialValue: { terms: terms2, conns: [] } });
         expect(calledWith.filter.id).to.have.members(['F', 'G']);
@@ -310,9 +296,7 @@ describe('VsmBox', () => {
 
         var terms3 = [
           { str: 'xy',
-            queryOptions: {
-              filter: { dictID: ['H'] }
-            }
+            queryOptions: { filter: { dictID: ['H'] } }
           }
         ];
 
@@ -341,8 +325,17 @@ describe('VsmBox', () => {
     //   - But as soon as both are true again, it becomes ..FocusWidth again.
     //   - And then it makes both TheTerms and TheConns wider too.
     // - Prop `allowClassNull` has effect.
+    // - Prop `freshListDelay` has effect.
     // - At creation, VsmBox already emits a `change`+{terms,conns},
     //   because it can already have updated some IDs (for Referring Terms).
+    // - Passes `custom-term` to Term.
+    // - Passes `custom-popup` to ThePopup.
+    // - Passes `custom-item` to Term's vsm-autocomplete.
+    // - Passes `custom-item-literal` to Term's vsm-autocomplete.
+
+
+    //*
+    it('a', cb => cb());  /**/
 
 
   });

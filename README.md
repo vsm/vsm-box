@@ -35,14 +35,14 @@ These are all the VSM-term types:
 | Literal            | str                               | isFocal, style                | minWidth, maxWidth, editWidth, queryOptions |
 | Class              | str, classID                      | isFocal, style, dictID, descr | minWidth, maxWidth, editWidth, queryOptions |
 | Instance           | str, classID, instID              | isFocal, style, dictID, descr | minWidth, maxWidth, editWidth, queryOptions |
-| Referring instance | str, classID, instID, parentID    | isFocal, style                | minWidth, maxWidth, editWidth, queryOptions |
+| Referring instance | str, classID, instID, parentID    | isFocal, style, dictID, descr | minWidth, maxWidth, editWidth, queryOptions |
 | Edit-Instance      | (none)                            | isFocal                       | minWidth, maxWidth, editWidth, queryOptions |
 | Edit-Class         | type `: 'EC'`                     | isFocal                       | minWidth, maxWidth, editWidth, queryOptions |
 | Edit-Literal       | type `: 'EL'`                     | isFocal                       | minWidth, maxWidth, editWidth, queryOptions |
 | (Edit-Referring)*  | (type `: 'ER'`)                   | isFocal                       | minWidth, maxWidth, editWidth, queryOptions |
 
 Notes:
-+ About `classID`, for Instance and Class terms (_for Referring Terms,
++ About `classID`, for **Instance** and **Class** terms (_for Referring Terms,
   see later_):
   + The `classID` of a VSM-term corresponds to the `id` of an entry from a
     VSM-dictionary.
@@ -51,40 +51,49 @@ Notes:
     stored & referable `classID`:  
     only in such a setup, such a term's `classID` may be `null`
     during VSM-sentence construction.
-+ About `instID` (only for Instance and Referring terms):
++ About `instID` (only for **Instance** and **Referring** terms):
   + An Instance/Referring term's `instID` is `null` (but not absent) in a
     VSM-sentence that has not been saved yet in some database.  
   + After it has been saved, the database should provide the `instID` it
     created for each VSM-term.  
   + A VSM-term's `instID` can then be used to refer to it as a parent term,
     also from other VSM-sentences.
-+ About both `parentID` and `classID`, for Referring terms:
+  + Note on `instID` conservation:
+    when a user edits an already-stored VSM-sentence, and changes a term's type
+    from Inst. to Ref. or vice versa (i.e. without replacing it with a new term
+    via autocomplete), then the vsm-box reports the term with the same `instID`
+    (only its `parentID` and maybe `classID` would change).
++ About both `parentID` and `classID`, for **Referring** terms:
   + They are both `null` (but not absent) until the Referring term has been
     connected to a 'parent term'.  
-    I.e. they are null during VSM-sentence construction, as long as the term is
-    not connected to a parent term through the presence of a reference-connector,
+    I.e. they are `null` during VSM-sentence construction, as long as the term
+    is not connected to a parent term through the presence of a
+    reference-connector,
     nor by it referring to the ID of some term in another VSM-sentence.
   + When it is connected to a parent term that was not stored yet (i.e. in the
     same, under-construction VSM-sentence), and so that parent still has a
     `null` `instID`, then the Referring term's `parentID` is `null` too.  
-    In that case (no matter whether the parent has a `null` `classID` or not),
-    also its `classID` is `null`.  
+    In that case, its `classID` will be the same as its parent's `classID`.
   + When it is connected to a parent term that has been stored (and thus
     has a known `instID` and `classID`),  
     then the Referring term's `parentID` and `classID` are equal to its parent's
     `instID` and `classID` resp.
-  + + So, for a Referring term: if either one of its `parentID` or `classID` are
-      `null`, then they are both `null`.
-    + <span style="font-size: smaller"> (Implementation note):  
-      A Referring term's `classID` and `parentID` are not actively managed,
-      internally, during VSM-sentence construction or editing.  
-      But they are filled in based on current connectors, before VsmBox emits a
-      `change` event. So they are only mananged when presented to the outside
-      world.  
-      Exception: when a Referring term refers to a term in another, stored
-      VSM-sentence, then both its `parentID` (==external parent's `instID`) and
-      its `classID` (==external parent's `classID`), do always maintain their
-      non-`null` value, internally. </span>
+  + <span style="font-size: smaller"> (Implementation notes):  
+    &bull; The above describes how a vsm-box's `classID` and `parentID` are
+    presented to the outside world, i.e. the way it emits its current state.  
+    &bull; Internally, however, an unconnected Referring term's `classID` may
+    be not-`null`, e.g. if it was an Instance term before but it was changed to
+    a Ref. term. Because then, if the user would decide to change it back to
+    Inst. type, it can be restored with its original not-`null` `classID`.  
+    &bull; Also, when a Referring term refers to a term in another (or same),
+    stored VSM-sentence, then both its `parentID` (==external parent's `instID`)
+    and its `classID` (==external parent's `classID`) will keep their non-`null`
+    value, internally.
+    This is kept so, internally, even if it is changed to or back from other
+    term types, or if it would be connected and then unconnected by a
+    Reference-connector to a different term, in the same sentence. But it is
+    emitted correctly, according to its current type and connection state.  
+    </span>
 + A single one of the VSM-terms in a VSM-sentence may have an `isFocal: true`
   property, to indicate that it is the sentence's head (= focal term).
 + The optional `style` property is used to apply custom styling to `str` (e.g.
@@ -125,14 +134,20 @@ Notes:
   + These widths pertain to a term's string-content only. A term's total width
     will include its padding and border in addition.
   + An external CSS declaration could set a VsmBox's font-size to larger than
-    the default font-size, and then the min/max/..Widths may accomodate less
+    the default font-size, and then the min/max/..Widths would accomodate less
     text than intended.  
-    Therefore, the sub-prop `sizes.widthScale` may be set to another value than
-    its default value `1`.  
+    Therefore, `sizes.widthScale` controls scaling to adjust for a different
+    font size.
     + For example, VsmBox's default font-size is currently 11px. If external CSS
       sets it to 22px, then min/max/edit/default...Width will accomodate half as
       much text. Then, by setting `sizes.widthScale` to 2, these widths will be
       scaled to twice as wide, and hold just as much text as in the 11px case.
+    + + If `sizes.widthScale` is left to its default value of `false`, then it
+        will be automatically calculated (replaced by a number) based on
+        currently active `.term`-CSS.
+      + If set to `1`, no scaling happens.
+      + If set to a number different than `1`, that scale will be used instead
+        of auto-scaling.
 + The `queryOptions` property is used by a VSM-term's autocomplete, when it
   sends a query to `VsmDictionary.getMatchesForString()`.  
   (See also [`vsm-dictionary`](https://github.com/vsmjs/vsm-dictionary)'s
@@ -151,7 +166,7 @@ Notes:
       sorts matches whose dictID is in this list, first; then sorts as usual.
       This enables defining 'preferred dictionaries'.
   + `idts`: {Array(Object)}: a list of "fixedTerms", represented by a
-    classID + optional term: `[{ id:.., str:.. },  ...]`.  
+    classID + optional term-string: `[{ id:.., str:.. },  ...]`.  
     Note: fixedTerms appear on top of the VSM-term's autocomplete result list,
     and already appear when the term is focused and has no text input yet.  
   + `z`: {true|Array(String)}: to include a full, partial, or no z-object.
@@ -305,7 +320,7 @@ VsmBox
 │ └── Conn      (multiple ones)
 └─┬ TheTerms
   ├── Term      (multiple ones, plus endTerm)
-  └── ThePopup  (only 1, or 0)
+  └── ThePopup  (only 1 or 0)
 ```
 
 + Notes:  
@@ -334,9 +349,18 @@ VsmBox
 - `placeholder`: {String|Boolean}:  
   given as prop to VsmAutocomplete.
 - `max-string-lengths`: {Object}:  
-  given as prop to VsmAutocomplete.
-- `item-literal-content (trimmedSearchStr)`: {Function|false} (default `false`):  
   given as prop to VsmAutocomplete:  
+  limits the string-length of match-items in autocomplete's selection panel.
+- `fresh-list-delay`: {Number} (default: a few 100):  
+  given as prop to VsmAutocomplete:  
+  the small delay (in ms) between when autocomplete's selection-list updates,
+  and when the user can select an item from it again (to prevent mis-selection).
+- `custom-item`: {Function|false} (default `false`):  
+  given to VsmAutocomplete as its prop `custom-item`:  
+  a function to customize an autocomplete's selection-panel items' different
+  parts.
+- `custom-item-literal`: {Function|false} (default `false`):  
+  given to VsmAutocomplete as its prop `custom-item-literal`:  
   a function to customize VsmAutocomplete's 'item-literal', if present.
 - `allow-class-null`: {Boolean}:  
   tells if users are allowed to create new, ad-hoc general concepts; i.e.
@@ -366,7 +390,7 @@ VsmBox
     Note that Referring-type terms will have `null` `classID`s as long as they
     are not connected to a parent term (e.g. while the user builds a
     VSM-sentence, or in some VSM-templates).
-- `advanced-search (settings, cb)`: {Function|false}:  
+- `advanced-search (data, cb)`: {Function|false}:  
   If given, this function will be called when the user selects the 'item-literal'
   at the bottom of a VsmAutocomplete result list.  
   + The intention is that it creates and shows a dialog panel where the user
@@ -386,7 +410,7 @@ VsmBox
     (so, keeping `classID==null`, e.g. until the full VSM-sentence is stored)
     (only supported if `allowClassNull==true`, see above).
   + Arguments:
-    + `settings`: {Object}: a collection of data used by the Edit-Term on which
+    + `data`: {Object}: a collection of data used by the Edit-Term on which
       advancedSearch is called, and that can also be used by the dialog
       component. Properties:
       + `str`: {String}: contents of the input (what the user typed so far
@@ -402,18 +426,18 @@ VsmBox
       + `allowClassNull`: {Boolean}: as described earlier.
     + `cb(match)`: {Function}: returns what the user selected in the dialog.
       Arguments:
-      + `match`: {Object|false}: it should be:  
+      + `match`: {Object|false}: it should be one of:  
         + `false` if the user closed the dialog without selecting anything,
           or on any error; or else:
-        + an Object with the required data to create an Instance/Class-type
-          VSM-term. It resembles the match-objects returned by vsm-autocomplete.
+        + an Object with the required data to create a VSM-term.
+          It resembles the match-objects returned by vsm-autocomplete.
           It has properties:  
           + `str`
           + `style` (optional)
           + `id`  (note: not 'classID' but 'id', consistent with
             `VsmDictionary.getMatchesForString()`).
-          + `dictID` (opt.) (only used for Instance/Class terms)
-          + `descr` (opt.) (only used for Instance/Class terms)
+          + `dictID` (opt.) (only used for Ref/Inst/Class terms)
+          + `descr` (opt.) (only used for Ref/Inst/Class terms)
           + `termType` (opt.) (see below)  (note: not 'type' but 'termType',
             to avoid confusion with the 'type' property of match-objects
             returned by `VsmDictionary,getEntriesForString()`).
@@ -424,15 +448,15 @@ VsmBox
         + If `allowClassNull` is `false`, then returning a match with `null`
           `id` is wrong and would have the same effect as returning `false`.
       + Notes 2:
-        + If a `match.termType` is given (`'R'`, `'I'`, `'C'`, or `'L'`), it
-          determines the created Term's type.
+        + If a `match.termType` is given (`'R'`, `'I'`, `'C'`, or `'L'`),
+          then it determines the created Term's type.
         + Else the created Term's type is inferred:
           + if `match.id==''` (which is also how VsmAutocomplete returns
             refTerms like 'it'), then it creates an R-Term (with all
             `...ID`s`==null`);
           + else, it creates an I- or C-Term, depending on whether the Edit-Term
-            (from which advancedSearch was launched) is EI-type, or
-            EC/ER/EL-type resp.
+            (from which advancedSearch was launched) is EI/ER/EL-type, or
+            EC-type resp.
         + Note: if `match.termType=='R'`, and both `id` and `parentID` are
           not-null, then it creates an R-Term with `classID` and `parentID`
           not-null, i.e. a Term that refers to a Term in another VSM-sentence.
@@ -452,7 +476,8 @@ VsmBox
   + `defaultMaxWidth`: {Number}:  
     string-width for any Term that has no own `maxWidth` property. To remove
     any limit, make this `0`.
-  + `widthScale`: {Number} (default `1`):  
+  + `widthScale`: {Number|Boolean} (default `false`, which gets replaced by an
+    automatically calculated Number, see earlier):  
     If an external stylesheet makes VsmBox use a larger font-size than default,
     then min/max/edit stringwidths can only contain less text than intended.
     Therefore, this custom multiplier will be applied to all stringwidths.
@@ -467,7 +492,57 @@ VsmBox
     (by apparently intruding TheTerms' fake 'top padding').
   + `termDragThreshold`: {Number}:  
     The distance in pixels that a Term must be dragged before it starts moving.
-  + ...
+  + `delayPopupShow`: {Number}: &nbsp; _(a 'size' in the time dimension)_  
+    Delay before hovering or clicking a Term will show ThePopup for it.
+  + `delayPopupSwitch`: {Number}:  
+    Delay before showing ThePopup for a new Term, if ThePopup is already visible
+    for another Term.
+  + `delayPopupHide`: {Number}:  
+    Delay before unhovering a Term (or ThePopup) will hide ThePopup.
+- `custom-term`: {Function|false}:  
+  can build custom content for non-Edit-type Terms' labels.  
+  See below, under: "Custom content for Term labels".
+- `custom-popup`: {Function|false}:  
+  can build custom content for Terms' popup-box's info-panel.  
+  See below, under: "Custom content for ThePopup".
+- `term-copy (term)`: {Function|false}:  
+  If given, this function will be called when the user selects the "Copy"
+  menu-item in a Term's ThePopup. If not given or `false`, the Copy menu-item
+  will not be accessible.  
+  + Argument:
+    + `term`: {Object}: follows the VSM-term data model (see earlier).
+      + Except: it never has a
+        `isFocal`/`minWidth`/`maxWidth`/`editWidth`/`queryOptions` property.
+        This means that it copies only the core semantic data of a term,
+        isolated from its role in a VSM-sentence or settings in a `vsm-box`.  
+      + `dictID`/`descr` are included if they are available in the copied Term.
+  + Notes:
+    + When copying an Instance or Referring Instance, the copy's `instID`
+      is made `null`. This is because a copy should be saved as a new Instance,
+      with its own `instID`.
+    + The "Copy Reference" menu-item calls this function as well.  
+      In addition to the above, it also assigns the copied Term's `instID`
+      to the copy's `parentID`. This makes that later when Pasting,
+      the pasted Term will refer to the 'reference-copied' Term.  
+      This menu-item is only available on Inst. and Ref. Inst. Terms that
+      have a not-null 'instID`.
+    + The main reason why the Copy (Ref) / Paste functionality exists,
+      is to support the creation of references between sentences,
+      i.e. between multiple `vsm-box`es.
+      Therefore, the copy/paste handler (which should store the copied Term in
+      some buffer) is designed to be external to the `vsm-box`.
+- `term-paste`: {Function|false}:  
+  If given, this function will be called when the user selects the "Paste"
+  menu-item in a Term's ThePopup. If not given or `false`, the Paste menu-item
+  will not be accessible.  
+  During the application's run-time, this prop should be switched
+  between `false` and a Function, based on the whether the external
+  copy-handler has available term-data to paste. This can for example happen
+  after `term-copy` receives a `term` for the first time.  
+  If invalid data is given (e.g. an Instance Term with `classID==null` while
+  the vsm-box's prop `allowClassNull==false`), then pasting will abort.
+  + Returns a `term`: {Object}:  
+    same form as `term-copy`'s argument.
 
 
 <br>
@@ -475,7 +550,9 @@ VsmBox
 
 ## VsmBox's emitted events
 
-- ...
+<br>
+
+- //To do
 
 
 <br>
@@ -487,105 +564,117 @@ VsmBox
 
 ### User interaction on VSM-terms
 
-- User-interaction on Edit-type Terms (including the endTerm):
+- User-interaction on **Edit-type Terms** (including the endTerm):
   + [Initial note]: at creation time, a VsmBox puts an input field (either a
     VsmAutocomplete or a plain HTML &lt;input&gt;) in its first Edit-type Term.  
-    If the VsmBox is empty, it places this in the extra 'endTerm' (see earlier).  
+    If the VsmBox is empty or has only real (=non-endTerm) non-Edit-type Terms,
+    it places this in the extra 'endTerm' (see earlier).  
     A VsmBox is implemented so that it holds only one input element at any time,
     and the user can move it from one Term to another.
-  * Tab/Shift+Tab:  
+  - Tab/Shift+Tab:  
     moves the input to the next/previous Edit-type, if any, respectively.  
     + Any content in the first, abandoned Term, remains visible.  
     + When moving to a Term that has previously abandoned content, it is used as
       the initial content of the input moved into that Term.
     + It switches between VsmAutocomplete and plain input as needed.
-  * Click:  
+  - Click:  
     moves the input to the Edit-type Term, if it doesn't have it yet.  
     As for Tab, it preserves/uses existing content, and sets correct input-type.
-  * Ctrl+Click:  
+  - Ctrl+Click:  
     cycles its type through the four Edit-types, in the order:  
     EI -> EC -> EL -> ER -> EI.  
     This also updates the input type (autocomplete/plain).  
     And this emits `change` + VsmBox's new (publicly visible) state.
-  * Alt+Click: makes the term the focal term, or removes focal state if it was
+  - Alt+Click: makes the term the focal term, or removes focal state if it was
     it already.
-  * Esc, on an Autocomplete with closed selection-list (only), or on a plain
+  - Esc, on an Autocomplete with closed selection-list (only), or on a plain
     input:  
     if the Edit-Term was (any) non-Edit-type Term before, then it restores the
     original Term. (Also restores the term-type if Ctrl+Click had changed it).
-  * Backspace, on empty Term (only):  
+  - Backspace, on empty Term (only):  
     moves the input and focus on the Term before it, after converting it to
     an Edit-type Term if needed.  It has no effect in a first Term.
-  * Ctrl+Delete:  
+  - Ctrl+Delete:  
     removes the Term, and moves the input and focus to the term right after it
     (if it is an Edit-Term), or else to right before it (if Edit-Term),
     or else to the first Edit-Term that comes after it.  
     Does not remove the endTerm, but sets its type to 'EI' if it isn't that yet.
-  * Ctrl+Enter:  
+  - Ctrl+Enter:  
     + if the input contains certain string-codes: converts them to special
       characters, e.g. '\beta' to &beta;.
       (Currently only available in VsmAutocomplete inputs: type-EI/EC Terms).
     + else: inserts a new Edit-type Term ('#2') after the current Term ('#1').  
       It gives #2 the default type EI, leaves #1's current type
       (ER/EI/EC/EL) unchanged, and moves the focus to #2's position.  
-  * Alt+ArrowUp / Alt+ArrowDown:  
+  - Alt+ArrowUp / Alt+ArrowDown:  
     moves the Edit-Term one position to the left / right in the Terms-list.  
     Any attached VSM-connectors will stay attached and move along with it.  
     (Note: Alt+Left/Right would not be usable as they browser hotkeys).
-  * Enter, on Autocomplete normal list-Item:  
+  - Enter, on Autocomplete normal list-Item:  
     fills it, and switches the Term's type to its non-Edit counterpart (I or C).
-  * Enter, on Autocomplete ItemLiteral:  
+  - Enter, on Autocomplete ItemLiteral:  
     - If the prop-function `advanced-search` is given (see extensive description
       above), then that function may provide a string, ID, etc. in another way.  
       This enables plugging in a custom dialog box for advanced term lookup.
-    - Else: fill in a `classID: null` Term.  
+    - Else: fills in a `classID: null` Term.  
     + Note: ItemLiteral is only shown to the user if the prop
       `allow-class-null==true`, or if an `advanced-search` function is available.
-    + Note: ItemLiteral's content is configurable via prop `item-literal-content`.
-  * Enter, on plain input (of EL/ER-type Terms):  
+    + Note: ItemLiteral's content is configurable via prop `custom-item-literal`.
+  - Enter, on plain input (of EL/ER-type Terms):  
     fills it, and switches the Term's type to L/R, resp.  
-    - Note: when editing an existing R-term (e.g. by doubleclicking it,
+    + Note: when editing an existing R-term (e.g. by doubleclicking it,
       which changes it to an ER-Term, and then changing the text),  
       then pressing Enter _only_ changes the R-term's `str` string-label.  
       Any existing `classID`/`instID`/`parentID` is conserved (so, _not_ reset
-      to `null`.  
+      to `null`), and any `dictID`/`descr` is kept.  
       (In contrast, when entering an I/C-type Term (during EI/EC->I/C),
-      the `instID` (if any) and `classID` are reset).  
-      (One can reset an R-term by selecting a refTerm like 'it' in (an
-      EC/IC-Term's) autocomplete, or via advanced-search).  
+      the `instID` (if any), `classID`, etc. are reset).  
+      (One can reset an R-term by selecting a refTerm like 'it' in autocomplete
+      (after changing it into an EI/EC-Term), or via advanced-search).  
       In summary: when editing an R- or L-Term, one simply changes its label
       (and for an L-Term, that's all it has).
-  * Shift+Enter on any Edit-type Term: immediately launches the
+  - Shift+Enter on any Edit-type Term: immediately launches the
     `advanced-search` function, if is available.  
-    This allows the user to bypass navigating to the ItemLiteral; and also use
-    advanced-search when no autocomplete-list is shown yet, e.g. for empty input.
-  * Mousedown / drag:  
-    * focuses the Edit-Term's input;
-    * nothing special happens when dragging. Because for Edit-type Terms,
+    This allows the user to bypass navigating to the ItemLiteral; and also to
+    use advanced-search when no autocomplete-list is shown yet,
+    e.g. for an empty input field.
+  - Mousedown / drag:  
+    - focuses the Edit-Term's input;
+    - nothing special happens when mouse-dragging. Because for Edit-type Terms,
       mouse-dragging is used for selecting text in the input element.
-  * Ctrl+Shift+Mousedown / drag:  
-    prepares for dragging, but does not start it yet.   
-    After that, listens to mousemove/mouseup/blur events on the whole page:  
-    * Mousemove:
+  - Ctrl+Shift+Mousedown / drag:  
+    Mousedown prepares for dragging, but does not start it yet.   
+    After that, it listens to mousemove/mouseup/blur events on the whole page:  
+    - Mousemove:
       - only when first moved past a distance set by prop
         `sizes.termDragThreshold`, it starts dragging;
       - if already dragging:
-        - it updates the position of the Term along with the mouse;
+        - it updates the position of the Term, along with the mouse;
         - the movement of the Term is bound to 'stick' to the 'ribbon' of Terms,
-          even when the mouse is moving further;
+          even when the mouse is moving further away;
         - it adds a placeholder-element that indicates the Term's target
           position between other terms, which moves along with the mouse too,
           in a stepwise way.
         + (Note: it listens to events on the whole page, because the mouse may
-          move so fast that it temporarily leaves the dragged Term, before the
-          code can make the Term follow).
-    * Mouseup: finalizes dragging: it puts the Term at the current location
+          leave the Term (when it moves so fast that it temporarily leaves the
+          dragged Term, before the code can make the Term follow; or when the
+          Term remains sticking to the ribbon), and then Term will not receive
+          any events).
+    - Mouseup: finalizes dragging: it puts the Term at the current location
       of its placeholder.
-    * Blur (i.e. when browser loses focus): has the same effect as Mouseup.
-  * Doubleclick on Edit-type Term: shows ThePopup for it.
-  - Unhover: removes ThePopup after a delay, if shown.
-- User-interaction on non-Edit-type Terms:
-  * Ctrl+Click on non-Edit-type Term:  
+    - Blur (i.e. when browser loses focus): has the same effect as Mouseup.
+  - Doubleclick on Edit-type Term: shows ThePopup for it.
+  - Hover:
+    - if ThePopup is already shown for another Term:
+      now shows it for this Edit-Term instead, after a delay
+      (see `sizes.delayPopup...`);  
+    - if no ThePopup is shown yet: does not show it (in order to not interfere
+      with Hover before Click to edit a Term).
+  - Unhover: removes ThePopup after a delay, if shown.  
+    Note that Esc and various other actions hide ThePopup too.
+
+- User-interaction on **non-Edit-type** Terms:
+  - Ctrl+Click on non-Edit-type Term:  
     cycles through the four types: I -> C -> L -> R -> I. &nbsp; Notes:  
     + Properties that are not relevant for a certain type (e.g. `instID`
       for Class-type) are still kept internally, so that the Term can be fully
@@ -599,32 +688,186 @@ VsmBox
       if `true`, it becomes an Instance Term;  
       if `false`, it can not be an Instance or Class Term, so it skips these
       and becomes a Literal Term.  
-  * Alt+Click: makes the Term the focal Term, or removes focal state if it was
+  - Alt+Click: makes the Term the focal Term, or removes focal state if it was
     focal already.
-  * Doubleclick on non-Edit-type Term:  
+  - Doubleclick on non-Edit-type Term:  
     converts it into its corresponding Edit-type Term, and puts its current
     `str` in the input. (For EI/EC-type, also launches autocomplete lookup).
-  * Mousedown or Ctrl+Shift+Mousedown + drag: for dragging, see above.
-  - Click: shows ThePopup.
-  - Hover: shows ThePopup after a delay.
-  - Unhover: removes ThePopup after a delay, if shown.
+  - Mousedown or Ctrl+Shift+Mousedown + drag:  
+    for dragging, see above.
+  - Hover: shows ThePopup after a delay (see `sizes.delayPopup...`).
+  - Unhover: removes ThePopup after a delay, if shown;  
+    except if a new (Edit-/non-Edit-)Term is hovered before that delay expires.
 
 
 <br>
 
 ### User interaction on the VSM-connector panel
 
-- ...
+- //To do
 
 
 <br>
 <br>
 
-# Other implementation details
+## Customized content
 
 <br>
 
-## Management of widths and heights
+### Custom content for Term labels
+
+The label (=stylized string) of non-Edit-type Terms (types R/I/C/L)
+can be customized by giving a customizing function as the `custom-term` prop.  
+
+`customTerm()` (if given) is called during the construction or update of each
+non-Edit-type Term.  
+It is called with one argument: an Object with useful properties:  
+`customTerm(data)`:  
+- `data`: {Object}:
+  - `type`: the Term's internally used type: one of: R, I, C, L, ER, EI, EC, EL.
+  - `index`: the Term's current index in the VSM-sentence.
+  - `term`: the Term's VSM-term data, in the format defined earlier.
+  - `vsmDictionary`: a reference to the VsmDictionary instance being used.  
+    (It can not be used for queries, as `customTerm()` is synchronous. But
+    it may be used for accessing e.g. `vsmDictionary.numberMatchConfig` details).
+  - `strs`: {Object}:
+    - `str`: the Term's label, which is the default content that would be used
+      if `customTerm()` was not applied.  
+      This text or HTML has the Term's custom CSS-styling `style` already
+      applied.
+    + Note: because a Term component (currently) has only one customizable part,
+      `strs` has only one sub-property `str`.  
+      This design makes `customTerm` uniform with the other customization
+      functions, and also makes it future-proof (in case a Term would get
+      additional parts).
+
+`customTerm()` must return an Object like its argument `data.strs`.  
+It may simply return the given `strs` object, after directly modifying its
+`str` property.
++ E.g. `customTerm: o => { if (o.term.dictID == 'X') o.strs.str += '!'; return o.strs }`  
+  would add a "!" to the end of a Term that has a `dictID` 'X'.  
+  + Note: `dictID` will only be available if it was given in the `initial-value`
+    prop (the VSM-sentence data object), or for a Term that was freshly entered.  
+    (Note: even though extra info about a Term could be queried based on its
+    `classID`, `customTerm()` is not designed to wait for such query results,
+    and works with immediately available data only).  
+    (Note though, that sometimes (e.g. with BioPortal dictionaries),
+    the `dictID` may be derived from a Term's `classID`-URI).
+
+
+<br>
+
+### Custom content for ThePopup
+
+**CSS**: all labels (a label is e.g. 'Key' in 'Key: 123') in ThePopup's
+info-panel (top part) are defined in CSS, and can be overriden via
+CSS-definitions as well.  
+
+**Data**: all data (=non-label text/HTML) presented in ThePopup's info-panel can
+be customized by giving a customizing function as the `custom-popup`
+prop.
+
+In addition, some extra panels can be added: above&below the settings-panel, and
+above&below the menu-items.
+
+`customPopup()` gets called during the construction or update of a ThePopup.
+It is called with one argument: an Object with useful properties & subproperties:  
+`customPopup(data)`:  
+- `data`: {Object}:
+  - `term`: the Term's VSM-term data, augmented with all internally added
+    properties.
+    (These extra properties should not be relied upon too much, but may be
+    useful for some purposes, e.g. during software development).
+  - `type`: the Term's internally used type: one of: R, I, C, L, ER, EI, EC, EL.
+  - `dictInfo`: the info-object of the subdictionary from which this term came.  
+    (This object is empty when no additional query results arrived yet; see note
+    below).
+  - `z`: the extra-info object `z`, associated with the Term's entry in the
+    vsmDictionary.  
+    (This object is empty when no additional query results arrived yet; see note
+    below).
+  - `vsmDictionary`: a reference to the VsmDictionary-instance being used.  
+    (It can not be used for queries, as `customPopup()` is synchronous. But
+    it may be used for accessing e.g. `vsmDictionary.numberMatchConfig` details).
+  - `sizes`: the VsmBox's `sizes` prop, augmented with default values
+    for sub-properties that were not explicitly given.
+  - `strs`: the default content for the different parts of ThePopup.  
+    It is an Object with properties (Strings) that represent the different parts.  
+    These parts may contain HTML tags, but will most commonly be just text.  
+    All properties are guaranteed to be of type {String},
+    except for queryFilter/Sort/Idts, which are of type {Array(String)}.  
+    - `str`: `term.str` as the title-line of ThePopup, with any `style` applied;
+    - `descr`: the Term's description `descr`;
+    - `dict`: its `dictID`; or if dictInfo-data is available then it is a
+      combination of its `name` plus `abbrev` or `dictID`, depending on what
+      fields are available;
+    - `classID`:  its `classID` (=its vsmDictionary-entry's `id`), or `…`
+      if unknown (i.e. `null`);
+    - `instID`:   its `instID`, or `…` for null, or `''` if absent (for a C-type
+      Term);
+    - `parentID`: its `parentID` (=`instID` of its parent term), or `…` or `''`;
+    - `queryFilter` (Array): a list of dictionary-info strings, for each of
+      the Term's `queryOptions.filter.dictID[*]`s (if any);
+    - `querySort` (Array): similar, for any `queryOptions.sort.dictID[*]`s;
+    - `queryIdts` (Array): a list of string+ids, for each of
+      the `queryOptions.idts[*]` fixedTerms (if any);  
+      (the term-string part will be absent from this if no additional query
+      results arrived yet; see note below);
+    - `queryZ`: describes the z-object-property-filter in `queryOptions.z`,
+      if given and not `true`, i.e. if there is an actual filter;
+    - `minWidth`: the Term's `minWidth` (as a String);
+    - `maxWidth`: the Term's `maxWidth`;
+    - `editWidth`: the Term's `editWidth`, i.e. its width when its type is
+      (or changes to) one of the Edit-types;
+    - `widthScale`: the VsmBox's `sizes.widthScale` (or its auto-calculated
+      value) (as a String), if it is different from its zero-effect value of 1;
+    - `extra`: if not-empty, makes an extra subpanel appear, which shows
+      the given text/HTML content; this subpanel appears after the term-info
+      subpanel, and before the settings subpanel;
+    - `extra2`: similar; this subpanel can appear under the settings subpanel,
+      still inside the top scroll-pane.
+    - `extra3`: similar; this subpanel can appear on top of the menu-items,
+      outside of the scroll-pane.
+    - `extra4`: similar; this subpanel can appear under the menu-items.
+
+`customPopup()` must return an Object like its argument `data.strs`.  
+It may simply return the given `strs` object, after directly modifying just
+those properties it needs to.  
+- E.g. `customPopup: data => { data.strs.str += '!'; return data.strs; }`  
+  would add a "!" to the `str` title-line part of each ThePopup instance,
+  and leave ThePopup's other parts unchanged. 
+- If any part is an empty String, it will be left out of ThePopup.
+
+`customPopup()` is asynchronous, but it may get called multiple times. 
++ It is called when ThePopup appears, or switches to a new Term.
++ It may then get called again after query results arrive, e.g. the `dictInfo`.
+  So the panel may update its content shortly after it appears,
+  while the user is already watching it.  
+  (Note: this behavior is probably only acceptible/'nice' for a ThePopup, and
+  does not occur with a Term's `custom-term`, which is called only once.
+  When a whole page of VSM-sentences is loaded, they should not all
+  flicker (or potentially change width) because of such updates;
+  but for a single, manually summoned popup-box, this may be OK).
+
+
+<br>
+
+### Custom content in autocomplete's match list
+
+Items in autocomplete's selection-panel can be customized
+via the `custom-item` and `custom-item-literal` props.  
+See [`vsm-autocomplete`](https://github.com/vsmjs/vsm-autocomplete)'s
+description of its props with the same name.
+
+
+<br>
+<br>
+
+## Other implementation details
+
+<br>
+
+### Management of widths and heights
 
 The width and height of a VsmBox are determined by its subcomponents TheConns
 and TheTerms:
@@ -665,11 +908,11 @@ and TheTerms:
         for typing.
     + A TheTerms component will only grow in width; it does not shrink during
       editing. This gives more visual stability when editing a VsmBox.  
-      It may shrink again e.g. after external code sets new `v-model` data on
-      the vsm-box component.
+      It may shrink again e.g. after external code sets new `initial-value` data
+      on the vsm-box component.
 
 Notes:
-+ a TheTerms component works with 'absolute positioning' of its Term
++ A TheTerms component works with 'absolute positioning' of its Term
   subcomponents. So it takes full control over the positioning of its Terms,
   instead of relying on the browser's sometimes finnicky way of laying-out
   'floating' components.  
@@ -685,9 +928,10 @@ Notes:
 + A comment in 'index-dev.html' demonstrates how to override the default CSS
   settings of various parts of a vsm-box.
 
+
 <br>
 
-## Combination of props `allow-class-null`, `advanced-search`, `item-literal-content`
+### Combination of props `allow-class-null`, `advanced-search`, `custom-item-literal`
 
 These three props determine:
 - whether or not the item-literal is shown at the bottom of a vsm-autocomplete
@@ -699,7 +943,7 @@ These three props determine:
 
 This is how they combine:
 
-|allow-class-null | advanced-search | item-literal-content* | => itemLiteral's appearance | effect of Enter | effect of advancedSearch return value |
+|allow-class-null | advanced-search | custom-item-literal* | => itemLiteral's appearance | effect of Enter | effect of advancedSearch return value |
 |-|-|-|-|-|-|
 |  false |  false |  false |no itemLiteral  | | |
 |  false |  false |**Func**|no itemLiteral  | | |
@@ -715,11 +959,48 @@ This is how they combine:
 &nbsp; &bull; 'create...' = something like: 'create new term & id for
 {input-string}'.  
 &nbsp; &bull; {custom} = content determined by
-`itemLiteralContent({input-string})`-function.
+`custom-item-literal ({input-string})`-function.
 
 <br>
 
-## Data preloading
+### Validity of emitted VSM-sentence data objects
+
+`vsm-box` is designed to be an editor and presenter of VSM-sentence data.  
+During every editing step, it emits the current state.  
+The semantic validity of this state should be evaluated by **external**
+functions.  
+
+Because: when users construct a VSM-sentence step by step, they will
+likely progress through states that are semantically invalid,
+but that are necessary or nice-to-progress-through,
+on their way building the final result.  
+> For example: Users should not be blocked in their editing process
+> by software that would refuse to add a new connector, before some incompatible
+> connector is deleted.
+> This is similar to how a text-editor does not block users while changing
+> part of a natural-language sentence.
+
+Such states may include:  
+- Incomplete connector structure: where not all terms are connected yet.
+- A new connector got added before an overlapping, erroneously added one gets
+  deleted.  
+- Connecting an Class Term to a parent, before later converting it to a
+  Referring Instance.
+- A Literal Term assigned as the sentence's focal Term, before the user
+  replaces or changes it to another Term type.
+
+`vsm-box` may handle simple semantic improvements though, before it emits
+data. This may include [some are To Do, at time of writing]:
+- Setting a Referring Term's classID to that of the parent it is
+  connected to via a coreference connector.
+- Removing `isFocal`, if it would be assigned to a Literal Term.
+- When prop `allowClassNull == false`, it prevents that users would change
+  an L/R-type Term to an I/C-type Term, when that L/R-type Term
+  never had a classID associated with it.
+
+<br>
+
+### Data preloading
 
 + At creation time or when updating the `initialValue` prop, VsmBox evaluates
   all `initialValue.terms`, and:
@@ -727,16 +1008,14 @@ This is how they combine:
     Preloading happens with `vsmDictionary.loadFixedTerms()`.  
     For efficiency, it groups together all found fixedTerms ('idts') into one
     preload-query (one per distinct `queryOptions.z`).  
-    Preloading fixedTerms is required for them to appear in autocomplete.
+    &rarr; Preloading fixedTerms is required for them to appear in autocomplete.
   + If `vsmDictionary` is wrapped in a 'vsm-dictionary-cacher' instance (which
     implies that it can also cache dictInfo-data, among others):  
     then it also queries for the dictInfo-data for all `dictID`s encountered in
-    the `queryOptions` of Edit-type terms (only). This this data already
+    the `queryOptions` of Edit-type terms (only). Then this data will already be
     available in the cache before a VsmAutocomplete subcomponent may request it,
-    which is likely, when showing a VSM-template that has Edit-type Terms.  
-    Preloading dictInfos happens for efficiency only.
-
-
+    which is likely in the case of a VSM-template and Edit-type Terms.  
+    &rarr; Preloading dictInfos happens for efficiency only.
 
 
 <br>
@@ -746,3 +1025,28 @@ This project's configuration (webpack + npm + Vue + testing + linting) will be a
 &nbsp;&nbsp; [github.com/stcruy/building-a-reusable-vue-web-component](https://github.com/stcruy/building-a-reusable-vue-web-component),  
 in order to build `vsm-box` as:  
 &nbsp;&nbsp; 1) a standalone web-component, 2) a slim web-component, and 3) a Vue component.
+
+<br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>
+<br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>
+<br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>
+<br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>
+<br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>
+<br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>
+<br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>
+<br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>
+<br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>
+<br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>
+<br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>
+<br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>
+<br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>
+<br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>
+<br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>
+<br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>
+<br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>
+<br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>
+<br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>
+<br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>
+<br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>
+<br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>
+<br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>
+<br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>

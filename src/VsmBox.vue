@@ -14,11 +14,17 @@
       :autofocus="autofocus"
       :placeholder="placeholder"
       :max-string-lengths="maxStringLengths"
-      :item-literal-content="itemLiteralContent"
+      :fresh-list-delay="freshListDelay"
       :advanced-search="advancedSearch"
       :allow-class-null="allowClassNull"
       :orig-terms="terms"
       :sizes="sizesFull"
+      :custom-item="customItem"
+      :custom-item-literal="customItemLiteral"
+      :custom-term="customTerm"
+      :custom-popup="customPopup"
+      :term-copy="termCopy"
+      :term-paste="termPaste"
       @width="onTermsWidth"
       @change="onTermsChange"
     />
@@ -42,11 +48,15 @@ const DefaultSizes = {
   defaultEditWidth: 80,
   defaultMaxWidth: 200,
 
-  widthScale: 1,
+  widthScale: false,
 
   theConnsMarginBottom: 2,
 
-  termDragThreshold: 3
+  termDragThreshold: 3,
+
+  delayPopupShow:   650,  // Delay to show ThePopup.
+  delayPopupSwitch: 300,  // Delay to switch a visible ThePopup to a new Term.
+  delayPopupHide:   200   // Delay to hide ThePopup.
 };
 
 
@@ -75,9 +85,9 @@ export default {
       type: Object,
       default: () => ({ str: 40, strAndDescr: 70 })
     },
-    itemLiteralContent: {  // See `vsm-autocomplete`.
-      type: [Function, Boolean],
-      default: false
+    freshListDelay: {
+      type: Number,
+      default: 250
     },
     advancedSearch: {
       type: [Function, Boolean],
@@ -94,6 +104,30 @@ export default {
     sizes: {
       type: Object,
       default: () => ({})
+    },
+    customTerm: {
+      type: [Function, Boolean],
+      default: false
+    },
+    customPopup: {
+      type: [Function, Boolean],
+      default: false
+    },
+    customItem: {
+      type: [Function, Boolean],
+      default: false
+    },
+    customItemLiteral: {  // See `vsm-autocomplete`.
+      type: [Function, Boolean],
+      default: false
+    },
+    termCopy: {
+      type: [Function, Boolean],
+      default: false
+    },
+    termPaste: {
+      type: [Function, Boolean],
+      default: false
     }
   },
 
@@ -137,7 +171,7 @@ export default {
      * `loadFixedTerms()` for them, grouped by their `queryOptions.z`-filter.
      */
     preloadFixedTerms() {
-      var idtsByZ = {};  // FixedTerms, grouped by zObj, repres by JSON-str-key.
+      var idtsByZ = {}; // FixedTerms grouped by zObj, represntd by JSON-str-key.
       this.initialValue.terms.forEach(term => {
         if (term.queryOptions) {
           var z = JSON.stringify(term.queryOptions.z || true);
@@ -145,14 +179,15 @@ export default {
         }
       });
       Object.keys(idtsByZ).forEach(z => {
-        this.vsmDictionary.loadFixedTerms(idtsByZ[z], { z: JSON.parse(z) });
+        this.vsmDictionary.loadFixedTerms(
+          idtsByZ[z], { z: JSON.parse(z) }, () => {} );
       });
     },
 
 
     /**
-     * If `vsmDictionary` is wrapped in a VsmDictionaryCacher, preloads
-     * dictInfos data for all dictIDs encounterd in `terms[*].queryOptions.**`.
+     * If `vsmDictionary` is wrapped in a VsmDictionaryCacher: this preloads
+     * dictInfo-data for all dictIDs encountered in `terms[*].queryOptions.**`.
      */
     preloadDictInfos() {
       if (this.vsmDictionary.cacheDI) {  // Detect 'vsm-dictionary-cacher'.
@@ -181,7 +216,7 @@ export default {
 };
 
 
-///function J(obj) { console.dir(JSON.parse(JSON.stringify(obj))) }  0&&J;
+function J(obj) { console.dir(JSON.parse(JSON.stringify(obj))) }  J;
 
 </script>
 
@@ -192,18 +227,25 @@ export default {
   *::after {
     line-height: 0;
   }
+
   .vsm-box {
     box-sizing: content-box;
     background-color: #fff;
     border: 1px solid #d3d9e5;
   }
+
   .vsm-box,
   .vsm-box >>> input {  /* '>>>' overrides scoped child CSS */
     /* This sets both vsm-autocomplete and plain <input>'s style */
     font-family: tahoma, verdana, arial, sans-serif;
+
+    /* 'font-size' should equal TheTerms's `defaultFontSize`. External CSS may
+       may override this CSS-value; if so then `widthScale` will automatically
+       update accordingly. */
     font-size: 11px;
     color: #000;
   }
+
   .terms,
   .conns {
     margin: 0;

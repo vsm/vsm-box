@@ -1,0 +1,118 @@
+/*
+This 'CSS-skin' is a demo of how to customize a vsm-box.
+
+To use it, include the following tag _in_ the page's <body>, _after_ the
+element that Vue is activated on (e.g. after '<div #app>...</div>') :
+
+  <link rel="stylesheet" href="vsm-box-custom.css">
+
+*/
+
+.vsm-box {
+  border: 5px solid #ddd !important;
+}
+
+.vsm-box .terms {
+  padding: 4px;
+  background-color: #ffc;
+}
+.vsm-box .term {
+  font-family: sans-serif;
+  font-size: 19px;  /* Note: for a different font-size, the prop-property
+                       `sizes.widthScale` will automatically be adjusted, which
+                       will scale each Term's `min/max/editWidth` accordingly. */
+  line-height: normal;
+}
+.vsm-box .term.inp input {  /* `.term.inp` here, for higher selector-specificity, for bkgr-color */
+  font-size: 16px;
+  background-color: #ff9;
+}
+.vsm-box .term {
+  border-width: 3px;
+  padding: 2px 5px 0;
+}
+
+.vsm-box .term.inp .list {
+  margin: 10px 0 0 -8px;
+  border: 3px solid #aab;
+  font-size: 13px;
+  line-height: 16.5px;
+}
+.vsm-box .term .item:not(.item-type-literal) {
+  padding: 3px 6px 4px 5px;
+}
+.vsm-box .term .item.item-type-literal {
+  color: #a33;
+}
+.vsm-box .term .item.item-type-literal {
+  padding-left: 12px;
+}
+.vsm-box .term .spinner {
+  width: 11px;
+  height: 11px;
+  margin-top: 10px;
+  border-width: 2.5px;
+}
+.vsm-box .term .spinner.list-closed {
+  margin-top: 7px;
+}
+
+
+.vsm-box .popup {
+  border: 2px solid #e44;
+}
+.vsm-box .popup .ext3 {
+  width: calc(100% + 4px);  /* Adjust to new sizes. See 'ThePopup.vue''s CSS. */
+}
+.vsm-box .popup .arrow {
+  top: -10.5px;
+  border-bottom-color: #e44;
+}
+.vsm-box .hover-extend {
+  margin: -10.5px 0 0 -2px;  /* Adjust to new sizes. See 'ThePopup.vue''s CSS. */
+}
+.vsm-box .popup .arrow-inner {
+  border-bottom-color: #fff2f0;
+}
+.vsm-box .popup .content {
+  background-color: #fff2f0;
+}
+.vsm-box .popup .title {
+  font-size: 21px;
+}
+.vsm-box .popup .info-settings {
+  background-color: #ffe9e7;
+  padding: 0 2px 0 2px;
+  margin: 0 6px 0 7px;
+}
+.vsm-box .popup .dict::before {
+  content: "Controlled Vocabulary: ";
+}
+
+
+.vsm-box .popup .menu {
+  background-color: #f6eeee;
+}
+.vsm-box .popup .item {
+  border-color: #f6eeee;
+}
+.vsm-box .popup .item {
+  font-style: italic;
+}
+.vsm-box .popup .item:not(.inactive):hover {
+  background-color: #e1a2b2;
+  border-color: #a13467;
+}
+.vsm-box .popup .item:hover .hotkey {
+  color: #a89999;
+}
+.vsm-box .popup .types .type.selected {
+  font-weight: bold;
+  border-color: #ea7a7a;
+}
+.vsm-box .popup .types:hover .type.selected {
+  background-color: #f08181;
+}
+.vsm-box .popup .types:hover .type:not(.selected):not(.inactive):hover {
+  background-color: #f06161;
+}

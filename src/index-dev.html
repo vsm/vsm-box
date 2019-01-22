@@ -10,15 +10,23 @@
     a, a:visited { color: #FF0000; }
     #app { padding: 20px 0 18px 50px;  background-color: #FFEEDD;  min-height: 180px; }
     [v-cloak] { display: none; }
+
+    .reporter {
+      color: #bbb;  font-size: 13px;  margin: 12px 0 0 0;
+      white-space: nowrap;  overflow: visible;  text-overflow: ellipsis;
+      /* width: 500px;  max-height: 200px;  overflow-y: scroll; /**/
+    }
   </style>
 
-  <!-- For faster reloads, we include Vue.js in the webpack bundle, during dev.
-  <script src="https://unpkg.com/vue"></script> -->
+  <!-- For faster reloads, include Vue.js in the webpack bundle, during dev. --
+  <script src="https://unpkg.com/vue"></script> <!-- -->
 </head>
 
 
 <body>
-  <!-- -><div style="margin: 5px 0 0 10px; position: absolute; left: 50px; top: 20px"><!-- -->
+  <!-- The next line can place the vsm-box in an absolutely positioned div --
+  <div style="margin: 5px 0 0 10px; position: absolute; left: 20px; top: 10px; right: 0"> <!-- -->
+
   <div id="app" v-cloak>
     <vsm-box
       :vsm-dictionary="vsmDictionary"
@@ -26,10 +34,16 @@
       :placeholder="placeholder"
       :initial-value="initialValue"
       :max-string-lengths="maxStringLengths"
-      :item-literal-content="itemLiteralContent"
+      :fresh-list-delay="freshListDelay"
       :advanced-search="advancedSearch"
       :allow-class-null="allowClassNull"
       :sizes="sizes"
+      :custom-term="customTerm"
+      :custom-popup="customPopup"
+      :custom-item="customItem"
+      :custom-item-literal="customItemLiteral"
+      :term-copy="termCopy"
+      :term-paste="termCopied ? termPaste : false"
       @change="onChange"
     >
     </vsm-box>
@@ -40,57 +54,11 @@
     </div>
   </div>
 
-
-  <style>
-    .reporter {
-      color: #bbb;
-      font-size: 13px;
-      margin: 12px 0 0 0;
-      white-space: nowrap;
-      overflow: visible;
-      text-overflow: ellipsis;
-      /*width: 500px;
-      max-height: 200px;
-      overflow-y: scroll;/**/
-    }
-
-    /* One can override CSS-styling of a vsm-box, with CSS that comes _after_
-       the Vue-activated '#app' element. Like this: /
-    .vsm-box {
-      border: 5px solid #ddd !important;
-    }
-    .vsm-box .terms {
-      padding: 4px;
-    }
-    .vsm-box .term,
-    .vsm-box .term input {
-      font-family: courier, sans-serif;
-      font-size: 30px;
-      line-height: normal;
-    }
-    .vsm-box .term {
-      border-width: 3px;
-      padding: 2px 5px 0;
-    }
-    .vsm-box .term.inp .item {
-      font-size: 8px;
-      line-height: 10px;
-    }
-    .vsm-box .term.inp .item:not(.item-state-active).item-type-literal {
-      color: #a33;
-    }
-    .vsm-box .term.inp .list {
-      margin: 12px 0 0 -8px;
-      border: 3px solid #aab;
-    }
-    .vsm-box .terms {
-      background-color: #ffa;
-    }
-    .vsm-box .term.inp input {
-      background-color: #ffe;
-    }
-    /**/
-  </style>
+  <!-- One can override vsm-box's CSS-styles,
+       by declaring CSS _after_ the Vue-activated '#app' div.
+       E.g. with CSS-declarations in this:  (add/remove a '>' to toggle this on/off) :
+  --
+  <link rel="stylesheet" href="vsm-box-custom.css">  <!-- -->
 
 </body>
 </html>

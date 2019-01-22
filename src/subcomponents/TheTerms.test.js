@@ -10,7 +10,8 @@ describe('sub/TheTerms', () => {
   const dict = new VsmDictionaryLocal({
     dictData: [
       { id: 'A', name: 'Aaa', entries: [
-        { id: 'A:01', dictID: 'A', terms: [{ str: 'aax', descr: 'ddx' }] }
+        { id: 'A:01', dictID: 'A', terms: [{ str: 'aax', descr: 'ddx' }] },
+        { id: 'A:02', dictID: 'A', terms: [{ str: 'aay', style: 'i' }] }
       ]}
     ],
     refTerms: ['it']
@@ -18,7 +19,7 @@ describe('sub/TheTerms', () => {
 
   var clock; // For using fake timers. See description @VsmAutocomplete.test.js.
   beforeEach(() => { clock = sinon.useFakeTimers() });
-  afterEach (() => { clock.restore() });
+  afterEach (() => { clock.runAll();  clock.restore() });
 
   const sizes = {  // Mock the `sizes` that parent component VsmBox would give.
     minWidth: 200,
@@ -26,7 +27,11 @@ describe('sub/TheTerms', () => {
     minEndTermWideWidth: 100,
     defaultEditWidth: 40,
     defaultMaxWidth: 0,
-    widthScale: 1
+    widthScale: 1, // (Make it not auto-calculate (->search for CSS) in tests).
+    termDragThreshold: 3,
+    delayPopupShow:   550,
+    delayPopupSwitch: 300,
+    delayPopupHide:   200
   };
 
   const TermHeight = 18;  // Used by the mocked getRuler() and in tests.
@@ -35,11 +40,12 @@ describe('sub/TheTerms', () => {
 
   // This function is used by each test. It creates and mounts a component with
   // default+custom props, and gives it extra functionality needed for tests.
-  const make = (props, wait = 10) => {
+  const make = (props, wait = 10, sync = true) => {
     w = mount(TheTerms, {
       propsData: Object.assign(
         { vsmDictionary: dict,
           maxStringLengths: {},
+          freshListDelay: 0,
           origTerms: []
         },
         props,
@@ -72,7 +78,9 @@ describe('sub/TheTerms', () => {
 
           return ruler;
         }
-      }
+      },
+
+      sync
     });
 
     if (wait)  clock.tick(wait); // Jump past Term's initial nofade-setTimeout().
@@ -127,19 +135,29 @@ describe('sub/TheTerms', () => {
 
   // --- UTILITY FUNCTIONALITY ---
 
-  const _terms   = () => w.findAll('.terms .term:not(.ruler):not(.end)');
-  const _termsET = () => w.findAll('.terms .term:not(.ruler)');  // +endTerm.
-  const _term    = i  => _termsET().at(i);
-  const _endTerm = () => w.find('.terms .term.end');
+  const _terms    = () => w.findAll('.terms .term:not(.drag-placeholder)' +
+    ':not(.ruler):not(.end)');
+  const _termsAll = () => w.findAll('.terms .term:not(.ruler)'); //+endT&dragPlh.
+  const _term     = i  => _termsAll().at(i);
+  const _label    = i  => _term(i).find('.label');
+  const _dragPlh  = () => w.find('.terms .term.drag-placeholder');
+  const _endTerm  = () => w.find('.terms .term.end');
+  const _popup    = () => w.find('.terms .popup');
 
   const _termTrig = (i, ...event) => {
     _term(i).trigger(...event);
     clock.tick(10);  // Let any triggered dictionary-lookup responses complete.
   };
-  const _termClick    = i => _termTrig(i, 'mousedown.left');
-  const _termCClick   = i => _termTrig(i, 'mousedown.left', { ctrlKey: true });
-  const _termAClick   = i => _termTrig(i, 'mousedown.left', { altKey: true });
-  const _termDblclick = i => _termTrig(i, 'dblclick.left');
+  const _termClick     = i => _termTrig(i, 'mousedown.left');
+  const _termCClick    = i => _termTrig(i, 'mousedown.left', { ctrlKey: true });
+  const _termAClick    = i => _termTrig(i, 'mousedown.left', { altKey: true });
+  const _termDblclick  = i => _termTrig(i, 'dblclick.left');
+  const _termMEnter    = i => _termTrig(i, 'mouseover');   // Not mouseenter.
+  const _termMLeave    = i => _termTrig(i, 'mouseleave');
+  const _termClickFull = i => _termTrig(i, 'click.left');  // Not just mousedown.
+
+  const _popupMEnter = () => { _popup().trigger('mouseenter'); clock.tick(10) };
+  const _popupMLeave = () => { _popup().trigger('mouseleave'); clock.tick(10) };
 
   const _termInput = i => _term(i).find('input.input');  // IF it has the input.
   const _termITrig = (i, ...event) => {
@@ -152,10 +170,20 @@ describe('sub/TheTerms', () => {
   const _termITrigEsc    = i => _termITrig(i, 'keydown.esc');
   const _termITrigCDel   = i => _termITrig(i, 'keydown.delete', {ctrlKey: true});
   const _termITrigCEnter = i => _termITrig(i, 'keydown.enter', {ctrlKey: true});
+  const _termITrigDown   = i => _termITrig(i, 'keydown.down');
   const _termITrigAUp    = i => _termITrig(i, 'keydown.up',   { altKey: true });
   const _termITrigADown  = i => _termITrig(i, 'keydown.down', { altKey: true });
   const _termITrigEnter  = i => _termITrig(i, 'keydown.enter');
   const _termITrigSEnter = i => _termITrig(i, 'keydown.enter', {shiftKey: true});
+
+  const _ppType = type => w.find('.popup .item.types .type.' + type);
+
+  const _ppItemClick = (name, sub = '') => {
+    w.find('.popup .item.' + sub + name).trigger('click.left');
+    clock.tick(10);
+  };
+  const _ppItemTypeClick = name => _ppItemClick(name, 'types .type.');
+
 
   // Finds the only <input>, whichever Term it's currently attached to.
   const _input = () => w.find('.terms .term input.input');
@@ -165,7 +193,7 @@ describe('sub/TheTerms', () => {
   // + E.g. `_setInput('aa')` changes the input, wherever it currently is.
   //   E.g. `_setInput(2, 'aa')` also implies that it exists at `index` 2.
   const _setInput = (index, newValue) => {
-    fixWarnHandler();
+    fixWarnHandler('initialValue');
     if (typeof index == 'string') {  // Is the first argument omitted?
       var input = _input();
       newValue = index;
@@ -178,25 +206,26 @@ describe('sub/TheTerms', () => {
   // .
   // .
   // Prevent false warning caused by 'vue-test-utils', saying: 'Avoid mutating
-  // a prop directly ... initialValue"'. Happens for some _setInput() cases.
-  function fixWarnHandler() {
+  // a prop directly ... [prop-name]"'. Happens for some _setInput() cases.
+  function fixWarnHandler(name) {
     Vue.config.warnHandler = (msg, vm, trace) => {
-      if (msg.includes('Prop being mutated: "initialValue"'))  return;
+      if (msg.includes(`Prop being mutated: "${name}"`))  return;
       console.log(`${msg}${trace}`);
     };
   }
   afterEach (() => { Vue.config.warnHandler = undefined });  // Reset every time.
 
 
-  const _trigClick = pageX => {  // Trigger click on TheTerms' (padding) itself.
-    w.trigger('mousedown.left', { pageX });
+  // Triggers a Click on TheTerms' (padding) itself, not on one of its Terms.
+  const _trigClick = (clientX, clientY) => {
+    w.trigger('mousedown.left', { clientX, clientY });
     clock.tick(10);
   };
 
 
   const _styleValue = (wrap, styleProp) => {
     // Extract e.g. the Number 45 from a style-attribute "width: 45px; .....".
-    var re = new RegExp('(^|;)\\s*' + styleProp + ':\\s*(\\d+)px\\s*(;|$)');
+    var re = new RegExp('(^|;)\\s*' + styleProp + ':\\s*(-?\\d+)px\\s*(;|$)');
     var s = wrap.attributes().style.match(re);
     return s === null ? false : +s[2];  // If style-prop. absent, return false.
   };
@@ -206,6 +235,70 @@ describe('sub/TheTerms', () => {
   const _termXPos   = index => _termStyleValue(index, 'left');
   const _termYPos   = index => _termStyleValue(index, 'top');
   const _totalWidth = () => _styleValue(w, 'width');
+
+
+
+  // Support code for the Term-dragging tests.
+  const _termMDown    = (i, x, y, cs = undefined) => _termTrig(i,
+    'mousedown.left', { ctrlKey: cs, shiftKey: cs,  clientX: x, clientY: y });
+  const _termCSMDown  = (i, x, y) => _termMDown(i, x, y, true);
+  const _windMTrig    = (name, x, y) =>
+    window.dispatchEvent(new MouseEvent(name, { clientX: x, clientY: y }));
+  const _windMMove = (x, y) => _windMTrig('mousemove', x, y);
+  const _windMUp   = (x, y) => _windMTrig('mouseup',   x, y);
+  const _windBlur = () =>  window.dispatchEvent(new CustomEvent('blur'));
+
+  const _termCoos   = index => ({
+    x: _termXPos (index),  y: _termYPos  (index),
+    w: _termWidth(index),  h: _termHeight(index) });
+
+  const _dragPlhCoos = () => {  // Returns `false` if drag-placeholder is absent.
+    var wrap = _dragPlh();
+    return !wrap.exists() ? false : ({
+      x: _styleValue(wrap, 'left' ),  y: _styleValue(wrap, 'top'   ),
+      w: _styleValue(wrap, 'width'),  h: _styleValue(wrap, 'height')
+    });
+  };
+
+  const _moveCoos = (coos, dx, dy) => ({ // Makes a `coos` with updated x/y only.
+    x: coos.x + dx,  y: coos.y + dy,  w: coos.w,  h: coos.h });
+
+
+  // Prints out all Terms' coordinates, incl endTerm, and any drag-placeholder.
+  const DCoos = () => {                    // eslint-disable-line no-unused-vars
+    for (var arr = [], i = 0, n = _terms().length;  i < n;  i++) {
+      arr.push( { [_term(i).text()] :  _termCoos(i) } );
+    }
+    arr.push({ '$': _termCoos(n) });  // Add the endTerm.
+    if (_dragPlh().exists())  arr.push({ '*': _termCoos(n+1) });  // Drag-placeh.
+    D(arr);
+  };
+
+
+  // Ensure to detach listeners that may be added after a mousedown (for drag),..
+  afterEach(() => { _windBlur() });       // ..in case the test didn't do so yet.
+
+
+
+  // Makes ThePopup appear by *hovering* any Term, and letting the delay pass.
+  // + Note: for Edit-Terms, we need to hover a non-Edit-Term first, and then
+  //   move over to the Edit-Term. (Note that using DblClick on Edit-Terms
+  //   would have the side-effect of cancel/closing vsmAC's matches-list).
+  // + THIS FUNCTION REQUIRES that Term 0 is a non-Edit-Term.
+  const _showPopupFor = index => {
+    if (_term(index).classes().includes('edit')) {
+      _termMEnter(0);
+      clock.tick(sizes.delayPopupShow);
+      // Somehow, the following line is needed. (It makes vue-test-utils
+      // v1.0.0-beta.26 update data somehow) (and `$forceUpdate` doesn't) :
+      _popup().exists().should.equal(true);
+      _termMLeave(0);
+    }
+    _termMEnter(index);
+    clock.tick(sizes.delayPopupShow + sizes.delayPopupSwitch);
+    w.vm.$forceUpdate();  // <-- Wake up lazy 'vue-test-utils@1.0.0-beta.26'.
+  };
+
 
 
   // Assertions.
@@ -239,6 +332,16 @@ describe('sub/TheTerms', () => {
     _inputHasFocus();
   };
 
+  const _popupShownAt = index => {  // (If -1, popup should *not* be shown).
+    var popup = _popup();
+    popup.exists().should.equal(index >= 0);
+    if (index < 0)  return;
+    var popupX = _styleValue(popup, 'left');
+    var termIX = _termXPos(index);
+    popupX.should.equal(termIX + 0); // <--(Adjust offset if code ever changes).
+  };
+  const _popupHidden = () => _popupShownAt(-1);
+
 
   // See 'Term.test.js' for info on `_emit*()`.
   const _emit = (index = 0, str = '-') => {
@@ -249,8 +352,8 @@ describe('sub/TheTerms', () => {
     _emit(index, str) ? w.emitted(str)[index][0] : false;
 
 
-  const vueTick = cb => Vue.nextTick(() => {  // Shorthand function.
-    clock.tick(10);  cb(); });
+  // Shorthand functions.
+  const vueTick = cb => Vue.nextTick(() => { clock.tick(10);  cb() });
   const DE = () => D(w.emittedByOrder());  // eslint-disable-line no-unused-vars
 
 
@@ -263,6 +366,34 @@ describe('sub/TheTerms', () => {
     it('initializes, when getting only the required props', () => {
       make({ });  // make() gives all & only required props a default value.
       w.isVueInstance().should.equal(true);
+    });
+
+
+    it('gives each Term a different `key` property', () => {
+      make({ origTerms: [ { str: 'abc', classID: 'A:01', instID: null } ]});
+      var key0 = w.vm.terms[0].key;
+      var key1 = w.vm.terms[1].key;  // This is the endTerm's key.
+      (key0 !== undefined).should.equal(true);
+      (key1 !== undefined).should.equal(true);
+      (key0 !=  key1     ).should.equal(true);
+    });
+
+
+    it('makes an R-type term have either both not-null or both null ' +
+       '`classID` and `parentID`', cb => {
+      function testCase(classID, parentID, c, p, cbf) {
+        make({ origTerms: [{ str: 'abc', classID, instID: null, parentID } ]});
+        vueTick(() => {
+          _termAClick(0);  // Make the Term focal, just to cause an emit.
+          _emitV(0, 'change').should.deep.equal([{ isFocal: true,
+            str: 'abc', classID: c, instID: null, parentID: p,  }]);
+          cbf();
+        });
+      }
+      testCase(      'A:01', 'id1', 'A:01', 'id1', () =>
+        testCase(    'A:01', null , null  , null,  () =>
+          testCase(  null  , 'id1', null  , null,  () =>
+            testCase(null  , null , null  , null,  cb))));
     });
 
 
@@ -354,7 +485,7 @@ describe('sub/TheTerms', () => {
         _termITrig(0, 'focus');
         expect(_termInput(0).attributes().placeholder).to.equal(undefined);
 
-        // Test 2: sets `placeholder` on lone, unfc., plain-input-having endTerm.
+        // Test 2: sets `placehol.` on lone, unfocs., plain-input-having endTerm.
         make({ origTerms: [], placeholder: 'abx' });
         vueTick(() => {
           _termInput  (0).exists().should.equal(true);
@@ -397,7 +528,7 @@ describe('sub/TheTerms', () => {
         });
       }
 
-      var advSrch = (settings, cb) => cb({ str: settings.str, id: null });
+      var advSrch = (data, cb) => cb({ str: data.str, id: null });
 
       testCase(      false, false,   false, () =>
         testCase(    false, advSrch, true,  () =>
@@ -406,33 +537,134 @@ describe('sub/TheTerms', () => {
     });
 
 
-    it('fills VsmAutocomplete\'s itemLit with custom `itemLiteralContent`, or ' +
+    it('fills VsmAutocomplete\'s itemLit with custom `customItemLiteral`, or ' +
        'default content based on `allowClassNull` & `advancedSearch`', cb => {
-      function testCase(allowClassNull, advancedSearch, iLtCont, result, cbf) {
-        make({ allowClassNull, advancedSearch, itemLiteralContent: iLtCont });
+      function testCase(allowClassNull, advancedSearch, custILt, result, cbf) {
+        make({ allowClassNull, advancedSearch, customItemLiteral: custILt });
         vueTick(() => {
           _setInput(0, 'aa');
           vueTick(() => {
             var itemLit = w.find('.item-type-literal');
             if (result === null)  itemLit.exists().should.equal(false);
-            else  itemLit.text().startsWith(result).should.equal(true);
+            else {
+              itemLit.text().startsWith(result).should.equal(true);
+
+              // Test: it sets a default HTML-title on the item-literal,
+              // based on the availability of `advancedSearch`.
+              itemLit.attributes().title.toLowerCase().should.include(
+                advancedSearch ? 'search' : 'create'
+              );
+            }
             cbf();
           });
         });
       }
 
-      var advSrch = (settings, cb) => cb({ str: settings.str, id: null });
-      var iLtCont = s => `_123_${s}_`;
+      var advSrch = (data, cb) => cb({ str: data.str, id: null });
+      var custILt = data => {
+        data.strs.str = `_123_${ data.strs.str }_`;
+        return data.strs;
+      };
       var aa = ' \'aa\'';
 
       testCase(              false, false,   false,   null,          () =>
-        testCase(            false, false,   iLtCont, null,          () =>
+        testCase(            false, false,   custILt, null,          () =>
           testCase(          false, advSrch, false,   'Search' + aa, () =>
-            testCase(        false, advSrch, iLtCont, '_123_aa_',    () =>
+            testCase(        false, advSrch, custILt, '_123_aa_',    () =>
               testCase(      true,  false,   false,   'Create' + aa, () =>
-                testCase(    true,  false,   iLtCont, '_123_aa_',    () =>
+                testCase(    true,  false,   custILt, '_123_aa_',    () =>
                   testCase(  true,  advSrch, false,   'Search' + aa, () =>
-                    testCase(true,  advSrch, iLtCont, '_123_aa_',    cb))))))));
+                    testCase(true,  advSrch, custILt, '_123_aa_',    cb))))))));
+    });
+
+
+    it('lets prop function `custom-term` update Term content, for ' +
+       'non-Edit-type Terms only; and gives it all necessary data', cb => {
+      var givenTerms = [];
+      make({
+        origTerms: [
+          { str: 'lit', style: 'i', minWidth: 100 },
+          { str: 'cls', style: 'i', classID: null },
+          { str: 'ins', style: 'i', classID: null, instID: null, isFocal: true },
+          { str: 'ref', style: 'i', classID: null, instID: null, parentID: null},
+          { },
+          { type: 'ER' },
+          { type: 'EC' },
+          { type: 'EL' }
+        ],
+        customTerm: function(o) {
+          givenTerms.push(o.term);
+          // Use/test all of o's properties: str, index, type, term, vsmDict.
+          return { str: o.strs.str + o.index + o.type + o.term.style +
+            o.vsmDictionary.refTerms.length };
+        }
+      });
+
+      vueTick(() => {
+        _setInput(4, 'ed');  // Give Term 4 some content, which is then turned..
+        vueTick(() => {
+          _termITrigTab(4);  // ..into a label, by moving the input to Term 5.
+          vueTick(() => {
+            _label(0).html().includes('<i>lit</i>0Li1').should.equal(true);
+            _label(1).html().includes('<i>cls</i>1Ci1').should.equal(true);
+            _label(2).html().includes('<i>ins</i>2Ii1').should.equal(true);
+            _label(3).html().includes('<i>ref</i>3Ri1').should.equal(true);
+            _label(4).html().includes(   'ed'    ).should.equal(true);
+            _label(4).html().includes('<i>ed</i>').should.equal(false);
+            _label(5).exists().should.equal(false);  // Edit-Term with <input>.
+            _label(6).html().includes('<i>'      ).should.equal(false);
+            _label(7).html().includes('<i>'      ).should.equal(false);
+
+            //Test that `customTerm()` received cleaned-up Term data.
+            givenTerms.should.deep.equal([
+              { str: 'lit', style: 'i', minWidth: 100 },
+              { str: 'cls', style: 'i', classID: null },
+              { str: 'ins', style: 'i', classID: null, instID: null,
+                isFocal: true },
+              { str: 'ref', style: 'i', classID: null, instID: null,
+                parentID: null},
+            ]);
+            cb();
+          });
+        });
+      });
+    });
+
+
+    it('lets prop function `custom-item` customize Term\'s ' +
+       'autocomplete list-items', cb => {
+      make({
+        origTerms: [{ }],
+        customItem: data =>
+          Object.assign(data.strs, { descr: data.strs.descr + '___' })
+      });
+      vueTick(() => {
+        _setInput(0, 'a');
+        vueTick(() => {
+          w.html().includes('ddx___').should.equal(true);
+          cb();
+        });
+      });
+    });
+
+
+    it('lets prop function `custom-popup` customize Term\'s ' +
+       'ThePopup\'s info-panel', cb => {
+      make({
+        origTerms: [{ str: 'abc', classID: 'null' }],
+        customPopup: data =>
+          Object.assign(data.strs, { str: data.strs.str + '___' })
+      });
+      vueTick(() => {
+        _termMEnter(0);
+        vueTick(() => {
+          clock.tick(1000);
+          vueTick(() => {
+            w.html().includes('abc___').should.equal(true);
+            cb();
+          });
+        });
+      });
     });
   });
 
@@ -640,13 +872,13 @@ describe('sub/TheTerms', () => {
 
 
 
-  describe('EndTerm\'s dimensions', () => {
+  describe('endTerm\'s dimensions', () => {
 
     it('makes EndTerm\'s width fill an empty TheTerms', cb => {
       make({ origTerms: [] });
       vueTick(() => {
-        _terms  ().length.should.equal(0);  // No normal Terms,..
-        _termsET().length.should.equal(1);  // .. only an endTerm.
+        _terms   ().length.should.equal(0);  // No normal Terms,..
+        _termsAll().length.should.equal(1);  // .. only an endTerm.
 
         _term(0)  .exists().should.equal(true);  // } Two ways to access endTerm.
         _endTerm().exists().should.equal(true);  // }
@@ -660,9 +892,9 @@ describe('sub/TheTerms', () => {
     it('makes EndTerm\'s width fill the rest of a near-empty TheTerms', cb => {
       make({ origTerms: [{ str: 'aaa' }, { str: 'aaa' }] });
       vueTick(() => {
-        _terms  ().length.should.equal(2);   // All normal Terms.
-        _termsET().length.should.equal(3);   // All normal Terms + the endTerm.
-        _term(2)  .text().should.equal('');  // The endTerm.
+        _terms   ().length.should.equal(2);   // All normal Terms.
+        _termsAll().length.should.equal(3);   // All normal Terms + the endTerm.
+        _term(2)   .text().should.equal('');  // The endTerm.
         _termWidth(2).should.equal(sizes.minWidth - PadLeft - PadRight - aaaTW*2
           - TermMarginHor * 2);  // Margin: between Term 0 & 1, and 1 & endTerm.
         cb();
@@ -754,7 +986,7 @@ describe('sub/TheTerms', () => {
 
 
     it(['when Dblclick=start-editing a real Term makes it a bit wider:',
-      'it shrinks endTerm accordingly, and does not widen TheTerms;',
+      'it shrinks a not-narrow endTerm accordingly, and does not widen TheTerms;',
       'then when Esc=cancel-edit restores it & focuses real Edit-term behind it:',
       'endTerm widens again to its original width']
       .join('\n        '),
@@ -1067,7 +1299,7 @@ describe('sub/TheTerms', () => {
 
 
 
-  describe('User-interaction: changing input location', () => {
+  describe('user-interaction: changing input location', () => {
 
     it('lets Tab/Shift+Tab move the input forward/backward between ' +
        'Edit-type Terms, cyclingly', cb => {
@@ -1184,14 +1416,14 @@ describe('sub/TheTerms', () => {
 
         // Test 1: a click left of the endTerm has no effect, but refocus input.
         var startX = w.vm.$el.offsetLeft + _termXPos(1) - TermMarginHor;
-        _trigClick(startX - 5);
+        _trigClick(startX - 5, 0);
         vueTick(() => {
           _termInput(0).exists().should.equal(true);
           _inputHasFocus();
           _termInput(1).exists().should.equal(false);
 
           // Test 2: a click right of (or at) the endTerm-left-margin has effect.
-          _trigClick(startX + 1);
+          _trigClick(startX + 1, 0);
           vueTick(() => {
             _termInput(1).exists().should.equal(true);
             _inputHasFocus();
@@ -1269,20 +1501,20 @@ describe('sub/TheTerms', () => {
 
 
 
-  describe('User-interaction: Ctrl+Mousedown changes Term-type, and ' +
+  describe('user-interaction: Ctrl+Mousedown changes Term-type, and ' +
      'emits `change` + new terms array', () => {
 
     it('L-type changes to R, and the emitted term includes properties ' +
        '`class/inst/parentID==null` (even if `allowClassNull==false`)', cb => {
-      // Note: `allowClassNull` only pertains to E- and C-type Terms.
+      // Note: `allowClassNull` only pertains to I- and C-type Terms.
       make({ origTerms: [{ str: 'aaa' }], allowClassNull: false });
       vueTick(() => {
         ///_term(0).classes().should.contain('term');
         ///_term(0).classes().should.contain('lit');
-        _termIsTypeL(0);  // Is shorthand for the two lines above.
+        _termIsTypeL(0);  // =shorthand for the two lines above.
 
         ///_term(0).trigger('mousedown.left', {ctrlKey: true});  clock.tick(10);
-        _termCClick(0);  // Is shorthand for the line above.
+        _termCClick(0);  // =shorthand for the line above.
 
         _termIsTypeR(0);
         _emitV(0, 'change').should.deep.equal(  // Emits (list of 1) R-type Term.
@@ -1311,7 +1543,7 @@ describe('sub/TheTerms', () => {
     it('R-type with `classID!=null` changes to I, ' +
        'if `allowClassNull==false`', cb => {
       make({
-        origTerms: [{ str: 'a', classID: 'A:01', instID: null, parentID: null }],
+        origTerms: [{ str: 'a', classID: 'A:01', instID: null, parentID: 'i5' }],
         allowClassNull: false
       });
       vueTick(() => {
@@ -1342,6 +1574,40 @@ describe('sub/TheTerms', () => {
     });
 
 
+    it('invalid I-type with `classID==null` under `allowClassNull==false` ' +
+       'skips type C, and changes to L', cb => {
+      make({
+        origTerms: [{ str: 'aa', classID: null, instID: null }],
+        allowClassNull: false
+      });
+      vueTick(() => {
+        _termIsTypeI(0);
+        _termCClick(0);
+        _termIsTypeL(0);
+        _emitV(0, 'change').should.deep.equal([{ str: 'aa' }]);
+        cb();
+      });
+    });
+
+
+    it('valid I-type with `classID!=null` or `allowClassNull!=false` ' +
+       'changes to C', cb => {
+      function testCase(classID, allowClassNull, cbf) {
+        make({origTerms: [{ str:'aa', classID, instID:null }], allowClassNull});
+        vueTick(() => {
+          _termIsTypeI(0);
+          _termCClick(0);
+          _termIsTypeC(0);
+          _emitV(0, 'change').should.deep.equal([{ str: 'aa', classID }]);
+          cbf();
+        });
+      }
+      testCase(    null, true,  () =>
+        testCase(  'id', false, () =>
+          testCase('id', true,  cb)));
+    });
+
+
     it('ER-type changes to EI if `allowClassNull==false` ', cb => {
       make({ origTerms: [{ type: 'ER' }], allowClassNull: false });
       vueTick(() => {
@@ -1358,7 +1624,7 @@ describe('sub/TheTerms', () => {
        'L->R, as it remembers `classID`)', cb => {
       var instTerm = {
         str: 'aaa', classID: 'A:01', instID: 'id01',
-        dictID: 'A:01', descr: 'xy'  // Extra test: only I/C-Terms emit these.
+        dictID: 'A:01', descr: 'xy'  // Extra test: only R/I/C-Terms emit these.
       };
       make({ origTerms: [instTerm] });
       vueTick(() => {
@@ -1379,12 +1645,13 @@ describe('sub/TheTerms', () => {
         _termCClick(0);
         _termIsTypeR(0);
         _emitV(2, 'change').should.deep.equal([
-          { str: 'aaa', classID: null,  // Note: parentID==null, so classID==null.
-            instID: 'id01', parentID: null }]);
+          // Note: parentID==null, so classID is reported as null too.
+          { str: 'aaa', classID: null,
+            instID: 'id01', parentID: null, dictID: 'A:01', descr: 'xy' }]);
 
         _termCClick(0);
         _termIsTypeI(0);
-        _emitV(3, 'change').should.deep.equal([instTerm]);  // classID is back.
+        _emitV(3, 'change').should.deep.equal([instTerm]);  // cls/instID: back.
         cb();
       });
     });
@@ -1505,7 +1772,7 @@ describe('sub/TheTerms', () => {
 
 
     it('emits after ER->EI/EC/EL/ER, and includes only `type`, ' +
-       'except for EI', cb => {  // (This was part of an earlier test already).
+       'and none for EI', cb => {  // (This was part of an earlier test already).
       make({ origTerms: [{ type: 'ER' }] });
       vueTick(() => {
         _termIsTypeER(0);
@@ -1531,7 +1798,7 @@ describe('sub/TheTerms', () => {
     });
 
 
-    it('change the type of the endTerm, and does not emit', cb => {
+    it('changes the type of the endTerm, and does not emit', cb => {
       make({ origTerms: [] });  // There is only an endTerm here.
       vueTick(() => {
         _term(0).classes().should.not.contain('class');
@@ -1541,11 +1808,32 @@ describe('sub/TheTerms', () => {
         cb();
       });
     });
+
+
+    it('for an R-term with parentID==null: emits classID as null too', cb => {
+      make({ origTerms: [
+        { str: 'aaa', classID: 'A:01', instID: 'id22' }] });
+      vueTick(() => {
+        // Cycle Term-type: I->C->L->R->I, and verify that in the R-type emit,
+        // emits, the classID is made null.
+        _termCClick(0);
+        _termCClick(0);
+        _termCClick(0);
+        _termCClick(0);
+        _emitV(0, 'change').should.deep.equal([{ str: 'aaa', classID: 'A:01' }]);
+        _emitV(1, 'change').should.deep.equal([{ str: 'aaa'}]);
+        _emitV(2, 'change').should.deep.equal([{ str: 'aaa', classID: null,
+          instID: 'id22', parentID: null }]);  // It made classID null,..
+        _emitV(3, 'change').should.deep.equal([{ str: 'aaa', classID: 'A:01',
+          instID: 'id22' }]);                  // ..but it can still restore it.
+        cb();
+      });
+    });
   });
 
 
 
-  describe('User-interaction: Alt+Mousedown sets focal Term, and ' +
+  describe('user-interaction: Alt+Mousedown sets focal Term, and ' +
      'emits `change` + array', () => {
 
     it('sets focal state on a Term', cb => {
@@ -1683,8 +1971,8 @@ describe('sub/TheTerms', () => {
 
 
 
-  describe('User-interaction: Doubleclick to edit Term; Esc cancels, ' +
-     'restores Term; both emit `change` + array', () => {
+  describe('user-interaction: Doubleclick starts to edit a Term; Esc cancels ' +
+     'and restores the Term; both emit `change` + array', () => {
 
     function testDblclickEsc(term, editTerm, hasAutocomplete, cb) {
       make({ origTerms: [term] });
@@ -1712,31 +2000,36 @@ describe('sub/TheTerms', () => {
 
     it('makes-editable and restores R-type Term: R -> ER -> R', cb => {
       testDblclickEsc(
-        { str: 'aaa', classID: null, instID: null, parentID: null },
-        { type: 'ER' }, false, cb);
+        { str: 'aaa', style: 'i', classID: null, instID: null, parentID: null },
+        { type: 'ER' },  // Note: no `style` here.
+        false,
+        cb);
     });
 
 
     it('makes-editable and restores I-type Term: I -> EI -> I', cb => {
       testDblclickEsc(
-        { str: 'aaa', classID: 'A:01', instID: null, ...extra }, { }, true, cb);
+        { str: 'aaa', style: 'i', classID: 'A:01', instID: null, ...extra },
+        { }, true, cb);
     });
 
 
     it('makes-editable and restores C-type Term: C -> EC -> C', cb => {
       testDblclickEsc(
-        { str: 'aaa', classID: 'A:01', ...extra }, { type: 'EC' }, true, cb);
+        { str: 'aaa', style: 'i', classID: 'A:01', ...extra },
+        { type: 'EC' }, true, cb);
     });
 
 
     it('makes-editable and restores L-type Term: L -> EL -> L', cb => {
-      testDblclickEsc({ str: 'aaa' }, { type: 'EL' }, false, cb);
+      testDblclickEsc({ str: 'aaa', style: 'i' }, { type: 'EL' }, false, cb);
     });
 
 
     it('restores the Term also after changing the Edit-Term\'s type: ' +
        'I->EI->EC->I', cb => {
-      var term = { str: 'aaa', classID: 'A:01', instID: null, ...extra };
+      var term =
+        { str: 'aaa', style: 'i', classID: 'A:01', instID: null, ...extra };
       make({ origTerms: [term] });
       vueTick(() => {
         _termIsTypeI(0);
@@ -1782,6 +2075,37 @@ describe('sub/TheTerms', () => {
             _termInput(1).element.value.should.equal('bb');  // In a vsmAC-input.
             _inputHasFocus();
             cb();
+          });
+        });
+      });
+    });
+
+
+    it('on Dblclick, some update-causing operations, and Esc: restores ' +
+       'the original `str`, `style`, and `label`', cb => {
+      make({ origTerms: [{ str: 'aaa', style: 'i2', classID: 'A:01' }, { }] });
+      vueTick(() => {
+        _term(0).html().should.include('>aa<i>a</i><');
+        _termDblclick(0);           // Make first Term Editable.
+        vueTick(() => {
+          _setInput(0, 'bbbb');     // Change <input> content.
+          vueTick(() => {
+            _termClick(1);          // Move to second Edit-Term.
+            vueTick(() => {
+              _term(0).html().should.include('>bbbb<');
+              _termITrigCEnter(1);  // Make new Term after 2nd one (=>re-inits).
+              vueTick(() => {
+                _termClick(0);      // Move back to first Edit-Term.
+                vueTick(() => {
+                  _termITrigEsc(0); // Close autocomplete.
+                  _termITrigEsc(0); // Restore original term.
+                  vueTick(() => {
+                    _term(0).html().should.include('>aa<i>a</i><');
+                    cb();
+                  });
+                });
+              });
+            });
           });
         });
       });
@@ -1909,7 +2233,7 @@ describe('sub/TheTerms', () => {
 
 
 
-  describe('User-interaction: varia', () => {
+  describe('user-interaction: varia', () => {
 
     it('does not emit `change` when typing in an Edit-type ' +
        'Term', cb => {
@@ -1958,11 +2282,97 @@ describe('sub/TheTerms', () => {
         });
       });
     });
+
+
+    it('Backspace on vsmAC-input with 2 trailing spaces does not remove all ' +
+       'spaces; and on Tab to next Term, keeps them in the label', cb => {
+      // Note: this tests that 'Term.vue' listens to vsmAC's 'input' event,
+      //       instead of the 'input-change' event which trims the input-string.
+      make({ origTerms: [{ }, { }] });
+      vueTick(() => {
+        _setInput('a  ');
+        vueTick(() => {
+          _termITrigBksp(0);
+          vueTick(() => {
+            _input().element.value.should.not.equal('a');
+
+            _setInput('a  ');
+            _termITrigTab(0);
+            vueTick(() => {
+              _term(0).html().should.include('>a  <');  // (Note: .text() trims).
+              cb();
+            });
+          });
+        });
+      });
+    });
+
+
+    it('Dblclick I-Term: EI-Term input gets styling-free, customization-free, ' +
+       'sanitized text; and gets it as label when focus other Edit-Term', cb => {
+      make({
+        origTerms: [ { str: 'aa<script ', style: 'i', classID: 'A:01' }, { } ],
+        customTerm: o => Object.assign(o.strs, { str: '_' + o.strs.str + '_' })
+      });
+      vueTick(() => {
+        _label(0).element.innerHTML.should.equal('_<i>aa&lt;script </i>_');
+
+        _termDblclick(0);
+        vueTick(() => {    // The exact `str` is placed in the <input>, ..
+          _termInput(0).element.value.should.equal('aa<script ');
+
+          _termClick(1);
+          vueTick(() => {  // ..but is sanitized when shown via an HTML-label.
+            _label(0).element.innerHTML.should.equal('aa&lt;script ');
+            cb();
+          });
+        });
+      });
+    });
+
+
+    it('Dblclick I-Term, edit content, focus other Edit-Term: then label is ' +
+       'still sanitized text', cb => {
+      make({
+        origTerms: [ { str: 'aa<script ', style: 'i', classID: 'A:01' }, { } ],
+        customTerm: o => Object.assign(o.strs, { str: '_' + o.strs.str + '_' })
+      });
+      vueTick(() => {
+        _termDblclick(0);
+        vueTick(() => {
+          _setInput(0, 'bb<script ');
+          _termClick(1);
+          vueTick(() => {
+            _label(0).element.innerHTML.should.equal('bb&lt;script ');
+            cb();
+          });
+        });
+      });
+    });
+
+
+    it('Dblclick non-Edit-Term, changing it, and focus other Edit-Term: ' +
+       'keeps the changed content in the first one', cb => {
+      make({ origTerms: [{ str: 'aa', classID: 'A:01' }, { }] });
+      vueTick(() => {
+        _termDblclick(0);
+        vueTick(() => {
+          _setInput(0, 'bb');
+          vueTick(() => {
+            _termClick(1);
+            vueTick(() => {
+              _term(0).text().should.equal('bb');
+              cb();
+            });
+          });
+        });
+      });
+    });
   });
 
 
 
-  describe('User-interaction: Bksp/Ctrl+Del/Ctrl+Enter on empty Edit-Term' +
+  describe('user-interaction: Bksp/Ctrl+Del/Ctrl+Enter on empty Edit-Term ' +
      'edits-prev / deletes current / inserts Edit-Term; emits `change`', () => {
 
     it('Backspace on a non-empty EI-type Edit-Term: has no effect', cb => {
@@ -2269,7 +2679,7 @@ describe('sub/TheTerms', () => {
         _termCClick(2);  // Change endTerm's type to 'EC'.
         _termITrigCEnter(2);
         vueTick(() => {
-          _termsET().length.should.equal(4);  // 4 Terms, including the endTerm.
+          _termsAll().length.should.equal(4);  // 4 Terms, including the endTerm.
           _thereIsFocusedInputAt(3);
           _emitV(0, 'change').should.deep.equal(
             [{ }, { }, { type: 'EC' }]);  // It generated a new, real EC-Term.
@@ -2345,7 +2755,7 @@ describe('sub/TheTerms', () => {
 
 
 
-  describe('User-interaction: Alt+Up/Alt+Down moves an Edit-Term, and ' +
+  describe('user-interaction: Alt+Up/Alt+Down moves an Edit-Term, and ' +
      'emits both `change` + terms, and `move` + `{from, to}`', () => {
 
     it('they have no effect when there is only 1 real Term', cb => {
@@ -2355,6 +2765,7 @@ describe('sub/TheTerms', () => {
         _termITrigAUp(0);
         _termITrigADown(0);
         _emit(0, 'change').should.equal(false);
+        _emit(0, 'move'  ).should.equal(false);
         cb();
       });
     });
@@ -2367,13 +2778,14 @@ describe('sub/TheTerms', () => {
         _termITrigAUp(2);
         _termITrigADown(2);
         _emit(0, 'change').should.equal(false);
+        _emit(0, 'move'  ).should.equal(false);
         cb();
       });
     });
 
 
-    it('they move an Edit-Term left / right, cyclingly, keep input focused; ' +
-       'update Term positions, and emit `change`', cb => {
+    it('they move an Edit-Term left / right, cyclingly, keep input focused, ' +
+       'and emit `change` and `move`', cb => {
 
       var origTerms = [{ str: 'a' }, { }, { str: 'b' }, { type: 'EL'}];
       var lastOrder = [0, 1, 2, 3];
@@ -2382,7 +2794,7 @@ describe('sub/TheTerms', () => {
 
       // Arg. `termNr` always refers to a term-pos. in `origTerms`, even though
       // that term gets moved around between tests. - For ease of understanding.
-      function testCase(termNr, arrow, newOrder, cb) {
+      function testCase(termNr, arrow, newOrder, cbf) {
         w.vm.$forceUpdate();  // <-- Wake up lazy 'vue-test-utils@1.0.0-beta.25'.
         var from = lastOrder.indexOf(termNr);
         var to   = newOrder .indexOf(termNr);
@@ -2390,10 +2802,11 @@ describe('sub/TheTerms', () => {
         vueTick(() => {
           var newTerms = newOrder.map(pos => origTerms[pos]);
           lastOrder = newOrder;
-          _emitV(moveNr++, 'change').should.deep.equal(newTerms);
+          _emitV(moveNr  , 'change').should.deep.equal(newTerms);
+          _emitV(moveNr++, 'move'  ).should.deep.equal({ from, to });
           _thereIsFocusedInputAt(to);
           _input().element.value.should.equal(termNr == 1 ? 'Aaa' : 'Bbb');
-          cb();
+          cbf();
         });
       }
 
@@ -2414,14 +2827,13 @@ describe('sub/TheTerms', () => {
                       testCase(      3, 'D', [3, 0, 1, 2], () =>
                         testCase(    3, 'D', [0, 3, 1, 2], () =>
                           testCase(  3, 'U', [3, 0, 1, 2], () =>
-                            testCase(3, 'U', [0, 1, 2, 3], () =>
-                              cb() )))) )) )))) ));
+                            testCase(3, 'U', [0, 1, 2, 3], cb )))) )) )))) ));
     });
   });
 
 
 
-  describe('User-interaction: entering terms', () => {
+  describe('user-interaction: entering terms', () => {
 
     it('Enter on plain-input ER-Term creates R-Term', cb => {
       make({ origTerms: [{ type: 'ER' }] });
@@ -2452,10 +2864,12 @@ describe('sub/TheTerms', () => {
     });
 
 
-    it('Enter after editing an existing R-Term: keeps its original `parentID` ' +
-       'and `classID`; i.e. editing only changes an R-Term\'s label', cb => {
+    it('Enter after editing an existing R-Term: keeps its original parentID/' +
+       'classID/dictID/descr and resets style; i.e. editing only changes an ' +
+        'R-Term\'s label', cb => {
       make({ origTerms: [
-        { str: 'aa', classID: 'A:01', instID: null, parentID: 'x:123' }] });
+        { str: 'aa', style: 'i', dictID: 'A', descr: 'abc',
+          classID: 'A:01', instID: null, parentID: 'x:123' }] });
       vueTick(() => {
         _termIsTypeR(0);
         _termDblclick(0);
@@ -2463,12 +2877,41 @@ describe('sub/TheTerms', () => {
           _setInput(0, 'aaB');
           _termITrigEnter(0);
           _termIsTypeR(0);
-          _emitV(0, 'change').should.deep.equal([{ type: 'ER' }]);
+          _emitV(0, 'change').should.deep.equal([{ type: 'ER' }]); // No `style`.
           _emitV(1, 'change').should.deep.equal([
-            { str: 'aaB', classID: 'A:01', instID: null, parentID: 'x:123' }]);
+            { str: 'aaB', // New `str`. No `style` (already since start-to-edit).
+              classID: 'A:01', instID: null, parentID: 'x:123',
+              dictID: 'A', descr: 'abc' }]);
           cb();
         });
       });
+    });
+
+
+    it('keeps all IDs/dictID/descr after changing R-Term to L-Term, editing ' +
+       'its label, Enter, and change back to R-Term', cb => {
+      make({ origTerms: [
+        { str: 'aa', dictID: 'A', descr: 'abc',
+          classID: 'A:01', instID: 'id5', parentID: 'id3' }] });  // R-Term.
+      vueTick(() => {
+        _termIsTypeR(0);
+        _termCClick(0); _termCClick(0); _termCClick(0);  // Change to L-Term.
+        vueTick(() => {
+          _termIsTypeL(0);
+          _termDblclick(0);  // Edit, i.e. change to EL-Term.
+          vueTick(() => {
+            _termIsTypeEL(0);
+            _setInput(0, 'aaB');
+            _termITrigEnter(0);   // Enter new label; changes back to L-Term.
+            vueTick(() => {
+              _termIsTypeL(0);
+              _termCClick(0);  // Change back to R-Term.
+              vueTick(() => {
+                _termIsTypeR(0);
+                _emitV(5, 'change').should.deep.equal([
+                  { str: 'aaB', dictID: 'A', descr: 'abc',
+                    classID: 'A:01', instID: 'id5', parentID: 'id3' }]);
+                cb(); }); }); }); }); });
     });
 
 
@@ -2485,6 +2928,25 @@ describe('sub/TheTerms', () => {
           _emitV(0, 'change').should.deep.equal([
             { str: 'aax', classID: 'A:01', instID: null,
               dictID: 'A', descr: 'ddx' }]);
+          cb();
+        });
+      });
+    });
+
+
+    it('..and hereby applies `style`', cb => {
+      make({ origTerms: [{ }] });
+      vueTick(() => {
+        _setInput(0, 'a');
+        vueTick(() => {
+          _termITrigDown(0);   // } Select the second list-item.
+          _termITrigEnter(0);  // }
+          _termIsTypeI(0);
+          _term(0).text().should.equal('aay');
+          _term(0).html().includes('<i>aay</i>').should.equal(true);
+          _emitV(0, 'change').should.deep.equal([
+            { str: 'aay', style: 'i', classID: 'A:02', instID: null,
+              dictID: 'A' }]);
           cb();
         });
       });
@@ -2509,7 +2971,25 @@ describe('sub/TheTerms', () => {
     });
 
 
-    it('Enter on a refTerm list-item creates an R-type Term', cb => {
+    it('Enter on a number-string list-item creates an I-type Term, with ' +
+       'no `descr`, but with a `dictID`', cb => {
+      make({ origTerms: [{ }] });
+      vueTick(() => {
+        _setInput(0, '5');
+        vueTick(() => {
+          _termITrigEnter(0);
+          _termIsTypeI(0);
+          _term(0).text().should.equal('5');
+          _emitV(0, 'change').should.deep.equal([
+            { str: '5', classID: '00:5e+0', instID: null, dictID: '00' }]);
+          cb();
+        });
+      });
+    });
+
+
+    it('Enter on a refTerm list-item creates an R-type Term, with ' +
+       'no `descr`', cb => {
       make({ origTerms: [{ }] });
       vueTick(() => {
         _setInput(0, 'it');
@@ -2572,7 +3052,7 @@ describe('sub/TheTerms', () => {
       }
 
       // Note: no item-literal shown for `!allowClassNull && !advancedSearch`.
-      var advSrch = (settings, cb) => cb({ str: settings.str, id: 'ID5' });
+      var advSrch = (data, cb) => cb({ str: data.str, id: 'ID5' });
       testCase(          'EI', false, advSrch, 'ID5', () =>
         testCase(        'EI', true,  false,   null,  () =>
           testCase(      'EI', true,  advSrch, 'ID5', () =>
@@ -2596,12 +3076,12 @@ describe('sub/TheTerms', () => {
           _termITrigEnter(0);
         });
       });
-      function advancedSearch (settings, cbf) {
-        settings.str           .should     .equal('aabbc');
-        settings.termType      .should     .equal('C');
-        settings.vsmDictionary .should     .equal(dict);
-        settings.queryOptions  .should.deep.equal(queryOptions);
-        settings.allowClassNull.should     .equal(false);
+      function advancedSearch (data, cbf) {
+        data.str           .should     .equal('aabbc');
+        data.termType      .should     .equal('C');
+        data.vsmDictionary .should     .equal(dict);
+        data.queryOptions  .should.deep.equal(queryOptions);
+        data.allowClassNull.should     .equal(false);
         cbf(false);
         cb();
       }
@@ -2621,8 +3101,8 @@ describe('sub/TheTerms', () => {
       vueTick(() => {
         _termITrigSEnter(0);
       });
-      function advancedSearch (settings, cbf) {
-        settings.queryOptions.should.deep.equal({
+      function advancedSearch (data, cbf) {
+        data.queryOptions.should.deep.equal({
           filter: { dictID: ['A', 'B', 'C', 'D'] }
         });
         cbf(false);
@@ -2638,6 +3118,30 @@ describe('sub/TheTerms', () => {
         _termITrigSEnter(0);
         vueTick(cb);  // Here we just test that no error happens.
       });
+    });
+
+
+    it('shows Shift+Enter hotkey in item-literal, only if `advancedSearch()` ' +
+       'is available; also with a `customItemLiteral` prop', cb => {
+      function testCase(advancedSearch, customItemLiteral, showsHotkey, cbf) {
+        make({ advancedSearch, customItemLiteral, allowClassNull: true });
+        vueTick(() => {
+          _setInput(0, 'aa');
+          vueTick(() => {
+            var itemLit = w.find('.item-type-literal');
+            (itemLit.text().indexOf('Shift+Enter') >= 0)
+              .should.equal(showsHotkey);
+            cbf();
+          });
+        });
+      }
+      var advSrch = (data, cb) => cb({ str: data.str, id: 'ID5' });
+      var custILt = data =>
+        Object.assign(data.strs, { str: `_${ data.strs.str }_`});
+      testCase(       false,   false,   false, () =>
+        testCase(     false,   custILt, false, () =>
+          testCase(   advSrch, false,   true,  () =>
+            testCase( advSrch, custILt, true,  cb))));
     });
 
 
@@ -2657,12 +3161,12 @@ describe('sub/TheTerms', () => {
           }
           else _termITrigSEnter(0);
         });
-        function advancedSearch (settings, cbf2) {
-          settings.str           .should     .equal(str);
-          settings.termType      .should     .equal(type.replace('E', ''));
-          settings.vsmDictionary .should     .equal(dict);
-          settings.queryOptions  .should.deep.equal(queryOptions);
-          settings.allowClassNull.should     .equal(false);
+        function advancedSearch (data, cbf2) {
+          data.str           .should     .equal(str);
+          data.termType      .should     .equal(type.replace('E', ''));
+          data.vsmDictionary .should     .equal(dict);
+          data.queryOptions  .should.deep.equal(queryOptions);
+          data.allowClassNull.should     .equal(false);
           cbf2(false);
           cbf();
         }
@@ -2671,7 +3175,7 @@ describe('sub/TheTerms', () => {
         testCase(            'EI', 'abcd', () =>
           testCase(          'EC', 'abcd', () =>
             testCase(        'EL', 'abcd', () =>
-              testCase(      'ER', '',     () =>
+              testCase(      'ER', '',     () =>  // Also launches for empty Str.
                 testCase(    'EI', '',     () =>
                   testCase(  'EC', '',     () =>
                     testCase('EL', '',     cb))))))));
@@ -2726,11 +3230,11 @@ describe('sub/TheTerms', () => {
       make({
         origTerms: [{ str: 'a' }],
         defaultEditWidth: 100,
-        advancedSearch: (settings, cbf) => cbf({ str: 'Q', id: 'A1' })
+        advancedSearch: (data, cbf) => cbf({ str: 'Q', id: 'A1' })
       });
       vueTick(() => {
         _termITrigSEnter(1);  // Launch `advancedSearch()` on the endTerm.
-        vueTick(() => {
+        vueTick(() => vueTick(() => {  // (Because $nextTick wraps advSrch-call).
           _emitV(0, 'change').should.deep.equal(
             [{ str: 'a' }, { str: 'Q', classID: 'A1', instID: null }]);
           var x = _termXPos(2);  // X-coordinate of new endTerm.
@@ -2742,14 +3246,14 @@ describe('sub/TheTerms', () => {
             (!!w.vm.terms[2].key).should.equal(true);  // It got a `.key`.
             cb();
           });
-        });
+        }));
       });
     });
   });
 
 
 
-  describe('Handling of `advancedSearch()` return values', () => {
+  describe('handling of `advancedSearch()` return values', () => {
 
     /**
      * This `make()`s a TheTerms component, enters a string in its first Term
@@ -2770,7 +3274,7 @@ describe('sub/TheTerms', () => {
     it('if `advancedSearch()` returns `false, no Term is generated', cb => {
       prep(
         { origTerms: [{ }],
-          advancedSearch: (settings, cbf) => cbf(false)
+          advancedSearch: (data, cbf) => cbf(false)
         },
         () => {
           _termIsTypeEI(0);
@@ -2786,7 +3290,7 @@ describe('sub/TheTerms', () => {
         prep(
           { origTerms: [{ }],
             allowClassNull,
-            advancedSearch: (settings, cbf2) => cbf2({ str: 'test', id: null })
+            advancedSearch: (data, cbf2) => cbf2({ str: 'test', id: null })
           },
           () => {
             if (!allowClassNull) {  // Case 1: It did not fill the Edit-Term.
@@ -2806,13 +3310,27 @@ describe('sub/TheTerms', () => {
     });
 
 
+    it('if `advancedSearch()` returns an Object with `str==\'\'`: ' +
+       'aborts', cb => {
+      prep(
+        { origTerms: [{ }],
+          advancedSearch: (data, cbf) => cbf({ str: '', id: 'A1' })
+        },
+        () => {
+          _termIsTypeEI(0);
+          _emit(0, 'change').should.equal(false);
+          cb();
+        });
+    });
+
+
     it('`termType` (R/I/C/L) determines the created Term\'s type, ' +
        'for any `id` (null, empty, or truthy)', cb => {
       function testCase(termType, id, cbf) {
         prep(
           { origTerms: [{ }],
             allowClassNull: true,
-            advancedSearch: (settings, cbf2) => cbf2({ str: 'xy', id, termType })
+            advancedSearch: (data, cbf2) => cbf2({ str: 'xy', id, termType })
           },
           () => {
             ///D(_emitV(0, 'change'));
@@ -2860,7 +3378,7 @@ describe('sub/TheTerms', () => {
         prep(
           { origTerms: [{ }],
             allowClassNull: true,
-            advancedSearch: (settings, cbf2) => cbf2({ termType: 'R', str: 'xy',
+            advancedSearch: (data, cbf2) => cbf2({ termType: 'R', str: 'xy',
               id, parentID })
           },
           () => {
@@ -2892,7 +3410,7 @@ describe('sub/TheTerms', () => {
         prep(
           { origTerms: [{ }],
             allowClassNull,
-            advancedSearch: (settings, cbf2) => cbf2({ str: 'xy', id: '' })
+            advancedSearch: (data, cbf2) => cbf2({ str: 'xy', id: '' })
           },
           () => {
             _termIsTypeR(0);
@@ -2910,7 +3428,7 @@ describe('sub/TheTerms', () => {
        'also for ER-Term that was R-Term w. non-null `parentID` earlier', cb => {
       make({
         origTerms: [{ str: 'Abe', classID: 'C5', instID: 'i6', parentID: 'P7' }],
-        advancedSearch: (settings, cbf) => cbf({ str: 'xy', id: '' })
+        advancedSearch: (data, cbf) => cbf({ str: 'xy', id: '' })
       });
       vueTick(() => {
         _termDblclick(0);  // Change Term 0 from type 'R' to 'ER'.
@@ -2938,7 +3456,7 @@ describe('sub/TheTerms', () => {
       function testCase(type, cbf) {
         make({
           origTerms: [ type == 'EI' ? { } : { type }],
-          advancedSearch: (settings, cbf2) => cbf2({ str: 'xy', id: 'ID3' })
+          advancedSearch: (data, cbf2) => cbf2({ str: 'xy', id: 'ID3' })
         });
         vueTick(() => {
           _setInput(0, 'Q');
@@ -2969,7 +3487,7 @@ describe('sub/TheTerms', () => {
       function testCase(termType, cbf) {
         make({
           origTerms: [{ }],
-          advancedSearch: (settings, cbf2) => cbf2(
+          advancedSearch: (data, cbf2) => cbf2(
             { termType, str: 'xy', style: 'i' })
         });
         vueTick(() => {
@@ -2987,29 +3505,28 @@ describe('sub/TheTerms', () => {
     });
 
 
-    it('`dictID/descr` are copied to I/C-Terms, but not to R/L-Terms ' +
-       '(when converted to I-Term, dictID/descr do not appear)', cb => {
+    it('`dictID/descr` are copied to R/I/C-Terms, but not to L-Terms (when ' +
+       'these are converted to an R-Term, dictID/descr do not appear)', cb => {
       function testCase(termType, cbf) {
         make({
           origTerms: [{ }],
-          advancedSearch: (settings, cbf2) => cbf2(
+          advancedSearch: (data, cbf2) => cbf2(
             { termType, str: 'xy', dictID: 'D1', descr: 'abc' })
         });
         vueTick(() => {
           _termITrigSEnter(0);
           vueTick(() => {
             var term = _emitV(0, 'change')[0];
-            if (termType == 'I' || termType == 'C') {
+            if (termType == 'R' || termType == 'I' || termType == 'C') {
               term.dictID.should.equal('D1');
               term.descr .should.equal('abc');
             }
-            else {  // Else: termType is 'L' or 'R'.
+            else {  // Else: termType is 'L'.
               expect(term.dictID).to.equal(undefined);
               expect(term.descr ).to.equal(undefined);
 
-              if (termType == 'L')  _termCClick(0);  // Change type: L -> R.
-              _termCClick(0);                        // Change type: R -> I.
-              term = _emitV(termType == 'L' ? 2 : 1, 'change')[0];
+              _termCClick(0);  // Change type: L -> R.
+              term = _emitV(1, 'change')[0];
               expect(term.dictID).to.equal(undefined);
               expect(term.descr ).to.equal(undefined);
             }
@@ -3026,8 +3543,1607 @@ describe('sub/TheTerms', () => {
 
 
 
-  describe('User-interaction: mouse-dragging of Terms', () => {
+  describe('user-interaction: mouse-dragging Terms', () => {
 
+    // We start from the same setup in most of our Term-drag tests.
+    var co0, co1, co2;
+    beforeEach(cb => {
+      make({ origTerms: [{ str: 'aa' }, { str: 'bbbb' }, { }] });
+      vueTick(() => {
+        co0 = _termCoos(0);  // } Get the original coordinates (x/y/w/h) ..
+        co1 = _termCoos(1);  // } ..of each Term.
+        co2 = _termCoos(2);  // }
+        cb();
+      });
+    });
+
+
+    it('mousemove without mousedown has no effect', cb => {
+      _windMMove(1000, 1000);
+      _termCoos(0)  .should.deep.equal(co0);
+      _dragPlh().exists().should.equal(false);
+      _emitV(0, 'change').should.equal(false);
+      _emitV(0, 'move'  ).should.equal(false);
+      cb();
+    });
+
+
+    it('mousedown on a Term + tiny mousemove has no effect', cb => {
+      _termMDown(0, co0.x + 0, co0.y + 0); // Mousedown on it, with 0 dragOffset.
+
+      _windMMove(co0.x + 1, co0.y + 2);  // 1*1+2*2 < termDragThreshold^2.
+
+      _termCoos(0)  .should.deep.equal(co0);   // It didn't move yet.
+      _dragPlh().exists().should.equal(false); // No placeholder there yet.
+      _emitV(0, 'change').should.equal(false);
+      _emitV(0, 'move'  ).should.equal(false);
+      _windBlur();  // This detaches the window-listeners. Note that..
+      cb();              // .. an `afterEach()` does this already too!
+    });
+
+
+    it('mousedown + mousemove at/past `termDragThreshold`: moves a Term, and ' +
+       'puts a same-sized drag-placeholder at its original place', cb => {
+      _termMDown(0, co0.x + 0, co0.y + 0);
+      _windMMove(co0.x + 3, co0.y + 0);  // 3*3+0*0 >= termDragThreshold^2.
+
+      _termCoos(0)  .should.deep.equal(_moveCoos(co0, 3, 0));  // The Term moved.
+      _dragPlhCoos().should.deep.equal(co0); // Plh. at Term's orig pos & size.
+      _dragPlh().exists().should.equal(true);
+      _emitV(0, 'change').should.equal(false);
+      _emitV(0, 'move'  ).should.equal(false);
+      cb();
+    });
+
+
+    it('mousedown + small mousemove at/past `termDragThreshold`, then mouseup' +
+       ': restores the Term at its original position', cb => {
+      _termMDown(0, co0.x + 0, co0.y + 0);
+      _windMMove(co0.x + 3, co0.y + 0);
+      _windMUp  (co0.x + 3, co0.y + 0);  // Mouse-up, at coos of last position.
+      _termCoos(0)  .should.deep.equal(co0);  // Term back at its orig. pos.
+      _dragPlh().exists().should.equal(false);
+      _emitV(0, 'change').should.equal(false);
+      _emitV(0, 'move'  ).should.equal(false);
+      cb();
+    });
+
+
+    it('on blurring the browser-window: also finishes dragging', cb => {
+      _termMDown(0, co0.x + 0, co0.y + 0);
+      _windMMove(co0.x + 3, co0.y + 0);
+      _windBlur ();
+      _termCoos(0)  .should.deep.equal(co0);  // Term back at its orig. pos.
+      _dragPlh().exists().should.equal(false);
+      _emitV(0, 'change').should.equal(false);
+      _emitV(0, 'move'  ).should.equal(false);
+      cb();
+    });
+
+
+    it('takes the mousedown-position/offset inside the Term into account ' +
+       'when moving a Term', cb => {
+      _termMDown(0, co0.x + 2,     co0.y + 0);
+      _windMMove(   co0.x     + 3, co0.y + 0);
+      _dragPlh().exists().should.equal(false);  // No placeholder yet.
+
+      _windMMove(   co0.x + 2 + 3, co0.y + 0);
+      _dragPlh().exists().should.equal(true);  // Now the placeholder is there.
+      cb();
+    });
+
+
+    it('Ctrl+Shift+Mousedown + drag: moves a non-Edit-Term', cb => {
+      _termCSMDown(0, co0.x + 0, co0.y + 0);
+      _windMMove  (   co0.x + 3, co0.y + 0);
+
+      _termCoos(0)  .should.deep.equal(_moveCoos(co0, 3, 0));
+      _dragPlhCoos().should.deep.equal(co0);
+      _dragPlh().exists().should.equal(true);
+      cb();
+    });
+
+
+    it('Ctrl+Shift+Mousedown + drag: moves an Edit-Term, and hides an open ' +
+       'autocomplete-list', cb => {
+      _termClick(2);  // Focus the Edit-Term, so it can respond to blur, below.
+      _setInput(2, '123');  // Make an autocomplete result-list open.
+      vueTick(() => {
+        _thereIsFocusedInputAt(2);
+        _term(2).find('.list').exists() .should.equal(true);
+
+        _termCSMDown(2, co2.x + 0, co2.y + 0);
+        _windMMove  (   co2.x + 3, co2.y + 5); // This also blurs the Edit-Term..
+        //                             // .. and causes the result-list to close.
+
+        _termCoos(2)  .should.deep.equal(_moveCoos(co2, 3, 5));
+        _dragPlhCoos().should.deep.equal(co2);
+        _dragPlh().exists().should.equal(true);
+        _term(2).find('.list').exists() .should.equal(false);  // List is gone.
+        cb();
+      });
+    });
+
+
+    it('Ctrl+Shift+Mousedown on Edit-Term having the <input> and text: ' +
+       'does not open an autocomplete-list', cb => {
+      _termClick(2);
+      _setInput(2, '123');  // Make an autocomplete result-list open.
+      vueTick(() => {
+        _termITrigEsc(2);  // Make the list close, and leave '123' in the input.
+        vueTick(() => {
+          _term(2).find('.list').exists() .should.equal(false);  // List is gone.
+
+          _termCSMDown(2, co2.x + 0, co2.y + 0);  // Just C+S+mousedown, no move.
+          vueTick(() => {
+            _term(2).find('.list').exists() .should.equal(false);  // No list.
+            cb();
+          });
+        });
+      });
+    });
+
+
+    it('limits a dragged Term\'s movement to max. where it "sticks to" ' +
+       'the series of Terms excluding the endTerm', cb => {
+      // Note: this feature keeps a dragged Term visually closer to where its
+      // placeholder is stepwise'ly moved to. And it emphasizes that the dragged
+      // Term will stay within its VSM-box, no matter how far out the mouse goes.
+
+      _term(0).text().should.equal('aa');    // } Sanity checks.
+      _term(1).text().should.equal('bbbb');  // }
+
+      // PART 1: drag the Term towards very far left and up.
+      _termMDown(1, co1.x + 0, co1.y + 0);
+      _windMMove(-1000, -1000);
+
+      // Now the original Term 1 got dragged to before the original Term 0,
+      // so they switched places!: the being-dragged term is now called Term 0.
+      _term(0).text().should.equal('bbbb'); // Orig. Term 1 is our new Term 0.
+      _term(1).text().should.equal('aa');
+      _termCoos(0).should.deep.equal({
+        x: co0.x - co1.w,  y: co1.y - co1.h,  // The Term sticks to the Term-..
+        w: co1.w,          h: co1.h });       // ..series's top left corner.
+      _dragPlhCoos().should.deep.equal({
+        x: co0.x,  y: co0.y,
+        w: co1.w,  h: co1.h });
+
+      // PART 2: drag the Term towards very far right and down.
+      _windMMove(1000, 1000);
+
+      // Now the original Term 1 got dragged to after the original Term 2,
+      // so they switched places: the being-dragged term is now called Term 2.
+      _term(2).text().should.equal('bbbb'); // Orig. Term 1 is our new Term 2.
+      _term(1).text().should.equal('');
+      _termCoos(2).should.deep.equal({
+        x: co2.x + co2.w,  y: co1.y + co1.h,  // The Term sticks to the Term-..
+        w: co1.w,          h: co1.h });       // ..series's bottom right corner.
+      _dragPlhCoos().should.deep.equal({
+        x: co2.x + co2.w - co1.w,  y: co2.y,
+        w: co1.w,                  h: co1.h });
+      cb();
+    });
+
+
+    it('when dragging a Term, only when mouse-pointer moves to before mid. of ' +
+       'Term before it: moves placeh. before that Term, emits `change`', cb => {
+      // Note: it is based on *the mouse-pointer* moving over the left half of a
+      //   hovered Term, and *not the middle of the dragged Term* moving there.
+      // Because: imagine a narrow Term 1: "a", and a wide Term 2: "a...z".
+      //   Now, if Term 2 is grabbed by its left half (e.g. its left border),
+      //   and if Term 1 is placed ~against the browser window's left side,
+      //   then the mouse can not drag Term 2's middle before Term 1's middle!
+      //   But the mouse-pointer is able to move left to that extent.
+
+      // Start dragging Term 1.
+      _termMDown(1, co1.x + 5, co1.y + 2);
+
+      // Moving the mouse to after the middle of Term 0 has no real effect.
+      _windMMove(co1.x + 0 - TermMarginHor - co0.w / 2 + 1, co1.y);
+      _term(0).text().should.equal('aa');
+      _term(1).text().should.equal('bbbb');
+      _dragPlhCoos().should.deep.equal({
+        x: co1.x,  y: co1.y,  w: co1.w,  h: co1.h });
+      _emitV(0, 'change').should.equal(false);
+      _emitV(0, 'move'  ).should.equal(false);
+
+      // But when moving the mouse to before the middle of Term 0,
+      // the Terms 1 and 0 switch place.
+      _windMMove(co1.x + 0 - TermMarginHor - co0.w / 2 - 1, co1.y);
+      _term(0).text().should.equal('bbbb');
+      _term(1).text().should.equal('aa');
+      _dragPlhCoos().should.deep.equal({
+        x: co0.x,  y: co0.y,  w: co1.w,  h: co1.h });
+      _emitV(0, 'change').should.deep.equal([{ str: 'bbbb' }, { str: 'aa' },{}]);
+      _emitV(0, 'move'  ).should.deep.equal({ from: 1, to: 0 });
+      cb();
+    });
+
+
+    it('when dragging a Term, only when mouse-pointer moves to past middle of ' +
+       'Term after it: moves placeh. after that Term, emits `change`', cb => {
+      // Start dragging Term 1.
+      _termMDown(1, co1.x + 5, co1.y + 2);
+
+      // Moving the mouse to before the middle of Term 2 has no real effect.
+      _windMMove(co1.x + co1.w + TermMarginHor + co2.w / 2 - 1, co1.y);
+      _term(1).text().should.equal('bbbb');
+      _term(2).text().should.equal('');
+      _dragPlhCoos().should.deep.equal({
+        x: co1.x,  y: co1.y,  w: co1.w,  h: co1.h });
+      _emitV(0, 'change').should.equal(false);
+      _emitV(0, 'move'  ).should.equal(false);
+
+      // But when moving the mouse to after the middle of Term 2,
+      // the Terms 1 and 2 switch place.
+      _windMMove(co1.x + co1.w + TermMarginHor + co2.w / 2 + 1, co1.y);
+      _term(1).text().should.equal('');
+      _term(2).text().should.equal('bbbb');
+      _dragPlhCoos().should.deep.equal({
+        x: co2.x + co2.w - co1.w,  y: co1.y,  w: co1.w,  h: co1.h });
+      _emitV(0, 'change').should.deep.equal([{ str: 'aa' }, {}, { str: 'bbbb'}]);
+      _emitV(0, 'move'  ).should.deep.equal({ from: 1, to: 2 });
+      cb();
+    });
+
+
+    it('on mouseup after dragging a Term to a new place: removes placeholder, ' +
+       'puts dragged Term at its place, emits `change`', cb => {
+      var key1 = w.vm.terms[1].key;
+
+      // 1) Grab Term 1 (using a small offset, not just top-left).
+      _termMDown(1, co1.x + 5,     co1.y + 2);
+
+      // 2) Move the mouse, but less than drag-starting threshold.
+      _windMMove(   co1.x + 5 + 1, co1.y + 2 + 0);                   ///DCoos();
+      _term(1).text().should.equal('bbbb');
+      _dragPlh().exists().should.equal(false);  // No placeholder yet.
+
+      // 3) Move the mouse so that dragging starts.
+      _windMMove(   co1.x + 5 + 3, co1.y + 2 + 1);                   ///DCoos();
+      _term(1).text().should.equal('bbbb');
+      _dragPlhCoos().should.deep.equal(co1);    // Placeholder at Term 1's pos.
+      _emitV(0, 'change').should.equal(false);  // No real change yet.
+      _emitV(0, 'move'  ).should.equal(false);
+
+      // 4) Move the Term to the end.
+      _windMMove(1000, 1000);                                        ///DCoos();
+      _term(2).text().should.equal('bbbb');
+      _dragPlhCoos().x.should.equal(co2.x + co2.w - co1.w);  // Placeholder @end.
+      _emitV(0, 'change').should.deep.equal(      // It emitted a first 'change'.
+        [{ str: 'aa' }, { }, { str: 'bbbb' }]);
+      _emitV(0, 'move'  ).should.deep.equal({ from: 1, to: 2 });
+
+      // 5) Move & drop the Term to/at the front.
+      _windMUp(1, -1000, 0);                                         ///DCoos();
+      _term(0).text().should.equal('bbbb');
+      _termCoos(0).should.deep.equal({          // Term is placed at front.
+        x: co0.x,  y: co0.y,  w: co1.w,  h: co1.h });
+      _dragPlh().exists().should.equal(false);  // No more placeholder.
+      _emitV(1, 'change').should.deep.equal(    // It emitted a second 'change'.
+        [{ str: 'bbbb' }, { str: 'aa' }, { }]);
+      _emitV(1, 'move'  ).should.deep.equal({ from: 2, to: 0 });
+
+      w.vm.terms[0].key.should.equal(key1);  // Term 1 actually moved to pos. 0.
+      cb();
+    });
+
+
+    it('on window-blur after dragging a Term to a new place: (same)', cb => {
+      var key1 = w.vm.terms[1].key;
+
+      // 1) Move Term to front.
+      _termMDown(1, co1.x, co1.y);
+      _windMMove(-1000, 0);
+      _term(0).text().should.equal('bbbb');
+      _dragPlhCoos().x.should.equal(co0.x);
+      _emitV(0, 'change').should.deep.equal(  // It emitted a first 'change'.
+        [{ str: 'bbbb' }, { str: 'aa' }, { }]);
+      _emitV(0, 'move'  ).should.deep.equal({ from: 1, to: 0 });
+
+      // 2) Blur the browser window: == mouse-up, but without new coordinates.
+      _windBlur(1);
+      _term(0).text().should.equal('bbbb');
+      _termCoos(0).should.deep.equal({
+        x: co0.x,  y: co0.y,  w: co1.w,  h: co1.h });
+      _dragPlh().exists().should.equal(false);
+      _emitV(1, 'change').should.equal(false);  // It emitted no second 'change'.
+      _emitV(1, 'move'  ).should.equal(false);
+
+      w.vm.terms[0].key.should.equal(key1);  // Term 1 actually moved to pos. 0.
+      cb();
+    });
+
+
+    it('when dragging a Term left/right of the active Edit-Term: ensures ' +
+       'the Edit-Term keeps the <input>-element', cb => {
+      _termInput(2).exists().should.equal(true);
+      _termHasCssClassInp(2);
+
+      // PART 1: drag Term 1 to the right of (Edit-)Term 2.
+      _termMDown(1, co1.x, co1.y);
+      _windMMove(1000, 0);
+      _term     (1).text()  .should.equal('');    // The Edit-Term is now..
+      _termInput(1).exists().should.equal(true);  // ..at position 1.
+      _termHasCssClassInp(1);
+      _emitV(0, 'change').should.deep.equal(  // (Just an extra check).
+        [{ str: 'aa' }, { }, { str: 'bbbb' }]);
+      _emitV(0, 'move'  ).should.deep.equal({ from: 1, to: 2 });
+
+      // PART 2: drag our Term (now at 2) back to left of the Edit-Term (now @1).
+      _windMMove(co1.x, 0);
+      _term     (2).text()  .should.equal('');    // The Edit-Term is now back..
+      _termInput(2).exists().should.equal(true);  // ..at position 2.
+      _termHasCssClassInp(2);
+      _emitV(1, 'change').should.deep.equal(
+        [{ str: 'aa' }, { str: 'bbbb' }, { }]);
+      _emitV(1, 'move'  ).should.deep.equal({ from: 2, to: 1 });
+      cb();
+    });
+
+
+    it('when dragging the active Edit-Term: ensures it keeps the ' +
+       '<input>', cb => {
+      _termCSMDown(2, co2.x + 5, co2.y + 3);
+      _windMMove(-1000, 0);
+      _windMUp(-1000, 0);  // Drop Term 2 at front, making it the new Term 0.
+      _term     (0).text()  .should.equal('');
+      _termInput(0).exists().should.equal(true);
+      _termHasCssClassInp(0);
+      cb();
+    });
+
+
+    const docStyle  = () => JSON.stringify(document.body.style);
+    const mouseGrab = () => docStyle().should.include('"cursor":"grabbing"');
+    const mouseNormal=() => docStyle().should.not.include('"cursor":"grabbing"');
+
+    it('only when dragging past drag-threshold, changes the mouse cursor to ' +
+       '\'grabbing\', and restores it on mouseup or window-blur', cb => {
+      _termMDown(0, co0.x + 0, co2.y + 0);  // Only a mousedown.
+      mouseNormal();
+      _termMDown(0, co0.x + 2, co2.y + 0);  // Move less than threshold.
+      mouseNormal();
+      _windMMove(-1000, 0);  // Move more than threshold => mouse is grabbing.
+      mouseGrab();
+      _windMUp(-1000, 0);    // Mouseup => mouse is normal again.
+      mouseNormal();
+
+      _termMDown(0, co0.x + 0, co2.y + 0);  // Mousedown #2.
+      _windMMove(-1000, 0);  // Large move again => mouse is grabbing.
+      mouseGrab();
+      _windBlur(-1000, 0);   // Window blur => mouse is normal again.
+      mouseNormal();
+      cb();
+    });
   });
 
+
+
+  describe('user-interaction: showing & hiding ThePopup', () => {
+
+    // Many of the tests will start from this same setup.
+    // Note that Term 0 is a non-Edit Term, as required by `_showPopupFor()`.
+    beforeEach(cb => {
+      make({ origTerms: [{ str: 'aa' }, { str: 'bbbb' }, { }] });
+      vueTick(cb);
+    });
+
+
+    it('stays hidden on: no user-interaction', cb => {
+      _popupHidden();  // No ThePopup at start.
+      clock.tick(10000);
+      _popupHidden();
+      cb();
+    });
+
+
+    it('shows on: Dblclick on an Edit-Term', cb => {
+      _popupHidden();  // No ThePopup at start.
+      _termDblclick(2);
+      _popupShownAt(2);  // (Note: assumes Term & popup have same left-X-coo).
+      _termITrigEsc(2);
+      _popupHidden();
+      cb();
+    });
+
+
+    it('shows on: Hover a non-Edit-Term, if ThePopup is not yet shown for ' +
+       'another Term: after a delay `delayPopupShow`', cb => {
+      _termMEnter(1);
+      clock.tick(sizes.delayPopupShow - 11); // < -10: account for _termTrig's..
+      _popupHidden();                         // ..built-in 10ms `clock.tick()`.
+      clock.tick(1);
+      _popupShownAt(1);
+      cb();
+    });
+
+
+    it('shows on: Hover a non-Edit Term, if ThePopup is already shown for ' +
+       'another Term: after a delay `delayPopupSwitch`', cb => {
+      _termMEnter(0);
+      clock.tick(sizes.delayPopupShow);
+      _popupShownAt(0);
+
+      _termMEnter(1);
+      clock.tick(sizes.delayPopupSwitch - 11);
+      _popupShownAt(0);
+      clock.tick(1);
+      _popupShownAt(1);
+      cb();
+    });
+
+
+    it('shows on: Hover an Edit-Term, if ThePopup is already shown for ' +
+       'another Term: after a delay `delayPopupSwitch`', cb => {
+      _termMEnter(0);
+      clock.tick(sizes.delayPopupShow);
+      _popupShownAt(0);
+
+      _termMLeave(0);
+      _termMEnter(2);
+      clock.tick(sizes.delayPopupSwitch - 11);
+      _popupShownAt(0);
+      clock.tick(1);
+      _popupShownAt(2);
+      cb();
+    });
+
+
+    it('stays hidden on: Hover an Edit-Term, if ThePopup is not yet shown ' +
+       'for another Term', cb => {
+      _termMEnter(2);
+      clock.tick(sizes.delayPopupShow + 1000);
+      _popupHidden();
+      cb();
+    });
+
+
+    it('shows on: Click on a non-Edit-Term (a real click, not only ' +
+       'mousedown): after delay `delayPopupShow`', cb => {
+      // Note: `delayPopupShow` prevents flashing ThePopup when a user Dblclicks.
+
+      // First simulate the mousedown & -up events (which would be fired in real
+      // life too). This tests that there is no interference with the code for
+      // Term-dragging.
+      _termMDown(1);
+      clock.tick(20);
+      _windMUp(1);
+      clock.tick(20);
+
+      _termClickFull(1);
+      clock.tick(sizes.delayPopupShow - 11);
+      _popupHidden();
+
+      clock.tick(1);
+      _popupShownAt(1);
+      cb();
+    });
+
+
+    it('hides on: on non-Edit-Term: Unhover it, and no re-hover before delay ' +
+       '`delayPopupHide` runs out: after that delay runs out', cb => {
+      _showPopupFor(1);
+      _popupShownAt(1);  // Sanity check of `show...()`, for a non-Edit-Term.
+
+      _termMLeave(1);
+      clock.tick(sizes.delayPopupHide - 11);
+      _popupShownAt(1);
+      clock.tick(10);
+      _popupHidden();
+      cb();
+    });
+
+
+    it('hides on: on Edit-Term: Unhover it, and no re-hover before delay ' +
+       '`delayPopupHide` runs out: after that delay runs out', cb => {
+      _showPopupFor(2);
+      _popupShownAt(2);  // Sanity check of `show...()`, for an Edit-Term.
+
+      _termMLeave(2);
+      clock.tick(sizes.delayPopupHide - 11);
+      _popupShownAt(2);
+      clock.tick(10);
+      _popupHidden();
+      cb();
+    });
+
+
+    it('hides on: on ThePopup: Unhover it: after same delay', cb => {
+      _showPopupFor(1);
+
+      // Move the mouse from the Term to over ThePopup instead.
+      _termMLeave(2);
+      _popupMEnter();
+
+      // Test that ThePopup remains visible after this.
+      clock.tick(sizes.delayPopupHide + 1000);
+      _popupShownAt(1);
+
+      // Unhover ThePopup. Before delay expires, it remains shown. After, not.
+      _popupMLeave();
+      clock.tick(sizes.delayPopupHide - 11);
+      _popupShownAt(1);
+      clock.tick(10);
+      _popupHidden();
+      cb();
+    });
+
+
+    it('hides on: on any Term: Ctrl+Click', cb => {
+      // Test: Ctrl+Click on same, non-Edit Term: hides ThePopup immediately.
+      _showPopupFor(0);
+      _termCClick(0);
+      _popupHidden();
+
+      // Extra test: Ctrl+Click on another Term should hide it too.
+      _showPopupFor(0);
+      _termCClick(0);
+      clock.tick(sizes.delayPopupHide - 11);
+      _popupHidden();
+
+      // Test: Ctrl+Click on Edit Term: hides ThePopup immediately.
+      _showPopupFor(2);
+      _termCClick(2);
+      _popupHidden();
+      vueTick(cb);  // `vueTick` lets vue-test-utils finish some *Edit-Term*-..
+      //            // ..related/queued events. Else, some next tests will hang.
+      //            // Note: apparently this can not be put in an `afterEach()`.
+    });
+
+
+    it('hides on: on any Term: Alt+Click', cb => {
+      _showPopupFor(0);  // For non-Edit-type Term.
+      _termAClick(0);
+      _popupHidden();
+
+      _showPopupFor(2);  // For Edit-type Term.
+      _termAClick(2);
+      _popupHidden();
+      vueTick(cb);
+    });
+
+
+    it('hides on: on any Term: Ctrl+Shift+Mousedown', cb => {
+      _showPopupFor(0);  // For non-Edit-type Term.
+      _termCSMDown(0);
+      _popupHidden();
+      _windBlur();  // Detach drag-related `window`-listeners, before next test.
+
+      clock.tick(1000);  // (Skip the hacky 'prevent-show'-delay in the code).
+      _showPopupFor(2);  // For Edit-type Term.
+      _termCSMDown(2);
+      _popupHidden();
+
+      clock.tick(1000);
+      vueTick(cb);
+    });
+
+
+    it('hides on: on a non-Edit Term: Dblclick', cb => {
+      _showPopupFor(0);
+      _termDblclick(0);
+      _popupHidden();
+      cb();
+    });
+
+
+    it('hides on: on a non-Edit Term: Mousedown', cb => {
+      _showPopupFor(0);
+      _termMDown(0);
+      _popupHidden();
+      cb();
+    });
+
+
+    it('hides on: on an Edit-Term: Mousedown', cb => {
+      _showPopupFor(2);
+      _termMDown(2);
+      _popupHidden();
+      vueTick(cb);
+    });
+
+
+    it('hides on: on an Edit-Term: Mousedown, in the endTerm', cb => {
+      _showPopupFor(2);
+      _termMDown(3);
+      _popupHidden();
+      vueTick(cb); // (Let mousedown still move the input; else next test hangs).
+    });
+
+
+    it('hides on: on an Edit-Term: typing in an Edit-Term\'s <input>', cb => {
+      _showPopupFor(2);  // Term 2 is an Edit-type Term.
+      _setInput(2, 'abc');
+      _popupHidden();
+      vueTick(cb);
+    });
+
+
+    it('hides on: on an Edit-Term: Backspace on empty input', cb => {
+      _showPopupFor(2);
+      _termITrigBksp(2);
+      _popupHidden();
+      vueTick(cb);
+    });
+
+
+    it('hides on: on an Edit-Term: Esc/Tab/Shift-Tab/Ctrl+Del/Ctrl+Enter' +
+       'Shift+Enter/Alt+Up/Alt+Down', cb => {
+      function testCase(trigFunc, cbf) {
+        make({ origTerms: [{ str: 'aa' }, { str: 'bbbb' }, { }] });
+        vueTick(() => {
+          _showPopupFor(2);
+          trigFunc(2);
+          _popupHidden();
+          vueTick(cbf);
+        });
+      }
+
+      testCase(              _termITrigEsc,    () =>
+        testCase(            _termITrigTab,    () =>
+          testCase(          _termITrigSTab,   () =>
+            testCase(        _termITrigCDel,   () =>
+              testCase(      _termITrigCEnter, () =>
+                testCase(    _termITrigSEnter, () =>
+                  testCase(  _termITrigAUp,    () =>
+                    testCase(_termITrigADown,  cb))))))));
+    });
+
+
+    it('hides on: in an Edit-Term: when the vsmAC-list opens', cb => {
+      // Use a VsmDictionary that responds extremely slowly.
+      var dict2 = new VsmDictionaryLocal({ refTerms: ['it'], delay: 10000 });
+      make({
+        origTerms: [{ str: 'aa' }, { str: 'bbbb' }, { }],
+        vsmDictionary: dict2
+      });
+      vueTick(() => {
+        _setInput('it');
+        vueTick(() => {
+          _showPopupFor(2);
+
+          // Hovering made ThePopup shown, before autocomplete results arrived.
+          _term(2).find('.vsm-autocomplete .list').exists().should.equal(false);
+          _popupShownAt(2);
+          clock.tick(50000);
+
+          // After a while, autocomplete results arrived, and ThePopup is gone.
+          _term(2).find('.vsm-autocomplete .list').exists().should.equal(true);
+          _popupHidden();
+          vueTick(cb);
+        });
+      });
+    });
+
+
+    it('hides on: on an EI/EC-Term: selecting an item or the item-literal ' +
+       '(`item-sel...`)', cb => {
+      function testCase(type, itemLit, cbf) {
+        make({ origTerms: [{ str: 'aa' }, { str: 'bbbb' }, {...type&&{type}}] });
+        vueTick(() => {
+          _setInput('5');  // Generates a 'number-string' match in autocomplete.
+          vueTick(() => {
+            clock.tick(1000);
+            vueTick(() => {
+              _showPopupFor(2);  // Show popup while autocomplete list is shown.
+              vueTick(() => {
+                _popupShownAt(2);
+
+                _term(2).find('.item-type-' + (itemLit ? 'literal' : 'number'))
+                  .trigger('click');  // Click either nr-str, or item-literal.
+                clock.tick(10);
+
+                vueTick(() => {
+                  _popupHidden();
+                  (!type ? _termIsTypeI : _termIsTypeC)(2);  // Bonus test.
+                  vueTick(cbf);
+                });
+              });
+            });
+          });
+        });
+      }
+
+      testCase(      undefined, false, () =>  // `undefined` makes type 'EI'.
+        testCase(    undefined, true,  () =>
+          testCase(  'EC',      false, () =>
+            testCase('EC',      true,  cb))));
+    });
+
+
+    it('hides on: on an ER/EL-Term: Enter (`plain-enter`)', cb => {
+      function testCase(type, cbf) {
+        make({ origTerms: [{ str: 'aa' }, { str: 'bbbb' }, { type }] });
+        vueTick(() => {
+          _setInput('abc');
+          _showPopupFor(2);
+          vueTick(() => {
+            _popupShownAt(2);
+            _termITrigEnter(2);
+            vueTick(() => {
+              _popupHidden();
+              (type == 'ER' ? _termIsTypeR : _termIsTypeL)(2);  // Bonus test.
+              vueTick(cbf);
+            });
+          });
+        });
+      }
+
+      testCase(  'ER', () =>
+        testCase('EL', cb));
+    });
+
+
+    it('hides on: hovering a non-Edit Term (and popup shows), then hovering ' +
+       'an Edit-Term, but then Esc before `delayPopupSwitch`', cb => {
+      _showPopupFor(0);
+      _termMLeave(0);
+      _termMEnter(2);
+      clock.tick(sizes.delayPopupSwitch - 20);
+      _popupShownAt(0);  // Still at Term 0, before the delayed switch.
+      _termITrigEsc(2);  // Esc aborts switch and should hide it.
+      clock.tick(10);
+      _popupHidden();    // It it hidden about-immediately.
+      clock.tick(10000);
+      _popupHidden();    // And it stays hidden.
+      vueTick(cb);
+    });
+
+
+    it('stays hidden on: hovering a non-Edit-Term, but then Esc on the ' +
+       'currently active Edit-Term before `delayPopupShow`', cb => {
+      _termMEnter(0);
+      clock.tick(sizes.delayPopupShow - 20);
+      _popupHidden();
+      _termITrigEsc(2);
+      clock.tick(10000);
+      _popupHidden();
+      vueTick(cb);
+    });
+
+
+    it('stays hidden on: hovering a non-Edit-Term, but then Click on an ' +
+       'Edit-Term before `delayPopupShow`', cb => {
+      _termMEnter(0);
+      clock.tick(sizes.delayPopupShow - 20);
+      _popupHidden();
+      _termClick(2);
+      clock.tick(10000);
+      _popupHidden();
+      vueTick(cb);
+    });
+
+
+    it('stays hidden on: hovering non-Edit-Term, then hovering Edit-Term ' +
+       'before show-delay, then Click on endTerm before show-delay', cb => {
+      _termMEnter(0);
+      clock.tick(sizes.delayPopupShow - 20);
+      _popupHidden();
+
+      _termMLeave(0);
+      _termMEnter(2);
+      clock.tick(sizes.delayPopupShow - 20);
+      _popupHidden();
+
+      _termClick(3);  // Click on endTerm.
+      clock.tick(10000);
+      _popupHidden();
+      vueTick(cb);
+    });
+
+
+    it('shows on: Hover a non-Edit-Term, then Unhover it before show-delay, ' +
+       'then Hover it before hide-delay: shows after show-delay', cb => {
+      // Note: this tests that no hide-delay timer is set, and so a new
+      //       hover-action will show it after the normal delay.
+      _termMEnter(0);
+      clock.tick(sizes.delayPopupShow - 20);
+      _popupHidden();
+
+      _termMLeave(0);
+      clock.tick(sizes.delayPopupHide - 20);
+      _popupHidden();
+
+      _termMEnter(0);
+      clock.tick(sizes.delayPopupShow - 20);
+      _popupHidden();
+      clock.tick(20);
+      _popupShownAt(0);
+      cb();
+    });
+
+
+    it('stays hidden on: Hover, Mousedown, window-Mouseup, Click, ' +
+       'Dblclick to edit on non-Edit-Term', cb => {
+      // Note: this sequence of events happens before Dblclick to edit a Term.
+      // We tests that Hover and Click's show-timers are cancelled, at Dlbclick.
+      var term = _term(0);
+      term.trigger('mouseenter');
+      clock.tick(20);
+      _popupHidden();
+      term.trigger('mousedown.left');
+      clock.tick(20);
+      _popupHidden();
+      term.trigger('mouseup.left');
+      _windMUp();  // (Because the drag-related code listens to window-mouseup).
+      clock.tick(20);
+      _popupHidden();
+      term.trigger('click.left');
+      clock.tick(20);
+      _popupHidden();
+      term.trigger('dblclick.left');
+      clock.tick(20);
+      _termIsTypeEL(0);
+      clock.tick(1000);
+      _popupHidden();
+      vueTick(cb);
+    });
+
+
+    it('stays hidden on: a Mousedown, long pause, drag to start ' +
+       'Term-dragging, pause', cb => {
+      // Test 1: Stays hidden during drag&drop below `termDragThreshold`.
+      var co0 = _termCoos(0);
+      _termMDown(0, co0.x + 0, co0.y + 0);
+      clock.tick(1000);
+      _popupHidden();
+
+      _windMMove(co0.x + 1, co0.y + 2);
+      clock.tick(1000);
+      _popupHidden();
+
+      _windMUp(0, co0.x + 0, co0.y + 0);
+      clock.tick(1000);
+      _popupHidden();
+
+      // Test 2: Stays hidden during drag&drop above `termDragThreshold`.
+      _termMDown(0, co0.x + 0, co0.y + 0);
+      _windMMove(co0.x + 5, co0.y + 3);
+      clock.tick(1000);
+      _popupHidden();
+
+      _windMUp(0, co0.x + 1, co0.y + 1);
+      clock.tick(1000);
+      _popupHidden();
+
+      // Test 3: next, after mouseleave + mouseenter, it is able to appear again.
+      _termMLeave(0);
+      clock.tick(1000);
+      _termMEnter(0);
+      clock.tick(sizes.delayPopupShow);
+      _popupShownAt(0);
+      cb();
+    });
+
+
+    it('stays shown on: Unhover a Term, when the delay `delayPopupHide` ' +
+       'has not run out', cb => {
+      _showPopupFor(1);
+      _termMLeave(1);
+      clock.tick(sizes.delayPopupHide - 20);
+      _popupShownAt(1);
+      cb();
+    });
+
+
+    it('stays shown on: Unhover a Term, but then rehover any Term before ' +
+       'that delay runs out: still shows it after that delay', cb => {
+      // Disable false warning caused by vue-test-utils@1.0.0-beta.28.
+      fixWarnHandler('termMargin');
+
+      _showPopupFor(1);
+
+      // Test 1: leave and re-enter the same Term.
+      _termMLeave(1);
+      clock.tick(sizes.delayPopupHide - 20);
+      _termMEnter(1);
+      clock.tick(1000);
+      _popupShownAt(1);
+
+      // Test 2: leave and re-enter another Term.
+      _termMLeave(1);
+      clock.tick(sizes.delayPopupHide - 20);
+      _termMEnter(2);
+      clock.tick(1000);
+      _popupShownAt(2);
+      cb();
+    });
+
+
+    it('stays shown on: Unhover a Term but then soon Hover over ' +
+       'ThePopup', cb => {
+      _showPopupFor(1);
+      _termMLeave(1);
+      clock.tick(sizes.delayPopupHide - 20);
+      _popupMEnter();
+      clock.tick(1000);
+      _popupShownAt(1);
+      cb();
+    });
+
+
+    it('stays shown on: Unhover ThePopup but then soon Hover any Term or ' +
+       'ThePopup again', cb => {
+      fixWarnHandler('termMargin');  // Disable false warning (see above).
+
+      _showPopupFor(1);
+      _termMLeave(1);
+      _popupMEnter();
+      clock.tick(1000);
+
+      // Test 1: leave ThePopup, then re-enter it.
+      _popupMLeave();
+      clock.tick(sizes.delayPopupHide - 20);
+      _popupMEnter();
+      _popupShownAt(1);
+
+      // Test 2: leave ThePopup, then enter its Term.
+      _popupMLeave();
+      clock.tick(sizes.delayPopupHide - 20);
+      _termMEnter(1);
+      _popupShownAt(1);
+
+      // Test 3: leave ThePopup, then enter another Term.
+      _termMLeave(1);
+      _popupMEnter();
+      clock.tick(1000);
+      _popupMLeave();
+      clock.tick(sizes.delayPopupHide - 20);
+      _termMEnter(2);
+      clock.tick(sizes.delayPopupSwitch - 20);
+      _popupShownAt(1);  // Popup still at original Term before switch-delay.
+      clock.tick(20);
+      _popupShownAt(2);  // Now it's at the new Term.
+      cb();
+    });
+
+
+    it('stays shown on: Mousedown/Click/Doubleclick on ThePopup', cb => {
+      _showPopupFor(1);
+      _termMLeave(1);
+      _popupMEnter();
+      clock.tick(1000);
+
+      _popup().trigger('mousedown.left');
+      clock.tick(1000);
+      _popupShownAt(1);
+
+      _popup().trigger('click.left');
+      clock.tick(1000);
+      _popupShownAt(1);
+
+      _popup().trigger('dblclick.left');
+      clock.tick(1000);
+      _popupShownAt(1);
+      cb();
+    });
+
+
+    it('hides on: open a vsmAC-TheList, hover a non-Edit Term, ' +
+       'then its ThePopup, then hover TheList', cb => {
+      _setInput(2, 'a');
+      vueTick(() => {
+        _term(2).find('.list .item').exists().should.equal(true);
+
+        _showPopupFor(1);
+        _termMLeave(1);
+        _popupMEnter();
+
+        clock.tick(1000);
+        _popupShownAt(1);
+        _popupMLeave();
+        _term(2).find('.list .item').trigger('mouseover');
+
+        clock.tick(1000);
+        _popupHidden();
+        cb();
+      });
+    });
+
+
+    it('stays shown on: hover a non-Edit Term, then hover an Edit-Term\'s ' +
+       '<input>, with the mouse jumping over the Term\'s border', cb => {
+      _showPopupFor(1);
+      _termMLeave(1);
+      _term(2).find('input').trigger('mouseover');
+
+      clock.tick(1000);
+      _popupShownAt(1);
+      cb();
+    });
+  });
+
+
+
+  describe('effect of props and Term changes on ThePopup\'s menu-items', () => {
+
+    // Makes a TheTerms with the given term as Term 1, and
+    // optional copy/paste-handler functions.
+    // (Note: Term 0 is a non-Edit Term, as required by `_showPopupFor()`).
+    const makeT1 = (term,
+      termCopy = false, termPaste = false, allowClassNull = true  // =Defaults.
+    ) => {
+      make({
+        origTerms: [{ str: 't0' }, term],
+        termCopy, termPaste, allowClassNull
+      });
+    };
+
+
+    it('has inactive Copy or Copy-Ref menu-items if prop ' +
+       '`termCopy==false`', cb => {
+      makeT1({ str: 'aa', classID: 'A:01', instID: 'i123' }, false);
+      vueTick(() => {
+        _showPopupFor(1);
+        w.find('.popup .item.copy'    ).classes().should.include('inactive');
+        w.find('.popup .item.copy-ref').classes().should.include('inactive');
+        cb();
+      });
+    });
+
+
+    it('has inactive Paste menu-item if prop `termCopy==false`; activates ' +
+       'when `termCopy` gets a Function; deactivates when `false` again', cb => {
+      function testPasteActive(active) {
+        w.find('.popup .item.paste').classes().includes('inactive')
+          .should.equal(!active);
+      }
+      makeT1({ }, false, false);  // Test the Paste menu-item on an Edit-Term.
+      vueTick(() => {
+        _showPopupFor(1);
+        testPasteActive(false);
+
+        // Note: thanks to reactivity, ThePopup stays visible during the whole
+        // test, during which the Paste menu-item's state gets updated.
+        w.setProps({ termPaste: x => x });
+        testPasteActive(true);
+
+        w.setProps({ termPaste: false });
+        testPasteActive(false);
+        cb();
+      });
+    });
+
+
+    it('after changing I-Term with not-null instID to C/L-type: makes ' +
+       'Copy-Ref menu-item inactive, ignores clicks', cb => {
+      var called = 0;
+      makeT1({ str: 'aa', classID: 'A:01', instID: 'i123' }, () => called = 1);
+      vueTick(() => {
+        // It's active for original I-type Term.
+        _showPopupFor(1);
+        w.find('.popup .item.copy-ref').classes().should.not.include('inactive');
+
+        function testNextCase(typeCheck, active, cbf) {
+          _termCClick(1);
+          typeCheck(1);
+          _showPopupFor(1);
+          var wrap = w.find('.popup .item.copy-ref');
+          wrap.classes().includes('inactive').should.equal(!active);
+          wrap.trigger('click.left');
+          vueTick(() => {  // Because it calls `termCopy` only after `$nextTick`.
+            called.should.equal(active ? 1 : 0);
+            called = 0;
+            cbf();
+          });
+        }
+
+        // When changing Term 1 to type C, and then L, Copy-Ref is inactive.
+        testNextCase(    _termIsTypeC, false, () =>
+          testNextCase(  _termIsTypeL, false, () =>
+
+            // After changing it to R-type, it becomes active again, because
+            // it keeps the original I-Term's instID as a backup.
+            testNextCase(_termIsTypeR, true,  cb)));
+      });
+    });
+
+
+    it('after changing R/I/C-Term with not-null classID to L-type, under ' +
+       '!allowClassNull: keeps Set-Type-I/C items active, ' +
+        'responds to clicks', cb => {
+      // Note: it keeps those menu-items active because it keeps the classID as
+      // a backup, so it can restore the Term to the original type, in valid way.
+      function testCase(extraIDs, numCClicks, cbf) {
+        makeT1(
+          Object.assign({ str: 'aa', classID: 'A:01' }, extraIDs),
+          false, false, false
+        );
+        vueTick(() => {
+          _showPopupFor(1);
+          var i = numCClicks;  while (i--)  _termCClick(1);
+          _termIsTypeL(1);
+          _showPopupFor(1);
+          _ppType('inst' ).classes().should.not.include('inactive');
+          _ppType('class').classes().should.not.include('inactive');
+
+          // Click on 'Inst'.
+          _ppType('inst' ).trigger('click.left');
+          _termIsTypeI(1);
+          _emitV(numCClicks, 'change')[1]
+            .should.deep.equal({ str: 'aa', classID: 'A:01', instID: null });
+
+          // It's already Inst now, but let's anyway click on 'Class'.
+          _showPopupFor(1);
+          _ppType('class').trigger('click.left');
+          _emitV(numCClicks + 1, 'change')[1]
+            .should.deep.equal({ str: 'aa', classID: 'A:01' });
+          cbf();
+        });
+      }
+      testCase(    { instID: null, parentID: 'id1' }, 3, () =>   // R-type.
+        testCase(  { instID: null                  }, 2, () =>   // I-type.
+          testCase({                               }, 1, cb)));  // C-type.
+    });
+
+
+    it('for R-term with null classID, or never-changed L-Term, ' +
+       'under !allowClassNull: makes Set-Type-I/C items inactive', cb => {
+      function testCase(extraIDs, cbf) {
+        makeT1(Object.assign({ str: 'aa' }, extraIDs),  false, false,  false);
+        vueTick(() => {
+          _showPopupFor(1);
+          _ppType('inst' ).classes().should.include('inactive');
+          _ppType('class').classes().should.include('inactive');
+          cbf();
+        });
+      }
+      testCase(  {classID: null, instID: null, parentID: null}, () => // R-type.
+        testCase({                                           }, cb)); // L-type.
+    });
+
+
+    it('..but keeps them active if allowClassNull==true', cb => {
+      function testCase(extraIDs, cbf) {
+        makeT1(Object.assign({ str: 'aa' }, extraIDs),  false, false,  true);
+        vueTick(() => {
+          _showPopupFor(1);
+          _ppType('inst' ).classes().should.not.include('inactive');
+          _ppType('class').classes().should.not.include('inactive');
+          cbf();
+        });
+      }
+      testCase(  {classID: null, instID: null, parentID: null}, () =>
+        testCase({                                           }, cb));
+    });
+
+
+    it('..also keeps them active for ER/EL-Terms', cb => {
+      function testCase(extraIDs, cbf) {
+        makeT1(Object.assign({ str: 'aa' }, extraIDs),  false, false,  false);
+        vueTick(() => {
+          _showPopupFor(1);
+          _ppType('inst' ).classes().should.include('inactive');
+          _ppType('class').classes().should.include('inactive');
+          cbf();
+        });
+      }
+      testCase(  { type: 'ER' }, () =>
+        testCase({ type: 'EL' }, cb));
+    });
+  });
+
+
+
+  describe('user-interaction: clicks on ThePopup\'s menu-items; ' +
+     'and emits', () => {
+
+    // Makes a TheTerms with the given term as Term 1, and shows ThePopup for it.
+    // (Note: Term 0 is a non-Edit Term, as required by `_showPopupFor()`).
+    const makeWithPopup = (term, cb) => {
+      make({ origTerms: [{ str: 't0' }, term] });
+      vueTick(() => {
+        _showPopupFor(1);
+        cb();
+      });
+    };
+
+
+    it('responds to Edit: on Click, closes ThePopup and makes its ' +
+       'Term editable', cb => {
+      makeWithPopup({ str: 'aa' }, () => {
+        _ppItemClick('edit');
+        _popupHidden();
+        _termIsTypeEL(1);
+        _emitV(0, 'change')[1].should.deep.equal({ type: 'EL' });
+        cb();
+      });
+    });
+
+
+    it('responds to Undo Edit', cb => {
+      makeWithPopup({ str: 'aa' }, () => {
+        _ppItemClick('edit');
+        _showPopupFor(1);
+        _ppItemClick('undo-edit');
+        _popupHidden();
+        _termIsTypeL(1);
+        _emitV(1, 'change')[1].should.deep.equal({ str: 'aa' });
+        cb();
+      });
+    });
+
+
+    it('responds to Make Focal and Unset As Focal (=the same menu item, ' +
+       'which sends `toggle-focal` events)', cb => {
+      makeWithPopup({ str: 'aa' }, () => {
+        _ppItemClick('focal');
+        _popupHidden();
+        _term(1).classes().should.contain('focal');
+        _emitV(0, 'change')[1].should.deep.equal({ str: 'aa', isFocal: true });
+
+        _showPopupFor(1);
+        _ppItemClick('focal');  // Now the menu is 'Unset As Focal'.
+        _popupHidden();
+        _term(1).classes().should.not.contain('focal');
+        _emitV(1, 'change')[1].should.deep.equal({ str: 'aa' });
+        cb();
+      });
+    });
+
+
+    it('responds to Insert', cb => {
+      makeWithPopup({ str: 'aa' }, () => {
+        _ppItemClick('insert');
+        _popupHidden();
+        vueTick(() => {
+          _terms().length.should.equal(3);  // One more (excluding endTerm).
+          _emitV(0, 'change').should.deep.equal(
+            [{ str: 't0' }, {}, { str: 'aa' }] );
+          _thereIsFocusedInputAt(1);
+          cb();
+        });
+      });
+    });
+
+
+    it('when inserting a Term to the left of endTerm, the endTerm releases ' +
+       'its claim to wide-width', cb => {
+      make({
+        origTerms: [],
+        sizes: {  // Make endTerm get its wide-width, and not more.
+          minWidth: 10,
+          defaultEditWidth: 50,
+          minEndTermWidth: 10, minEndTermWideWidth: 200
+        }
+      });
+      vueTick(() => {
+        _termClick(0);     // Focus the endTerm, so it gets its wideWidth.
+        _termCClick(0);    // Change endTerm to EC-type, so we can track it.
+        _termDblclick(0);  // Bring up ThePopup for endTerm.
+        vueTick(() => {
+          var origWidth = _termWidth(0);
+          _ppItemClick('insert');
+          vueTick(() => {
+            _thereIsFocusedInputAt(0);
+            (origWidth > _termWidth(1)).should.equal(true);
+
+            // Test: the new Term got inserted before EC-type endTerm.
+            _emitV(0, 'change').should.deep.equal([{ }]);
+            _termIsTypeEC(1);
+            cb();
+          });
+        });
+      });
+    });
+
+
+    it('responds to Remove', cb => {
+      makeWithPopup({ str: 'aa' }, () => {
+        _ppItemClick('remove');
+        _popupHidden();
+        vueTick(() => {
+          _terms().length.should.equal(1);  // One less (excluding endTerm).
+          _emitV(0, 'change').should.deep.equal([{ str: 't0' }]);
+          cb();
+        });
+      });
+    });
+
+
+    it('responds to Set Type with all 8 Term types (unless click on same ' +
+       'type); and if it is an Edit-Term then re-focuses it [32 tests]', cb => {
+      const items = { R: 'ref', I: 'inst', C: 'class', L: 'lit' };
+      const objs = {
+        R: { str: 'aa', classID: null, instID: null, parentID: null },
+        I: { str: 'aa', classID: null, instID: null },
+        C: { str: 'aa', classID: null },
+        L: { str: 'aa' },
+        ER: { type: 'ER' },
+        EI: { },
+        EC: { type: 'EC' },
+        EL: { type: 'EL' }
+      };
+      const baseTypes =  ['R', 'I', 'C', 'L'];
+
+      function testCase(type, newType, ePrefix, cbf) {
+        var item    = items[newType];
+        var term    = objs[ePrefix + type];
+        var newTerm = objs[ePrefix + newType];
+        makeWithPopup(term, () => {
+          _ppItemTypeClick(item);
+          vueTick(() => {
+            if (type == newType) {  // Click on current-type item is ignored.
+              _popupShownAt(1);
+            }
+            else {
+              _popupHidden();
+              _emitV(0, 'change')[1].should.deep.equal(newTerm);
+              if (ePrefix)  _thereIsFocusedInputAt(1); // Edit-Term gets focused.
+            }
+            //D({oriTerm: term, newTerm});
+            //D({type, newType, ePrefix});
+            cbf();
+          });
+        });
+      }
+
+      // Make a queue of 32 async test-function calls. Then call them in series.
+      var queue = [];
+      ['', 'E'].forEach(ePrefix =>
+        baseTypes.forEach(type =>
+          baseTypes.forEach(newType =>
+            queue.push( cbf => testCase(type, newType, ePrefix, cbf) ))));
+      (function run(i) {
+        queue[i](() => (++i != queue.length) ? run(i) : cb());
+      })(0);
+    });
+  });
+
+
+
+  describe('user-interaction: clicks on ThePopup\'s Copy/Paste', () => {
+
+    var termCopied;
+
+    // Makes a TheTerms with the given term as Term 1, and with copy- and paste-
+    // spy functions; and shows ThePopup for Term 1.
+    // (Note: Term 0 is a non-Edit Term, as required by `_showPopupFor()`).
+    const makeWithPopup = (term, props, cb) => {
+      termCopied = false;
+      make(Object.assign(
+        { origTerms: [{ str: 't0' }, term],
+          termCopy: term => termCopied = term,
+          termPaste: () => termCopied
+        },
+        props
+      ));
+      vueTick(() => {
+        _showPopupFor(1);
+        cb();
+      });
+    };
+
+
+    it('Copy on R/I-Term: passes a cleaned clone to function-prop `termCopy`, ' +
+       'with `instID=null` and no `isFocal/*width/queryOptions`', cb => {
+      function testCase(term, result, cbf) {
+        makeWithPopup(term, {}, () => {
+          _ppItemClick('copy');
+          _popupHidden();
+          vueTick(() => { // Needed because `termCopy` is called after $nextTick.
+            termCopied.should.deep.equal(result);
+
+            // Test that the given data is a clone, i.e. that a change to
+            // one of its properties does not cause a change in TheTerms.
+            termCopied.str = 'bbb';
+            w.vm.terms[1].str.should.equal('aa');
+            cbf();
+          });
+        });
+      }
+
+      var termR1 = {
+        str: 'aa', classID: 'X', instID: 'Y', parentID: 'Z',
+        isFocal: true, minWidth: 10, maxWidth: 20, editWidth: 30,
+        queryOptions: { z: [] }
+      };
+      var termR2 = { str: 'aa', classID: 'X', instID: null, parentID: 'Z' };
+
+      var termI1 = { str: 'aa', style: 'i', classID: 'X', instID: 'Y',
+        minWidth: 10 };
+      var termI2 = { str: 'aa', style: 'i', classID: 'X', instID: null };
+
+      testCase(  termR1, termR2, () =>
+        testCase(termI1, termI2, cb));
+    });
+
+
+    it('Copy on C/L-Term: passes a cleaned clone to `termCopy`', cb => {
+      function testCase(term, result, cbf) {
+        makeWithPopup(term, {}, () => {
+          _ppItemClick('copy');
+          _popupHidden();
+          vueTick(() => { termCopied.should.deep.equal(result);  cbf() });
+        });
+      }
+      var termC1 = { str: 'aa', style: 'b', classID: 'X', editWidth: 30 };
+      var termC2 = { str: 'aa', style: 'b', classID: 'X' };
+      var termL1 = { str: 'aa', style: 'b',                maxWidth: 10 };
+      var termL2 = { str: 'aa', style: 'b' };
+      testCase(  termC1, termC2, () =>
+        testCase(termL1, termL2, cb));
+    });
+
+
+    it('Copy Reference on R/I-Term: passes cleaned clone, with `instID=null` ' +
+       'and `parentID`=original instID to `termCopy`', cb => {
+      function testCase(term, result, cbf) {
+        makeWithPopup(term, {}, () => {
+          _ppItemClick('copy-ref');
+          _popupHidden();
+          vueTick(() => {
+            termCopied.should.deep.equal(result);
+
+            // Test that the given data is a clone.
+            termCopied.str = 'bbb';
+            w.vm.terms[1].str.should.equal('aa');
+            cbf();
+          });
+        });
+      }
+      var termR1 = { str: 'aa', classID: 'X', instID: 'YY',  parentID: 'Z'  };
+      var termR2 = { str: 'aa', classID: 'X', instID: null,  parentID: 'YY' };
+      var termI1 = { str: 'aa', classID: 'X', instID: 'QQ',  minWidth: 10 };
+      var termI2 = { str: 'aa', classID: 'X', instID: null,  parentID: 'QQ' };
+      testCase(  termR1, termR2, () =>
+        testCase(termI1, termI2, cb));
+    });
+
+
+    it('Paste on Edit-Term: calls `termPaste`, fills in a cleaned clone of ' +
+       'given Object, with no `isFocal/*width/queryOptions`; ' +
+       'emits `change`', cb => {
+      makeWithPopup({}, {}, () => {
+        termCopied = {
+          str: 'aa', style: 'i', classID: 'X', instID: 'Y', parentID: 'Z',
+          isFocal: true, minWidth: 10, maxWidth: 20, editWidth: 30,
+          queryOptions: { z: [] }
+        };
+        _ppItemClick('paste');
+        _popupHidden();
+        vueTick(() => {
+          // It also set an incorrectly given not-null instID, to null.
+          _emitV(0, 'change').should.deep.equal([
+            { str: 't0' },
+            { str: 'aa', style: 'i', classID: 'X', instID: null, parentID: 'Z' }
+          ]);
+
+          // Test that a clone of the given data was used.
+          termCopied.str = 'bbb';
+          w.vm.terms[1].str.should.equal('aa');
+          cb();
+        });
+      });
+    });
+
+
+    it('Paste: can replace an EL-Term by a given C-Term; emits `change`', cb => {
+      makeWithPopup({ type: 'EL' }, {}, () => {
+        termCopied = { str: 'aa', classID: null };
+        _ppItemClick('paste');
+        _popupHidden();
+        vueTick(() => {
+          _emitV(0, 'change').should.deep.equal([
+            { str: 't0' }, { str: 'aa', classID: null } ]);
+          cb();
+        });
+      });
+    });
+
+
+    it('Paste: aborts if an I-Term with `classID==null` is given while prop ' +
+       '`allowClassNull==false`', cb => {
+      makeWithPopup({ type: 'EC' }, { allowClassNull: false }, () => {
+        termCopied = { str: 'aa', classID: null };
+        _ppItemClick('paste');
+        _popupHidden();
+        vueTick(() => {
+          _termIsTypeEC(1);
+          _emitV(0, 'change').should.equal(false);
+          cb();
+        });
+      });
+    });
+
+
+    it('Paste: aborts if a Term with `str==\'\'` is given', cb => {
+      makeWithPopup({}, {}, () => {
+        termCopied = { str: '' };
+        _ppItemClick('paste');
+        _popupHidden();
+        vueTick(() => {
+          _termIsTypeEI(1);
+          _emitV(0, 'change').should.equal(false);
+          cb();
+        });
+      });
+    });
+
+
+    it('Paste, then Edit: keeps original `isFocal/*width/queryOptions` ' +
+       'properties; emits `change` twice', cb => {
+      var editTerm  = {
+        isFocal: true, minWidth: 80, maxWidth: 200, editWidth: 123,
+        queryOptions: { z: [{ id: 'xy' }] }
+      };
+      var coreCopyTerm  = { str: 'aa', style: 'b', classID: 'X', instID: null };
+      var newTerm       = Object.assign({}, editTerm, coreCopyTerm);
+      var givenCopyTerm = Object.assign({}, coreCopyTerm, {
+        minWidth: 50, maxWidth: 50, editWidth: 50, queryOptions: { z: [] }
+      });
+
+      makeWithPopup(editTerm, {}, () => {
+        termCopied = givenCopyTerm;
+        _ppItemClick('paste');
+        _popupHidden();
+        vueTick(() => {
+          // The emit already shows that the original minW/etc prop.s are kept.
+          _emitV(0, 'change').should.deep.equal([{ str: 't0' }, newTerm ]);
+
+          // vue-test-utils@1.0.0-beta.28 does not update things correctly now,
+          // so we can not use the following line, but use the one below it:
+          ///_termWidth(1).should.equal(80 + TermPadBordLR);
+          w.vm.terms[1].width.should.equal(80 + TermPadBordLR);
+
+          _termDblclick(1);
+          vueTick(() => {
+            _emitV(1, 'change').should.deep.equal([{ str: 't0' }, editTerm ]);
+            _term(1).classes().should.include('focal');
+
+            /// _termWidth(1).should.equal(123 + TermPadBordLR);
+            w.vm.terms[1].width.should.equal(123 + TermPadBordLR);
+            cb();
+          });
+        });
+      });
+    });
+
+
+    it('Paste on endTerm: fills it in, adds a new endTerm; ' +
+       'emits `change`', cb => {
+      // We first make endTerm an EC-type Term, so that we can track
+      // that Paste replaces it and adds a new EI-type endTerm.
+      makeWithPopup({ str :'t1' }, {}, () => {
+        termCopied = { str: 't2' };
+
+        _terms().length.should.equal(2);
+        _termCClick(2);
+        vueTick(() => {
+          _termIsTypeEC(2);
+
+          _showPopupFor(2);
+          _ppItemClick('paste');
+          _popupHidden();
+
+          vueTick(() => {
+            _termIsTypeL (2);  _term(2).classes().should.not.include('end');
+            _termIsTypeEI(3);  _term(3).classes().should    .include('end');
+            _emitV(0, 'change').should.deep.equal(
+              [{ str: 't0' }, { str: 't1' }, { str: 't2' }]);
+            cb();
+          });
+        });
+      });
+    });
+
+
+    it('assisted by external `termCopy` and `termPaste` functions, a Term can ' +
+       'be copied and Pasted into another Edit-Term; emits `change`', cb => {
+      var term = { str: 'x', classID: 'X', instID: 'YY' };
+      makeWithPopup(term, {}, () => {
+        _ppItemClick('copy');
+        vueTick(() => {
+          _showPopupFor(2);  // Paste it in the endTerm.
+          _ppItemClick('paste');
+          vueTick(() => {
+            _emitV(0, 'change').should.deep.equal([
+              { str: 't0' }, term, { str: 'x', classID: 'X', instID: null } ]);
+            cb();
+          });
+        });
+      });
+    });
+  });
 });

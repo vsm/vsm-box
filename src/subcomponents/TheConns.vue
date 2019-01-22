@@ -76,6 +76,8 @@ export default {
     }
   }
 };
+
+function J(obj) { console.log(JSON.parse(JSON.stringify(obj))) }  J;
 </script>
 
 

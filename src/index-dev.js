@@ -27,20 +27,12 @@ function runDemo() {
 
     data : {
       vsmDictionary: dict,
-      placeholder: 'Enter a term here',  //false,
-      maxStringLengths: undefined && {  // Change && <-> || to de/activate this.
+      placeholder: 'Type a term, doubleclick for menu',  //false,
+      maxStringLengths: undefined && { // Change to !undefined to activate this.
         str: 2,
         strAndDescr: 40
       },
-      itemLiteralContent: undefined && function(trimmedSearchStr) {
-        return '<div title="Advanced search">' +
-          `Search for '${trimmedSearchStr}' ▸</div>`;
-      },
-      advancedSearch: !undefined && function(settings, cb) {
-        /// settings: {str, vsmDict, queryOptions, allowClassNull}.
-        if (!settings.str)  return;
-        setTimeout(() => cb({ str: settings.str, style: 'i', id: null }), 500);
-      },
+      freshListDelay: 0, //1000,
       allowClassNull: true,
       initialValue: {
         terms: 0&&[] ||
@@ -53,20 +45,62 @@ function runDemo() {
           0&&[{ str: 'aaa' }, { }, { str: 'bbb' }, { type: 'EL' }] ||
           0&&[{ type: 'ER' }, { }, { type: 'EL' }, { type: 'EC' }] ||
           0&&[{ type: 'EL' }, { str: 'aaa' }] ||
-          0&&[{ str: 'a' }, { str: 'bbb' }, { str: 'ccc' }, { str: 'ddd' }] || [
-          { str: 'activates', classID: 'B:01', instID: null, maxWidth: 47 },
-          { str: 'b',         classID: 'B:02', instID: null }, //, minWidth: 47},
-          { editWidth: 20 },
-          { type: 'ER', editWidth: 20 },
-          { type: 'EC', editWidth: 20 },
-          { type: 'EL', editWidth: 20 },
-          { str: 'lit' },
-          { str: 'cls', classID: 'A:01', dictID: 'A', descr: 'descr-1' },
-          { str: 'ins', classID: 'A:02', dictID: 'A', descr: 'descr-2',
-            instID: 'id123', style: 'i', isFocal: true },
-          { str: 'ref', classID: 'A:03', dictID: 'A', descr: 'descr-3',
-            instID: 'id150', parentID: 'id123' },
-        ],
+          0&&[
+            { str: 'activates', classID: 'BIO:0014', instID: null,
+              minWidth: 5, maxWidth: 47, editWidth: 50,
+              queryOptions: {
+                filter: { dictID: ['CW', 'VAR', 'http://aaa/qqq'] },
+                sort:   { dictID: ['CW'] },
+                idts: [
+                  { id: 'PRS:0501', str: 'Alice' },
+                  { id: 'PRS:0502' },
+                  { id: 'BIO:0010' },
+                  { id: 'PRS:9999' } ],
+                z: ['species', 'color']
+              }
+            },
+            { str: 'activates', classID: 'VAR:0016', instID: 'http://xy.z/I1234',
+              queryOptions: { z: true }
+            },
+            { str: 'activates', classID: 'B:01',     instID: null, dictID: 'CW',
+              queryOptions: { z: [] }
+            },
+            { str: 'activates', classID: 'http://xyz.org/B:15', instID: null },
+            {             editWidth: 24, queryOptions: {sort:{dictID:['CW']}} },
+            { type: 'EL', editWidth: 24 },
+            { str: 'that', classID: 'B:01', instID: null, parentID: 'ab1' },
+            { str: 'a', classID: null, instID: null },
+            { str: 'ab' },
+            { str: 'abc', classID: 'C:01', style: 'b;i' },
+          ] ||
+          0&&[{ str: 'a' }, { str: 'bbb' }, { str: 'ccc' }, { str: 'ddd' }] ||
+          [
+            { str: 'activates', classID: 'BIO:0014', instID: null,
+              minWidth: 5, maxWidth: 47, editWidth: 50,
+              queryOptions: {
+                filter: { dictID: ['CW', 'VAR'] },
+                sort:   { dictID: ['CW'] },
+                idts: [
+                  { id: 'PRS:0501', str: 'Alice' },
+                  { id: 'PRS:0502' },
+                  { id: 'BIO:0010' },
+                  { id: 'PRS:9999' } ],
+                z: ['species', 'color']
+              }
+            },
+            { str: 'Ca2+', style: 'u2-4', descr: 'Calcium ion',
+              classID: 'BIO:0010', instID: null }, //, minWidth: 47},
+            { editWidth: 20 },
+            { type: 'ER', editWidth: 20 },
+            { type: 'EC', editWidth: 20 },
+            { type: 'EL', editWidth: 20 },
+            { str: 'lit' },
+            { str: 'cls', classID: 'A:01', dictID: 'A', descr: 'descr-1' },
+            { str: 'ins', classID: 'A:02', dictID: 'A', descr: 'descr-2',
+              instID: 'id123', style: 'i', isFocal: true },
+            { str: 'ref', classID: 'A:03', dictID: 'A', descr: 'descr-3',
+              instID: 'id150', parentID: 'id123' },
+          ],
         conns: 1&&[]|| [
           [0, 0, 1, 2],
           [0, 1, 3, 4],
@@ -78,6 +112,61 @@ function runDemo() {
         ///minWidth: 80,  // 360,
         ///widthScale: 2,
       },
+      customTerm: false && function(o) {
+        return o.type == 'L' ? o.strs : { str:
+          ( '<span style="font-size: 8px; color: #777;">' +
+            o.index + '.&nbsp; </span>' + o.strs.str )
+        };
+      },
+      customPopup: false && function(o) {
+        o.strs.extra1 = 'Test1: ' + [
+          o.strs.descr.split(' ')[0],
+          o.type,
+          o.term.classID,
+          o.dictInfo.abbrev || o.dictInfo.name,
+          o.z && o.z.extraChar ? o.z.extraChar : '',
+          o.vsmDictionary.refTerms.length
+        ].join(', ');
+        o.strs.extra2 = 'Test2';
+        o.strs.extra3 = 'Test3';
+        o.strs.extra4 = 'Test4';
+        return o.strs;
+      },
+      customItem: !false && function(o) {
+        var { item, strs, dictInfo } = o;
+        var span = s => '<span style="color: #000; ' +
+          'font-weight: normal; margin-left: 1ch;">' + s + '</span>';
+        if (item.dictID == 'uri://x/BIO') {
+          strs.str += span('☘');
+        }
+        else if (item.dictID == 'VAR') {
+          var synonyms = item.terms && item.terms.length > 1 ?
+            item.terms.map(termObj => termObj.str).join(', ') : '';
+          return Object.assign(strs, {
+            str: strs.str +
+              `${ item.z && item.z.extraChar ? span(item.z.extraChar): '' }`,
+            descr:
+              (synonyms ? `<i>=${ synonyms };</i>&nbsp; ` : '') + strs.descr,
+            info: item.id,
+            infoTitle: (dictInfo && dictInfo.name ?
+              `${ dictInfo.id } : ${ dictInfo.name }` : '')
+          });
+        }
+        return strs;
+      },
+      customItemLiteral: false && function(o) {
+        return Object.assign(o.strs, {
+          strTitle: 'Search more',
+          str: 'Search for ' + o.strs.str
+        });
+      },
+      advancedSearch: !false && function(data, cb) {
+        setTimeout(() => cb({
+          str: data.str,  style: 'i',
+          id: data.allowClassNull ? null: '' + Math.floor(Math.random()*1e6)
+        }), 500);
+      },
+      termCopied: 0,
       report: ''
     },
 
@@ -85,6 +174,14 @@ function runDemo() {
     },
 
     methods: {
+      termCopy(term) {
+        this.termCopied = term;
+        //console.log('Copy: ' + JSON.stringify(this.termCopied));
+      },
+      termPaste() {
+        //console.log('Paste: ' + JSON.stringify(this.termCopied));
+        return this.termCopied;
+      },
       msg(msg) {
         this.report += '<div>' + ///(this.report.length ? ', ' : '') +
           msg + '</div>\n';
@@ -105,7 +202,7 @@ function runDemo() {
 function createData() {
   return {
     dictData: [
-      { id: 'CW',  name: 'Common words', entries: [
+      { id: 'CW',  abbrev: 'CW',  name: 'Common words',  entries: [
         { id: 'CW:0045', terms: [{str: 'about'}] },
         { id: 'CW:0082', terms: [{str: 'after'}] },
         { id: 'CW:0036', terms: [{str: 'all'}] },
@@ -266,7 +363,7 @@ function createData() {
         },
         { id:'BIO:0903', descr: 'the Mouse gene cdc2', terms: [{str: 'cdc2'}] },
         { id:'BIO:0014',
-          descr: 'to activate (= the activation of) a molecule, by some actor',
+          descr: 'To activate (= the activation of) a molecule, by some actor',
           terms: [
             {str: 'activates'},
             {str: 'activation'},
@@ -303,7 +400,7 @@ function createData() {
           terms: [{str: 'twisted'}] },
       ]},
 
-      { id: 'VAR', name: 'Various concepts',
+      { id: 'VAR', abbrev: 'VAR', name: 'Various concepts',
         entries: [
           { id: 'VAR:0015', descr: 'Computer science, Information Technology',
             terms: [{str: 'IT'}] },
@@ -334,27 +431,7 @@ function createData() {
               'both humans and computers',
             terms: [{str: 'VSM'}]
           },
-        ],
-
-        f_aci: function(item, strs, searchStr, maxStringLengths, dictInfo) {
-          var synonyms = item.terms && item.terms.length > 1 ?
-            item.terms.map(termObj => termObj.str).join(', ') : '';
-
-          return Object.assign(strs, {
-            str:
-              `${ strs.str } &nbsp;` +
-              '<span style="color: #000; font-weight: normal;">' +
-              `${ item.z && item.z.extraChar ? item.z.extraChar : '' }☘</span>`,
-
-            descr: (synonyms ? `<i>=${ synonyms };</i>&nbsp; ` : '') +strs.descr,
-
-            info: item.id,
-
-            infoTitle: (dictInfo && dictInfo.name ?
-              `${ dictInfo.id }: ${ dictInfo.name }` : '')
-
-          });
-        }
+        ]
       },
 
       { id: '00', name: 'Numbers', entries: [

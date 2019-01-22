@@ -23,14 +23,15 @@
     @keydown.up.alt.exact="onKeyAltUp"
     @keydown.down.alt.exact="onKeyAltDown"
     @keydown.46.ctrl.exact="onKeyCtrlDelete"
-    @mouseenter="onMouseenter"
+    @mouseover="onMouseenter"
     @mouseleave="onMouseleave"
     @mousedown.left.exact.self.prevent.stop="onMousedown_div"
     @mousedown.left.exact.stop="onMousedown"
     @mousedown.left.ctrl.exact="onCtrlMousedown"
     @mousedown.left.ctrl.shift.exact.prevent="onCtrlShiftMousedown"
     @mousedown.left.alt.exact="onAltMousedown"
-    @click.left.exact="onClick"
+    @click.left.exact.self.prevent.stop="onClick_div"
+    @click.left.exact.stop="onClick"
     @dblclick.left.exact="onDblclick"
   ><input
     v-if="showPlain"
@@ -40,7 +41,7 @@
     :placeholder="!hasFocus && placeholder"
     class="input"
     spellcheck="false"
-    @input="event => onInputChange(event.target.value)"
+    @input="event => onInput(event.target.value)"
     @focus="onFocus"
     @blur="onBlur"
     @keydown.esc.exact.prevent="onKeyEsc"
@@ -52,15 +53,18 @@
     @keydown.tab.shift.exact.prevent="() => onKeyTab('shift')"
   ><vsm-autocomplete
     v-else-if="showAutocomplete"
+    ref="vsmac"
     :vsm-dictionary="vsmDictionary"
     :autofocus="autofocus"
     :placeholder="placeholder"
-    :max-string-lengths="maxStringLengths"
-    :item-literal-content="itemLiteralContent"
     :query-options="term.queryOptions"
+    :max-string-lengths="maxStringLengths"
+    :fresh-list-delay="freshListDelay"
     :initial-value="term.str"
+    :custom-item="customItem"
+    :custom-item-literal="customItemLiteral"
     v-on="hasItemLiteral ? { 'item-literal-select': onItemLiteralSelect } : {}"
-    @input-change="onInputChange"
+    @input="onInput"
     @focus="onFocus"
     @blur="onBlur"
     @key-esc="onKeyEsc"
@@ -70,9 +74,12 @@
     @key-tab="onKeyTab"
     @item-select="onItemSelect"
     @list-open="onListOpen"
+    @mouseover.native.stop="x => x"
+    @mouseover-input="onMouseenter"
   /><span
     v-else
-    v-html="label"
+    class="label"
+    v-html="term.label"
   /></div>
 </template>
 
@@ -84,10 +91,8 @@
  * It does not change any data in TheTerms' `terms`.
  */
 
-// Currently `vsm-autocomplete` pkg is uncompiled Vue code, so include it like..
-import VsmAutocomplete from '../../node_modules/vsm-autocomplete'; // ..<- this.
-/// import VsmAutocomplete from 'vsm-autocomplete';
-import stringStyleHtml from 'string-style-html';
+// `vsm-autocomplete` pkg is (for now) uncompiled Vue code, so include it like..
+import VsmAutocomplete from '../../node_modules/vsm-autocomplete'; // ..<-this.
 
 
 export default {
@@ -126,13 +131,21 @@ export default {
       type: Object,
       required: true
     },
-    itemLiteralContent: {
-      type: [Function, Boolean],
-      default: false
+    freshListDelay: {
+      type: Number,
+      default: 0
     },
     hasItemLiteral: {
       type: Boolean,
       default: true
+    },
+    customItem: {
+      type: [Function, Boolean],
+      default: false
+    },
+    customItemLiteral: {
+      type: [Function, Boolean],
+      default: false
     }
   },
 
@@ -149,9 +162,6 @@ export default {
     },
     showAutocomplete() {
       return this.hasInput && !this.showPlain;
-    },
-    label() {
-      return stringStyleHtml(this.term.str, this.term.style);
     }
   },
 
@@ -159,7 +169,7 @@ export default {
   watch: {
     showPlain: {
       immediate: true,
-      handler(val) { if (val)  this.emitInputChange(this.term.str); }
+      handler(val) { if (val)  this.emitInput(this.term.str); }
     },
 
     // After TheTerm's code changes anything in `term` (or at creation time),
@@ -188,7 +198,7 @@ export default {
       // call the real `onKeyBksp()`. (This mimics VsmAutocomplete's behavior).
       var el = this.$refs.input_plain;
       if (el.value && !el.value.trim() && !el.selectionStart) {
-        this.emitInputChange(el.value = '');
+        this.emitInput(el.value = '');
       }
       if (!el.value)  this.onKeyBksp();
     },
@@ -202,12 +212,12 @@ export default {
     onKeyCtrlDelete() { this.emit2('key-ctrl-delete') },
     onKeyShiftEnter() { this.emit2('key-shift-enter') },
 
-    // Note: mouseleave; not mouseout which bubbles up from each sub-elem.
+    // Note: `mouseleave`; not `mouseout` which bubbles up from each sub-elem.
     onMouseleave()   { this.emit2('mouseleave') },
     onMouseenter()   { this.emit2('mouseenter') },
 
-    emitInputChange(str) { this.emit2('input-change', str) },
-    onInputChange  (str) { this.emitInputChange(str) },
+    emitInput(str)   { this.emit2('input', str) },
+    onInput  (str)   { this.emitInput(str) },
 
     onFocus()        { this.hasFocus = true;  this.emit2('focus') },
     onBlur()         { this.hasFocus = false; this.emit2('blur')  },
@@ -227,7 +237,7 @@ export default {
      * + Does not `$emit()`, as `onMousedown()` will do that.
      */
     onMousedown_div() {
-      if (this.showPlain || this.showAutocomplete) { // Both types use same CSS-..
+      if (this.showPlain || this.showAutocomplete) { // Both types use same CSS..
         this.$el.querySelector('.input').focus();    // ..class on their <input>.
       }
     },
@@ -239,7 +249,39 @@ export default {
     onCtrlMousedown()  { this.emit2('ctrl-mousedown') },
     onAltMousedown()   { this.emit2('alt-mousedown') },
     onClick()          { this.emit2('click') },
-    onDblclick()       { this.emit2('dblclick') }
+
+    /**
+     * Makes a Click that happened on the border/padding of a Term with
+     * autocomplete (but not on match-list item; hence again `.self.prevent`),
+     * have the same effect as a Click on vsm-autocomplete <input>, so that
+     * it also may open its matches-list.
+     */
+    onClick_div()      { this.sendToAC('click') },
+
+    /**
+     * - Reports a Dblclick to the parent component.
+     * - Also, with a plain <input>: unselects any text. This makes a Dblclick
+     *   there have the same effect as on a VsmAutocomplete input.
+     * - Also, with a <vsm-autocomplete>: in case the DblClick happened on the
+     *   border/padding of the Term, makes it have the same effect as a Dblclick
+     *   on the VsmAutocomplete: which makes it close any open matches-list.
+     */
+    onDblclick() {
+      var el = this.$refs.input_plain;
+      if (el) el.selectionStart = el.selectionEnd = this.term.str.length;
+      this.sendToAC('dblclick');
+      this.emit2('dblclick');
+    },
+
+    /**
+     * Triggers 'eventStr' as a non-bubbling mouse event
+     * on VsmAutocomplete's <input>, if VsmAutocomplete is mounted.
+     */
+    sendToAC(eventStr) {
+      var el = this.$refs.vsmac;
+      if (el)  el = el.$el.querySelector('input');
+      if (el)  el.dispatchEvent(new MouseEvent(eventStr, { bubbles: false }));
+    }
   }
 };
 </script>

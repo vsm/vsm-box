@@ -154,7 +154,7 @@ module.exports = (env = {}) => {
         ),
 
       optimization: {
-        minimizer: PROD ? [
+        minimizer: !DEV ? [
           new TerserPlugin({
             sourceMap: sourceMapInProd,
             parallel: true,
