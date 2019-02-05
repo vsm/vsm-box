@@ -175,26 +175,35 @@ Notes:
 
 ### VSM-connector data model
 
-There are three main types of VSM-connectors: the trident (with 3 dident
+There are three main types of VSM-connectors: the trident (with 3 bident
 subtypes based on which 'leg' is omitted), the list, and the reference connector,
 which look like:
 
-| Type                  | Format                              |
-|-----------------------|-------------------------------------|
-| Trident               | `{ type: 0, pos: [.., .., ..] }`    |
-| - Dident, no subject  | `{ type: 0, pos: [-1, .., ..] }`    |
-| - Dident, no relation | `{ type: 0, pos: [.., -1, ..] }`    |
-| - Dident, no object   | `{ type: 0, pos: [.., .., -1] }`    |
-| List-connector        | `{ type: 1, pos: [.., .....] }` |
-| Reference-connector   | `{ type: 2, pos: [.., ..] }`        |
+| Type                  | Format                                |
+|-----------------------|---------------------------------------|
+| Trident               | `{ type: 'T', pos: [.., .., ..] }`    |
+| - Bident, no subject  | `{ type: 'T', pos: [-1, .., ..] }`    |
+| - Bident, no relation | `{ type: 'T', pos: [.., -1, ..] }`    |
+| - Bident, no object   | `{ type: 'T', pos: [.., .., -1] }`    |
+| List-connector        | `{ type: 'L', pos: [.., .....] }`     |
+| Reference-connector   | `{ type: 'R', pos: [.., ..] }`        |
 
 Notes:
-+ For tridents, the `pos` array tells the index of the referred-to subject-,
-  relation-, and object-term, respectively.
-+ For didents, the `-1` tells which term it omits.
-+ A list-connector's `pos` array can have any length >= 2.
-+ A reference-connector's `pos` array tells the index of 0: child, and 1: the
-  parent (=referred-to) term, respectively.
++ For tridents, the `pos` array holds the index of the connected subject-term
+  at `pos[0]`, the relation-term at `pos[1]`, and the object-term at `pos[2]`.
++ Bidents have the same `type` as tridents, because they connect to terms
+  in a semantically equivalent way as tridents, apart from that they omit one of
+  their three possible connections.  
+  A single value of `-1` instead of a positive index tells which term it omits.  
+  + The fact that both tridents and bidents have `type: 'T'` and use the same
+    position for their subject/relation/object term in the `pos` array should be
+    useful for query algorithms. E.g. a query based on a bident should also
+    match tridents (which only include additional information).
++ A list-connector's `pos` array can have any length of 2 or more. It holds the
+  index of the list-relation at `pos[0]`, followed by the list elements in the
+  same order as they appear in the VSM-sentence.
++ A reference-connector's `pos` array holds the index of the child term
+  at `pos[0]`, and of the parent (=referred-to) term at `pos[1]`.
 
 <br>
 
@@ -219,14 +228,14 @@ var vsmSentence = {
     { str: 'fork',          classID: 'EX:09', instID: null }
   ],
   conns: [
-    { type: 0, pos: [0, 1, 4] },   // = 0 (subject):  John
-                                   //   1 (relation): eats
-                                   //   4 (object):   and(-combination-of-things)
-    { type: 0, pos: [3, -1, 2] },  // = chicken  [is-specified-to-be]  burnt
-    { type: 1, pos: [4, 3, 5] },   // = and(-list-of:)  chicken  salad
-    { type: 0, pos: [5, 6, 7] },   // = salad  is-perforated-by  'it'
-    { type: 0, pos: [1, 8, 9] },   // = eats  with  fork
-    { type: 2, pos: [7, 3] }       // = it  ->  chicken
+    { type: 'T', pos: [0, 1, 4] },   // = 0 (subject):  John
+                                     //   1 (relation): eats
+                                     //   4 (object):   and(-combin.-of-things)
+    { type: 'T', pos: [3, -1, 2] },  // = chicken  [is-specified-to-be]  burnt
+    { type: 'L', pos: [4, 3, 5] },   // = and(-list-of:)  chicken  salad
+    { type: 'T', pos: [5, 6, 7] },   // = salad  is-perforated-by  'it'
+    { type: 'T', pos: [1, 8, 9] },   // = eats  with  fork
+    { type: 'R', pos: [7, 3] }       // = it  ->  chicken
   ]
 };
 ```
@@ -260,12 +269,12 @@ var vsmSentence = {
     { str: 'fork',          classID: 'EX:09', instID: 'myDB:10060' }
   ],
   conns: [
-    { type: 0, pos: [0, 1, 4] },
-    { type: 0, pos: [3, -1, 2] },
-    { type: 1, pos: [4, 3, 5] },
-    { type: 0, pos: [5, 6, 7] },
-    { type: 0, pos: [1, 8, 9] },
-    { type: 2, pos: [7, 3] }
+    { type: 'T', pos: [0, 1, 4] },
+    { type: 'T', pos: [3, -1, 2] },
+    { type: 'L', pos: [4, 3, 5] },
+    { type: 'T', pos: [5, 6, 7] },
+    { type: 'T', pos: [1, 8, 9] },
+    { type: 'R', pos: [7, 3] }
   ]
 };
 ```
@@ -275,8 +284,10 @@ var vsmSentence = {
 
 ### Data example: VSM-template
 
-A template contains Edit-type terms. And any non-Edit-type term's `instID` will
-be `null`.  
+A VSM-template is a VSM-sentence in which some of the terms are still Edit-type
+terms, i.e. 'not yet filled in';  
+and where each non-Edit-type term's `instID` is still `null`, i.e. not yet
+stored in a database.
 
 The following template corresponds to: "... eats ... with ...", with three empty
 fields.  
@@ -302,8 +313,8 @@ var vsmSentence = {
     }
   ],
   conns: [
-    { type: 0, pos: [0, 1, 2] },
-    { type: 0, pos: [1, 3, 4] }
+    { type: 'T', pos: [0, 1, 2] },
+    { type: 'T', pos: [1, 3, 4] }
   ]
 };
 ```
@@ -339,6 +350,14 @@ VsmBox
 
 - `initial-value`: {Object}:  
   a VSM-sentence data Object (see above).  
+  + Note that external code should _not_ update `initialValue` 
+    in a reactive cycle (like with Vue's `v-model`) where it listens to VsmBox's
+    emitted 'change' events and then responds by updating `initialValue`.  
+    (Because: although this would not change the publicly visible state,
+    it would delete backup properties that the user-interface uses, e.g. for
+    enabling Esc-keypress to restore the original Term after starting to edit it,
+    or for enabling Ctrl+Click to cycle through Term-types based on backed-up
+    class/inst/etc.-IDs (see later)).
 - `vsm-dictionary`: {Object}:  
   the [`vsm-dictionary`](https://github.com/vsmjs/vsm-dictionary) subclass that
   will be used by this VsmBox's
@@ -416,7 +435,8 @@ VsmBox
       + `str`: {String}: contents of the input (what the user typed so far
         in the Edit-type VSM-term);
       + `termType`: the type of Term that would be expected to be created, based
-        on the Edit-Term. E.g. for an Edit-Class Term ('EC') this would be 'C'.  
+        on the Edit-Term. E.g. for an Edit-Class Term (`'EC'`) this would
+        be `'C'`.  
         So, one of: `'R'`, `'I'`, `'C'`, `'L'`.  
         Note: this is just for information. The callback may return a different
         `termType`, which in the end determines the generated Term's type.
@@ -598,7 +618,11 @@ VsmBox
     removes the Term, and moves the input and focus to the term right after it
     (if it is an Edit-Term), or else to right before it (if Edit-Term),
     or else to the first Edit-Term that comes after it.  
-    Does not remove the endTerm, but sets its type to 'EI' if it isn't that yet.
+    If pressed in the endTerm: does not remove endTerm, but resets its type to
+    'EI' (if it isn't that yet), and resets its width to `minEndTermWideWidth`
+    (or more so that VsmBox is at least `minWidth` wide). (This is useful for
+    resetting VsmBox width after its content became a lot narrower, e.g.
+    after many Deletes or Enters).
   - Ctrl+Enter:  
     + if the input contains certain string-codes: converts them to special
       characters, e.g. '\beta' to &beta;.
@@ -724,7 +748,8 @@ non-Edit-type Term.
 It is called with one argument: an Object with useful properties:  
 `customTerm(data)`:  
 - `data`: {Object}:
-  - `type`: the Term's internally used type: one of: R, I, C, L, ER, EI, EC, EL.
+  - `type`: the Term's internally used type:
+    one of: `'R'`, `'I'`, `'C'`, `'L'`, `'ER'`, `'EI'`, `'EC'`, `'EL'`.
   - `index`: the Term's current index in the VSM-sentence.
   - `term`: the Term's VSM-term data, in the format defined earlier.
   - `vsmDictionary`: a reference to the VsmDictionary instance being used.  
@@ -778,7 +803,8 @@ It is called with one argument: an Object with useful properties & subproperties
     properties.
     (These extra properties should not be relied upon too much, but may be
     useful for some purposes, e.g. during software development).
-  - `type`: the Term's internally used type: one of: R, I, C, L, ER, EI, EC, EL.
+  - `type`: the Term's internally used type:
+    one of: `'R'`, `'I'`, `'C'`, `'L'`, `'ER'`, `'EI'`, `'EC'`, `'EL'`.
   - `dictInfo`: the info-object of the subdictionary from which this term came.  
     (This object is empty when no additional query results arrived yet; see note
     below).
