@@ -38,6 +38,7 @@ module.exports = {
       ignoreComments: false,
       // Allow a trailing punctuation mark at pos. 81, and a '.' or ';' at 82.
       ignorePattern: '^.{0,80}[^a-zA-Z0-9][.;]?$'
-    }]
+    }],
+    'vue/no-v-html': 'off'
   }
 };

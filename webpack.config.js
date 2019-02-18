@@ -14,7 +14,8 @@ npm i -D \
   stylelint  stylelint-webpack-plugin \
   stylelint-config-standard  stylelint-config-recess-order \
   opn-cli  npm-run-all \
-  vsm-dictionary-local  vsm-dictionary-cacher ;\
+  vsm-dictionary-local  vsm-dictionary-cacher \
+  json-stringify-pretty-compact  json5 ;\
 npm i -P \
   string-style-html \
   vsm-autocomplete

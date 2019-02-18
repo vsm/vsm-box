@@ -5,6 +5,8 @@ import Vue from 'vue';  // For fast loads @dev, include Vue in webpack bundle.
 import VsmBox from './VsmBox.vue';
 import VsmDictionaryLocal from 'vsm-dictionary-local';
 import cacher from 'vsm-dictionary-cacher';
+import stringify from 'json-stringify-pretty-compact';
+import JSON5 from 'json5';
 
 
 runDemo();
@@ -16,6 +18,91 @@ function runDemo() {
   var demoData = createData();
   var options = Object.assign(demoData, { delay: [20, 350] });
   var dict = new (cacher(VsmDictionaryLocal)) (options);
+  var lastAutoFilledText = '';
+
+
+  var example1 = {
+    terms: [
+      { str: 'John',    classID: 'PRS:0510', instID: null },
+      { str: 'eats',    classID: 'CW:0101',  instID: null },
+      { str: 'chicken', classID: 'BIO:0042', instID: null,
+        dictID: 'http://x.org/BIO',  descr: 'the animal',
+        queryOptions: { sort: { dictID: ['http://x.org/BIO'] } } },
+      { str: 'with',    classID: 'CW:0105',  instID: null,
+        dictID: 'CW',  descr: 'to use' },
+      { str: 'fork',    classID: 'CW:0108',  instID: null }
+    ],
+    conns: [
+      { type: 'T', pos: [0, 1, 2] },
+      { type: 'T', pos: [1, 3, 4] }
+    ]
+  };
+
+
+  var example2 = {
+    terms: [
+      { str: 'John',      classID: 'PRS:0510', instID: 'db-id20',
+        dictID: 'PRSNS',  descr: 'John Doe',
+        minWidth: 5, maxWidth: 80, editWidth: 50,
+        queryOptions: {
+          filter: { dictID: [ 'PRSNS', 'CW', 'VAR' ] },
+          sort: { dictID: [ 'CW' ] },
+          fixedTerms: [
+            { id: 'PRS:0501', str: 'Alice' }, { id: 'BIO:0010' }  ] }
+      },
+      { str: 'activates', classID: 'BIO:0014', instID: null, isFocal: true },
+      { str: 'burnt',     classID: 'CW:0109',  instID: null },
+      { str: 'chicken',   classID: 'BIO:0042', instID: null,
+        dictID: 'http://x.org/BIO',  descr: 'the animal',
+        queryOptions: { sort: { dictID: ['http://x.org/BIO'] } } },
+      { str: 'with',      classID: 'CW:0105',  instID: null,
+        dictID: 'CW',  descr: 'to use' },
+      { str: 'Ca2+', style: 'u2-4', descr: 'Calcium ion',
+        classID: 'BIO:0010', instID: null },  ///, minWidth: 47},
+      { str: 'with',      classID: 'CW:0106',  instID: null,
+        dictID: 'CW',  descr: 'to be accompanied by' },
+      { str: 'cls', classID: 'A:01', dictID: 'A', descr: 'descr-1' },
+      { str: 'lit' },
+      { editWidth: 20 },
+      { type: 'EC', editWidth: 20 },
+      { type: 'EL', editWidth: 20 },
+      { str: 'and',       classID: 'CW:0005',  instID: null,
+        dictID: 'CW',  descr: 'a set of items' },
+      { str: 'himself',   classID: 'PRS:0510', instID: 'db-id40',
+        parentID: 'db-id20'}
+    ],
+    conns: [
+      //{ type: 'T', pos: [ 3, 4, -1 ] },
+      { type: 'T', pos: [ 3, -1, 2 ] },
+      { type: 'T', pos: [ 0, 1, 3 ] },
+      { type: 'T', pos: [ 1, 4, 5 ] },
+      { type: 'L', pos: [ 12, 7, 8, 9, 10, 11, 13 ] },
+      { type: 'T', pos: [ 1, 6, 12 ] },
+      { type: 'R', pos: [ 13, 0 ] }
+    ]
+  };
+
+
+  var example3 = {
+    terms: [
+      { str: 'John', classID: 'PRS:0510', instID: null },
+      { str: 'eats', classID: 'CW:0101', instID: null },
+      { str: 'chicken', classID: 'BIO:0042', instID: null,
+        queryOptions: { sort: { dictID: [ 'http://x.org/BIO' ] } } },
+      { str: 'with', classID: 'CW:0106', instID: null },
+      { str: 'Alice', classID: 'PRS:0501', instID: null },
+      { str: 'Bob', classID: 'PRS:0502', instID: null },
+      { str: 'and', classID: 'CW:0005', instID: null },
+      { str: 'himself', classID: null, instID: null, parentID: null }
+    ],
+    conns: [
+      { type: 'T', pos: [ 0, 1, 2 ] },
+      { type: 'T', pos: [ 1, 3, 6 ] },
+      { type: 'L', pos: [ 6, 4, 5, 7 ] }
+    ]
+  };
+
+
 
   // Activate Vue on the #app element and its children.
   new Vue({
@@ -25,17 +112,15 @@ function runDemo() {
       'vsm-box': VsmBox
     },
 
-    data : {
+    data: function() { return {
       vsmDictionary: dict,
-      placeholder: 'Type a term, doubleclick for menu',  //false,
-      maxStringLengths: undefined && { // Change to !undefined to activate this.
-        str: 2,
-        strAndDescr: 40
-      },
-      freshListDelay: 0, //1000,
+      placeholder: 'Type a term or doubleclick for menu',  ///false,
+      maxStringLengths: undefined &&  // Change to !undefined to activate this.
+        { str: 5,  strAndDescr: 30  },
+      freshListDelay: 0, ///1000,
       allowClassNull: true,
       initialValue: {
-        terms: 0&&[] ||
+        terms: 0&&[] ||             // (It will use the first one with a `1&&`).
           0&&[
             { str:'aaa',   classID: 'A01', instID: 'id121', style: 'i' },
             { str:'abcde', classID: 'A01', instID: 'id122' },
@@ -51,7 +136,7 @@ function runDemo() {
               queryOptions: {
                 filter: { dictID: ['CW', 'VAR', 'http://aaa/qqq'] },
                 sort:   { dictID: ['CW'] },
-                idts: [
+                fixedTerms: [
                   { id: 'PRS:0501', str: 'Alice' },
                   { id: 'PRS:0502' },
                   { id: 'BIO:0010' },
@@ -74,39 +159,38 @@ function runDemo() {
             { str: 'abc', classID: 'C:01', style: 'b;i' },
           ] ||
           0&&[{ str: 'a' }, { str: 'bbb' }, { str: 'ccc' }, { str: 'ddd' }] ||
-          [
-            { str: 'activates', classID: 'BIO:0014', instID: null,
-              minWidth: 5, maxWidth: 47, editWidth: 50,
-              queryOptions: {
-                filter: { dictID: ['CW', 'VAR'] },
-                sort:   { dictID: ['CW'] },
-                idts: [
-                  { id: 'PRS:0501', str: 'Alice' },
-                  { id: 'PRS:0502' },
-                  { id: 'BIO:0010' },
-                  { id: 'PRS:9999' } ],
-                z: ['species', 'color']
-              }
-            },
-            { str: 'Ca2+', style: 'u2-4', descr: 'Calcium ion',
-              classID: 'BIO:0010', instID: null }, //, minWidth: 47},
-            { editWidth: 20 },
-            { type: 'ER', editWidth: 20 },
-            { type: 'EC', editWidth: 20 },
-            { type: 'EL', editWidth: 20 },
-            { str: 'lit' },
-            { str: 'cls', classID: 'A:01', dictID: 'A', descr: 'descr-1' },
-            { str: 'ins', classID: 'A:02', dictID: 'A', descr: 'descr-2',
-              instID: 'id123', style: 'i', isFocal: true },
-            { str: 'ref', classID: 'A:03', dictID: 'A', descr: 'descr-3',
-              instID: 'id150', parentID: 'id123' },
-          ],
-        conns: 1&&[]|| [
-          [0, 0, 1, 2],
-          [0, 1, 3, 4],
-          [1, 4, 5, 6, 7],
-          [2, 7, 3]
-        ],
+          0&&[{ str: 'activates' }, { str: '  activates  ' }] ||
+          0&&example1.terms ||
+          1&&example2.terms ||
+          1&&example3.terms || 1&&[],
+        conns: 0&&[] ||
+          0&&[
+            { type: 'T', pos: [ -1,  0,  1 ] },
+            { type: 'T', pos: [ -1,  1,  0 ] },
+            { type: 'T', pos: [  0, -1,  1 ] },
+            { type: 'T', pos: [  1, -1,  0 ] },
+            { type: 'T', pos: [  0,  1, -1 ] },
+            { type: 'T', pos: [  1,  0, -1 ] }
+          ] ||
+          0&&[
+            { type: 'T', pos: [ 0       ], isUC: true },
+            { type: 'T', pos: [ 1, 1    ], isUC: true },
+            { type: 'T', pos: [ 0, 1    ], isUC: true },
+            { type: 'T', pos: [ 2, 3, 3 ], isUC: true },
+            { type: 'T', pos: [-1, 4, 4 ], isUC: true },
+            { type: 'T', pos: [ 2, 3, 4 ], isUC: true },
+            { type: 'L', pos: [ 5       ], isUC: true },
+            { type: 'L', pos: [ 5, 5    ], isUC: true },
+            { type: 'L', pos: [ 6, 7    ], isUC: true },
+            { type: 'L', pos: [ 6, 7, 7 ], isUC: true },
+            { type: 'R', pos: [ 8       ], isUC: true },
+            { type: 'R', pos: [ 9, 9    ], isUC: true },
+            { type: 'R', pos: [ 8, 9    ], isUC: true },
+            { type: 'L', pos: [ 12, 10, 11, 13, 11 ], isUC: true }
+          ] ||
+          0&&example1.conns ||
+          1&&example2.conns ||
+          1&&example3.conns || 1&&[],
       },
       sizes: {
         ///minWidth: 80,  // 360,
@@ -119,7 +203,7 @@ function runDemo() {
         };
       },
       customPopup: false && function(o) {
-        o.strs.extra1 = 'Test1: ' + [
+        o.strs.infoExtra1 = 'Test1: ' + [
           o.strs.descr.split(' ')[0],
           o.type,
           o.term.classID,
@@ -127,16 +211,16 @@ function runDemo() {
           o.z && o.z.extraChar ? o.z.extraChar : '',
           o.vsmDictionary.refTerms.length
         ].join(', ');
-        o.strs.extra2 = 'Test2';
-        o.strs.extra3 = 'Test3';
-        o.strs.extra4 = 'Test4';
+        o.strs.infoExtra2 = 'Test2';
+        o.strs.menuExtra1 = 'TestM1';
+        o.strs.menuExtra2 = 'TestM2';
         return o.strs;
       },
       customItem: !false && function(o) {
         var { item, strs, dictInfo } = o;
         var span = s => '<span style="color: #000; ' +
           'font-weight: normal; margin-left: 1ch;">' + s + '</span>';
-        if (item.dictID == 'uri://x/BIO') {
+        if (item.dictID == 'http://x.org/BIO') {
           strs.str += span('☘');
         }
         else if (item.dictID == 'VAR') {
@@ -162,34 +246,102 @@ function runDemo() {
       },
       advancedSearch: !false && function(data, cb) {
         setTimeout(() => cb({
-          str: data.str,  style: 'i',
-          id: data.allowClassNull ? null: '' + Math.floor(Math.random()*1e6)
-        }), 500);
+          str: data.str,  ///style: 'i',
+          id: data.allowClassNull ? null : '' + Math.floor(Math.random() * 1e6)
+        }), 150);
       },
       termCopied: 0,
-      report: ''
+      msg: '',
+      stateText: '',
+      stateTextWidth: 0
+    }; },
+
+
+    watch: {
+      stateText: function() {             // Textarea changes ==> change VsmBox.
+        this.stateTextToBoxValue();
+      }
     },
 
-    computed: {
+
+    mounted: function() {
+      this.boxValueToStateText(this.initialValue); // Initial VsmBox ==>textarea.
+      this.setMsg('');
+      this.stateTextWidth =
+        getComputedStyle(document.getElementById('stateText')).width;
     },
+
 
     methods: {
       termCopy(term) {
         this.termCopied = term;
-        //console.log('Copy: ' + JSON.stringify(this.termCopied));
+        ///console.log('Copy: ' + JSON.stringify(this.termCopied));
       },
+
       termPaste() {
-        //console.log('Paste: ' + JSON.stringify(this.termCopied));
+        ///console.log('Paste: ' + JSON.stringify(this.termCopied));
         return this.termCopied;
       },
-      msg(msg) {
-        this.report += '<div>' + ///(this.report.length ? ', ' : '') +
-          msg + '</div>\n';
+
+
+      onChange(value)  {          // VsmBox content changes ==> change textarea.
+        this.boxValueToStateText(value);
       },
-      onChange(value) {
-        this.latestValue = value;
-        //this.msg('change: ' + JSON.stringify(value));
-        //console.log(JSON.stringify(value));
+
+
+      boxValueToStateText(value) {
+        // Make readable & compact JSON output, then change it a bit to JSON5.
+        lastAutoFilledText = this.stateText = stringify(value, { margins: true })
+          .replace(/ "([a-zA-Z]*)": /g, ' $1: ')       // Unquote property-keys.
+          .replace(/{\n {2}terms:/, '{ terms:')        // Merge first two lines.
+          .replace(/, conns:/, ',\n  conns:')    // 'conns:' always on new line.
+          .replace(/'/g, '\\\'') .replace(/"/g, '\'')    // Un-doublequote keys.
+          .replace(/\n {4}{\n {6}/g, '\n    { ')         // Less spacious Terms.
+          .replace(/\n {6,10}([\]}],?\n)/g, ' $1') // Compactify `queryOptions`.
+          .replace(/] }$/, ']\n}')              // Final '}' always on new line.
+          .replace(/] ?]\n}$/, ']\n  ]\n}')    // TheConns's ']' on its own line.
+          .replace(/(: \[|\],) ?\[/g, '$1\n    ['); // Each Conn on its own line.
+        this.setMsg(1);
+      },
+
+
+      stateTextToBoxValue() {
+        // Do not update VsmBox's `initialValue` if the reported textarea change
+        // was only caused by an automated reaction to a VsmBox emitted 'change'.
+        // Otherwise, VsmBox would re-init and discard backupIDs/drag-state/etc.
+        var abort = lastAutoFilledText === this.stateText;
+        lastAutoFilledText = false;
+        if (abort)  return;
+
+        try {
+          this.initialValue = JSON5.parse(this.stateText);
+          this.setMsg(-1);
+        }
+        catch (err) {
+          this.setMsg(err.toString().replace('JSON5: ', ''));
+        }
+      },
+
+
+      setMsg(msg) {
+        var d = new Date();
+        d = '[' + ('0' + d.getHours()).slice(-2) + ':' +
+          ('0' + d.getMinutes()).slice(-2) + ':' +
+          ('0' + d.getSeconds()).slice(-2) + '.' +
+          ('00' + d.getMilliseconds()).slice(-3, -1) + ']';
+        this.msg = !msg ? '' :
+          ((msg == -1 ? '<---' : msg == 1 ? '--->' : msg) + ' &nbsp;' + d);
+      },
+
+
+      onButtonClear()    { this.fillBoth('Cleared', { terms: [], conns: [] }) },
+      onButtonExample1() { this.fillBoth('Example 1', example1) },
+      onButtonExample2() { this.fillBoth('Example 2', example2) },
+
+      fillBoth(name, data) {
+        this.initialValue = JSON.parse(JSON.stringify(data));
+        this.boxValueToStateText(this.initialValue);
+        this.setMsg(name);
       }
     }
   });
@@ -290,10 +442,10 @@ function createData() {
           terms: [{str: 'at', descr: 'happens at timepoint'}] },
         { id: 'CW:0111', descr: 'to pertain to',
           terms: [{str: 'in', descr: 'pertains to'}] },
-        { id: 'CW:0005', descr: 'List, plain collection of items',
+        { id: 'CW:0005', descr: 'a set of items',
           terms: [{str: 'and'}]
         },
-        { id: 'CW:0112', descr: 'List where item order is important',
+        { id: 'CW:0112', descr: 'a list where item order is important',
           terms: [{str: 'ordered-and', style: 'i0-8'}] },
         { id: 'CW:0002', descr: 'to be',
           terms: [
@@ -347,12 +499,12 @@ function createData() {
         { id: 'PRS:0501', terms: [{str: 'Alice'}] },
         { id: 'PRS:0502', terms: [{str: 'Bob'}] },
         { id: 'PRS:0510', terms: [{str: 'John'}],
-          descr: 'my imaginary friend John Doe in Norway' },
+          descr: 'imaginary person John Doe from Norway' },
         { id: 'PRS:0256', descr: 'Steven Vercruysse (Cruy), creator of VSM',
           terms: [{str: 'Steven'}] },
       ]},
 
-      { id: 'uri://x/BIO', name: 'Biological concepts', entries: [
+      { id: 'http://x.org/BIO', name: 'Biological concepts', entries: [
         { id:'BIO:0010', terms: [{str: 'Ca2+', style: 'u2-4'}] },
         { id:'BIO:0011', terms: [{str: 'Na+Cl-', style: 'u2;u5'}] },
         { id:'BIO:0001', terms: [{str: 'beta-Carotene'}, {str: 'β-Carotene'}] },

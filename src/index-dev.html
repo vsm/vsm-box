@@ -7,15 +7,17 @@
 
   <style>
     body { font-family: sans-serif;  font-size: 14px;  margin: 0; }
-    a, a:visited { color: #FF0000; }
-    #app { padding: 20px 0 18px 50px;  background-color: #FFEEDD;  min-height: 180px; }
+    #app { padding: 20px 0 8px 50px;  min-height: 180px;
+      background-color: #fff; }
     [v-cloak] { display: none; }
-
-    .reporter {
-      color: #bbb;  font-size: 13px;  margin: 12px 0 0 0;
-      white-space: nowrap;  overflow: visible;  text-overflow: ellipsis;
-      /* width: 500px;  max-height: 200px;  overflow-y: scroll; /**/
-    }
+    #msg { color: #aaa;  font-size: 11px; height: 12px;  margin: 8px 0 2px 0;
+      text-align: right; }
+    #stateText { outline: none;  font-size: 11px;  white-space: pre;
+      box-sizing: border-box;  display: block;  border: 0.5px solid #b8b8b8; }
+    button { margin-top: 4px; }
+    #info { padding-left: 10px; }
+    #info, #info a, #info a:visited { color: #888;  font-size: 12px; }
+    #info a:hover { color: #88f; }
   </style>
 
   <!-- For faster reloads, include Vue.js in the webpack bundle, during dev. --
@@ -30,7 +32,7 @@
   <div id="app" v-cloak>
     <vsm-box
       :vsm-dictionary="vsmDictionary"
-      :autofocus="true"
+      :autofocus="false"
       :placeholder="placeholder"
       :initial-value="initialValue"
       :max-string-lengths="maxStringLengths"
@@ -48,15 +50,33 @@
     >
     </vsm-box>
     <div
-      v-html="report"
-      class="reporter"
-    >
+      id="msg"
+      :style="{ width: stateTextWidth }"
+      v-html="msg"
+    ></div>
+    <textarea
+      id="stateText"
+      rows="31"
+      cols="80"
+      spellcheck="false"
+      v-model="stateText"
+      @keydown.tab.prevent="x => x"
+    ></textarea>
+    <button @click="onButtonClear">Clear</button>
+    <button @click="onButtonExample1">Example 1</button>
+    <button @click="onButtonExample2">Example 2</button>
+    <span id="info">
+      Info: <a href="https://vsmjs.github.io/">vsmjs.github.io</a>,&nbsp;
+      <a href="https://github.com/vsmjs/vsm-box">vsm-box</a>,&nbsp;
+      <a href="http://scicura.org/vsm/vsm.html">VSM</a>,&nbsp;
+      <a href="http://scicura.org/vsm/examples.html">examples</a>.
+    </span>
     </div>
   </div>
 
   <!-- One can override vsm-box's CSS-styles,
        by declaring CSS _after_ the Vue-activated '#app' div.
-       E.g. with CSS-declarations in this:  (add/remove a '>' to toggle this on/off) :
+       E.g. with CSS-declarations in this: (add/remove a '>' to toggle on/off):
   --
   <link rel="stylesheet" href="vsm-box-custom.css">  <!-- -->
 

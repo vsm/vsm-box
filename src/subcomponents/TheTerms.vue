@@ -186,7 +186,9 @@ export default {
     dragIndex: -1,  // When >= 0, it is the index of a currently dragged Term.
     enablePopup: true,  // Helps to prevent showing ThePopup in an edge case.
     timerPopupHide: 0,  // = a timer-handle, only while a Popup-hide timer runs.
-    timerPopupShow: 0   // (Similar).
+    timerPopupShow: 0,  // (Similar).
+    popupEscListener: false,  // Helps hide ThePopup when the user presses Esc.
+    mayNarrow: false    // Prevents making TheTerms less wide.
   }; },
 
 
@@ -240,6 +242,15 @@ export default {
   watch: {
     origTerms: function() {
       this.initForNewTerms();
+    },
+
+    sizes: function() {
+      this.measureSizes();
+      this.setTermCoordinates();
+    },
+
+    customTerm: function() {
+      this.setTermCoordinates();
     },
 
     hasEndTermFocus: function(val) { // Recalc. endTerm coo.s; may need to widen.
@@ -298,7 +309,7 @@ export default {
       this.termHeight = ruler.offsetHeight;
 
       this.sizes.widthScale = this.sizes.widthScale ||
-        num(style['font-size']) / defaultFontSize;
+        num(style['font-size']) / defaultFontSize || 1;
     },
 
 
@@ -333,6 +344,12 @@ export default {
 
 
     initForNewTerms() {
+      // If dragging was ongoing, abort it. Make that all listeners get detached.
+      if (this.dragIndex >= 0)  window.dispatchEvent(new MouseEvent('mouseup'));
+
+      // Hide any ThePopup, and ignore a hover-event that might fire just after..
+      this.tempDisablePopup();    // ..we could place a new Term under the mouse.
+
       var terms = this.origTerms.map(term => to.prepToReceive(term));
       terms.push(to.newEndTerm());
 
@@ -345,6 +362,8 @@ export default {
 
       // Assign all `terms` at once, making all added sub-prop.s Vue-reactive.
       this.terms = terms;
+
+      this.emitValue('change-init');
     },
 
 
@@ -369,10 +388,11 @@ export default {
 
           editWidth = Math.ceil(this.sizes.widthScale * (this.hasEndTermFocus ?
             this.sizes.minEndTermWideWidth : this.sizes.minEndTermWidth) );
-          var spaceLeft =
-            // Note: part 1 = minWidth, adjusted for not letting TheTerms shrink.
-            Math.max(this.sizes.minWidth, this.width)
+          var spaceLeft =  // Note: part 1 = minWidth, adjusted for not letting..
+            //             // ..TheTerms become less wide, unless permitted.
+            Math.max(this.sizes.minWidth, this.mayNarrow ? 0 : this.width)
             - x - editWidth - this.termPadBordLR - this.padRight;
+          this.mayNarrow = false;
 
           t.width = editWidth + Math.max(0, spaceLeft) + this.termPadBordLR;
         }
@@ -396,7 +416,7 @@ export default {
 
       // Also set TheTerms' total width now.
       x = x - this.termMarginHor + this.padRight;
-      if (x > this.width)  this.$emit('width', this.width = x);  // Never shrink.
+      if (x != this.width)  this.$emit('width', this.width = x);
     },
 
 
@@ -587,8 +607,8 @@ export default {
      * Constructs and emits the current, publicly visible state of TheTerms,
      * excluding the endTerm. Term-properties are pruned in 'termOperations.js'.
      */
-    emitValue() {
-      this.$emit('change', this.terms .slice(0, -1) .map(to.prepToEmit));
+    emitValue(eventStr = 'change') {
+      this.$emit(eventStr, this.terms .slice(0, -1) .map(to.prepToEmit));
     },
 
 
@@ -631,11 +651,7 @@ export default {
 
       var term = this.terms[index];
       if (to.isEditable(term) && term.backup) {
-        this.moveInputToNextEditTerm(index, 1);  // Do this before changing type.
-
-        this.$set(this.terms, index, to.createRestoredTerm(term));
-        this.setTermCoordinates(index);
-        this.emitValue();
+        this.replaceTerm(index, to.createRestoredTerm(term));
       }
     },
 
@@ -681,7 +697,10 @@ export default {
 
       var term = this.terms[index];
       if (term.isEndTerm) {
+        term.str = term.label = '';
         to.setType(term, 'EI', this);
+        this.mayNarrow = true;
+        this.setTermCoordinates(index);
         return this.focusInput();
       }
 
@@ -792,7 +811,7 @@ export default {
 
     onPlainEnter(index) {  // Can be called on ER/EL-type Terms, only.
       this.hidePopup();
-      this.insertTerm(index, to.createRorLTerm(this.terms[index]));
+      this.fillInTerm(index, to.createRorLTerm(this.terms[index]));
     },
 
 
@@ -837,16 +856,16 @@ export default {
      */
     insertFromMatch(index, match) {
       if (match)
-        this.insertTerm(index, to.createTermFromMatch(this.terms[index], match));
+        this.fillInTerm(index, to.createTermFromMatch(this.terms[index], match));
     },
 
 
     /**
-     * Puts the given (already cleanded) `term` in place of the one at `index`,
-     * and adds a new endTerm if endTerm was there.
+     * Puts the given (already cleanded) non-Edit-Term in place of the Edit-Term
+     * at `index`, and adds a new endTerm if endTerm was there.
      * Aborts if invalid data is given.
      */
-    insertTerm(index, term) {
+    fillInTerm(index, term) {
       if (! term || !term.str ||
         (term.classID === null  &&  !this.allowClassNull  &&  term.type != 'R'))
         return;
@@ -856,10 +875,19 @@ export default {
         this.terms.push(to.newEndTerm());
       }
 
-      this.moveInputToNextEditTerm(index, 1);
+      this.replaceTerm(index, term);
+    },
+
+
+    /**
+     * Puts the given non-Edit-Term in place of the Edit-Term at `index`.
+     */
+    replaceTerm(index, term) {
+      this.moveInputToNextEditTerm(index, 1);  // Do this before changing type.
       this.$set(this.terms, index, term);
       this.setTermCoordinates(index);
       this.emitValue();
+      this.tempDisablePopup();
     },
 
 
@@ -883,13 +911,15 @@ export default {
       // + Note: mouse-coo.s `clientX/Y` are relative to a possibly scrolled
       //   viewport, and so is `getBoundingClientRect()` => cancels out nicely.
       // + Note that `term.x/y` change along with changing placeholder position.
-      var term = this.terms[index];
       var theTerms = this.$el.getBoundingClientRect();
       theTerms = { x: ~~theTerms.left,  y: ~~theTerms.top };
-      var mouseCoosRelToTerm = event => ({
-        x: event.clientX - theTerms.x - term.x,
-        y: event.clientY - theTerms.y - term.y
-      });
+      var mouseCoosRelToTerm = event => {
+        var term = this.terms[index];
+        return {
+          x: event.clientX - theTerms.x - term.x,
+          y: event.clientY - theTerms.y - term.y
+        };
+      };
 
       var dragOffset = mouseCoosRelToTerm(event); // =Mousedown-pos. inside Term.
       var threshSqr = Math.pow(this.sizes.termDragThreshold, 2);
@@ -910,6 +940,11 @@ export default {
 
 
       var processMousemove = event => {
+        // Get current Term at `index`. (Which can be a different object than at
+        // last call, if `origTerms` changed. That may happen often, if external
+        // code responds to VsmBox 'change' events by updating `initialValue`).
+        var term = this.terms[index];
+
         var loc = mouseCoosRelToTerm(event);
 
         // If not yet dragging (because mousemove-distance threshold not yet
@@ -959,14 +994,9 @@ export default {
         hook(window.removeEventListener);
         if (this.dragIndex >= 0)  {
           this.dragIndex = -1;
-          this.$delete(term, 'drag');
+          this.$delete(this.terms[index], 'drag');
           setGrabCursor(false);
-
-          // These hacky 2 lines prevent showing ThePopup after drag&dropping a
-          // Term.  Because: if the Term gets placed at a location (only) where
-          // the mouse is still hovering it, it soon reports a new `mouseenter`.
-          this.enablePopup = false;
-          setTimeout(() => this.enablePopup = true,  100);
+          this.tempDisablePopup();
         }
       };
 
@@ -989,15 +1019,23 @@ export default {
     showPopup(index) {  // Shows ThePopup for Term at `index`, unless it is < 0.
       this.clearPopupTimers();
       this.popupLoc = index;
+      this.addPopupEscListener(index);
     },
 
 
     hidePopup() {
       this.clearPopupTimers();
       this.showPopup(-1);
+      this.removePopupEscListener();
     },
 
 
+    /**
+     * Shows or moves ThePopup after a delay, in response to mouseenter or click
+     * on a non-Edit-Term.
+     * Or moves ThePopup to an Edit-Term (in response to mouseenter) if ThePopup
+     * is already shown.
+     */
     showPopupDelayed(index) {
       this.clearPopupTimers();
       if (
@@ -1007,6 +1045,7 @@ export default {
         this.timerPopupShow = setTimeout(
           () => this.showPopup(index), this.popupLoc < 0 ?
             this.sizes.delayPopupShow : this.sizes.delayPopupSwitch);
+        this.addPopupEscListener(index);
       }
     },
 
@@ -1015,6 +1054,39 @@ export default {
       this.clearPopupTimers();
       this.timerPopupHide = setTimeout(
         () => this.hidePopup(), this.sizes.delayPopupHide);
+    },
+
+
+    /**
+     * Prevents showing ThePopup after placing or moving Terms. Because:
+     * if a Term gets placed under the current position of the mouse cursor,
+     * it will soon report a non-user-caused `mouseenter`.
+     * This function should be called after inserting, restoring, or dropping
+     * a Term.
+     */
+    tempDisablePopup() {
+      this.hidePopup();
+      this.enablePopup = false;
+      setTimeout(() => this.enablePopup = true,  200);
+    },
+
+
+    /**
+     * When ThePopup is shown or about to be shown: enables the user to
+     * hide ThePopup by pressing Esc anywhere in the webpage.
+     */
+    addPopupEscListener(index) {
+      if (index >= 0  &&  !this.popupEscListener) {
+        this.popupEscListener = e => { if (e.key == 'Escape') this.hidePopup();};
+        window.addEventListener('keydown', this.popupEscListener);
+      }
+    },
+
+    removePopupEscListener() {
+      if (this.popupEscListener) {
+        window.removeEventListener('keydown', this.popupEscListener);
+        this.popupEscListener = false;
+      }
     },
 
 
@@ -1071,7 +1143,7 @@ export default {
     onPaste(index) {
       this.hidePopup();
       this.$nextTick(() =>    // Let Vue update before calling an external func.
-        this.insertTerm(index,
+        this.fillInTerm(index,
           to.prepForPaste(this.terms[index], this.termPaste()))
       );
     }
@@ -1089,20 +1161,21 @@ export default {
   }
 
   span.ruler {  /* For measuring Term string-pixel-width */
-    position: absolute;
-    line-height: normal;
-    white-space: nowrap;
     visibility: hidden;
   }
 
+  span.ruler,
   .term {
     position: absolute;
+    line-height: normal;
+  }
+
+  .term {
     box-sizing: border-box;
     display: inline-block;
     padding: 0 3px;
     margin: 0 2px;  /* Is later zero'ed, but abs. positioning uses this value */
     overflow: hidden;
-    line-height: normal;
     text-overflow: ellipsis;
     white-space: nowrap;
     cursor: default;
@@ -1116,7 +1189,7 @@ export default {
     vertical-align: baseline;
   }
   .term >>> sub {
-    top: 0.4em;
+    top: 0.15em;
   }
   .term:not(.edit),
   .terms >>> .popup .menu {
@@ -1145,6 +1218,10 @@ export default {
   }
   .edit:not(.inp) {
     text-overflow: clip;  /* No ellipsis for Edit-Terms without <input> elem. */
+  }
+  .edit:not(.inp),
+  .edit:not(.focus) >>> input {
+    color: #888;
   }
 
   .inp >>> .list {
@@ -1248,7 +1325,8 @@ export default {
     color: #777;
   }
 
-  .term >>> .label {
+  .term >>> .label,
+  span.ruler {
     white-space: pre;
   }
 

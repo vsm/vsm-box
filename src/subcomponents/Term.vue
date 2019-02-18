@@ -1,4 +1,5 @@
 <template>
+  <!-- eslint-disable vue/multiline-html-element-content-newline -->
   <div
     :style="{
       width: term.width + 'px',
@@ -81,6 +82,7 @@
     class="label"
     v-html="term.label"
   /></div>
+  <!-- eslint-enable -->
 </template>
 
 

@@ -90,8 +90,8 @@ describe('sub/ThePopup', () => {
   const _qFiltD = () => _sett().findAll('.query-filter div');
   const _qSort  = () => _sett().find   ('.query-sort');
   const _qSortD = () => _sett().findAll('.query-sort div');
-  const _qIdts  = () => _sett().find   ('.query-idts');
-  const _qIdtsD = () => _sett().findAll('.query-idts div');
+  const _qIdts  = () => _sett().find   ('.query-fixedterms');
+  const _qIdtsD = () => _sett().findAll('.query-fixedterms div');
   const _qZ     = () => _sett().find   ('.query-z');
 
   const _widths = () => _sett().find('.widths');
@@ -860,9 +860,9 @@ describe('sub/ThePopup', () => {
           o.strs.classID  = f(o.strs.classID);
           o.strs.instID   = f(o.strs.instID);
           o.strs.parentID = f(o.strs.parentID);
-          o.strs.queryFilter = o.strs.queryFilter.map(f);
-          o.strs.querySort   = o.strs.querySort  .map(f);
-          o.strs.queryIdts   = o.strs.queryIdts  .map(f);
+          o.strs.queryFilter     = o.strs.queryFilter    .map(f);
+          o.strs.querySort       = o.strs.querySort      .map(f);
+          o.strs.queryFixedTerms = o.strs.queryFixedTerms.map(f);
           o.strs.queryZ = f(o.strs.queryZ),
           o.strs.minWidth  = f(o.strs.minWidth),
           o.strs.maxWidth  = f(o.strs.maxWidth),

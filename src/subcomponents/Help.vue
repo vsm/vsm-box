@@ -6,6 +6,7 @@ Mousedrag: move normal Term
 Ctrl+Shift+Mousedrag: move empty Term
 Alt+Up/Down: move empty Term
 Ctrl+Del: remove empty Term
+Ctrl+Del: reset the end-Term
 Ctrl+Enter: insert empty Term to the right
 ['vsm-box': developed by stcruy]"
     class="hotkey help"

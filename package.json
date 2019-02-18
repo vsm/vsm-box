@@ -1,6 +1,6 @@
 {
   "name": "vsm-box",
-  "version": "0.2.1",
+  "version": "0.3.0",
   "description": "Webcomponent for building and showing a VSM-sentence",
   "main": "dist/vsm-box.min.js",
   "scripts": {
@@ -10,9 +10,10 @@
     "testw": "mocha-webpack --require src/test-setup.js \"src/**/*.test.js\" --check-leaks --webpack-env.NODE_ENV=testing --watch",
     "testwi": "mocha-webpack --require src/test-setup.js \"src/**/*.test.js\" --check-leaks --webpack-env.NODE_ENV=testing --watch --interactive=false",
     "lint": "eslint --ext .js,.vue src",
-    "build": "npm run build:slim && npm run build:standalone && opn src/index-prods.html",
-    "build:slim": "webpack --config webpack.config.js --env.NODE_ENV=production",
-    "build:standalone": "webpack --config webpack.config.js --env.NODE_ENV=production --env.standalone=true"
+    "build": "npm run build-slim && npm run build-stan",
+    "build-open": "npm run build && opn src/index-prods.html",
+    "build-slim": "webpack --config webpack.config.js --env.NODE_ENV=production",
+    "build-stan": "webpack --config webpack.config.js --env.NODE_ENV=production --env.standalone=true"
   },
   "keywords": [
     "VSM",
@@ -36,18 +37,20 @@
   "devDependencies": {
     "@babel/core": "^7.2.2",
     "@babel/preset-env": "^7.3.1",
-    "@vue/test-utils": "^1.0.0-beta.28",
+    "@vue/test-utils": "1.0.0-beta.28",
     "babel-loader": "^8.0.5",
     "chai": "^4.2.0",
     "clean-webpack-plugin": "^1.0.1",
-    "css-loader": "^1.0.1",
+    "css-loader": "^2.1.0",
     "document-register-element": "^1.13.1",
-    "eslint": "^5.12.1",
+    "eslint": "^5.13.0",
     "eslint-loader": "^2.1.1",
-    "eslint-plugin-vue": "^4.7.1",
+    "eslint-plugin-vue": "^5.1.0",
     "html-webpack-plugin": "^3.2.0",
-    "jsdom": "^13.1.0",
+    "jsdom": "13.1.0",
     "jsdom-global": "^3.0.2",
+    "json-stringify-pretty-compact": "^1.2.0",
+    "json5": "^2.1.0",
     "mocha": "^5.2.0",
     "mocha-webpack": "^2.0.0-beta.0",
     "npm-run-all": "^4.1.5",
@@ -62,10 +65,10 @@
     "terser-webpack-plugin": "^1.2.1",
     "text-transform-loader": "^2.0.0",
     "vsm-dictionary-cacher": "^1.1.2",
-    "vsm-dictionary-local": "^2.5.0",
+    "vsm-dictionary-local": "^2.6.0",
     "vue": "^2.5.22",
     "vue-custom-element": "^3.2.6",
-    "vue-loader": "^15.5.1",
+    "vue-loader": "^15.6.2",
     "vue-template-compiler": "^2.5.22",
     "webpack": "^4.29.0",
     "webpack-cli": "^3.2.1",
@@ -74,6 +77,6 @@
   },
   "dependencies": {
     "string-style-html": "^1.1.4",
-    "vsm-autocomplete": "^1.8.0"
+    "vsm-autocomplete": "^1.8.2"
   }
 }

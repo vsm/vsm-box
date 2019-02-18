@@ -3,108 +3,360 @@
 <head>
   <meta charset="utf-8"/>
 
-  <title>vsm-box: using the slim build</title>
+  <title>vsm-box: 'slim build' demo</title>
 
   <style>
-    body { font-family: sans-serif;  font-size: 14px;  margin: 0; }
-    a, a:visited { color: #FF0000; }
-    #app { padding: 20px 0 18px 50px;  background-color: #FFEEDD;  min-height: 180px; }
+    body { font-family: tahoma, verdana, arial, sans-serif;  margin: 0; }
+    #intro { font-size: 12px;  color: #aaa;  margin: 10px 0 20px 0; }
+    #app { padding: 1px 0 18px 50px;  background-color: #fff;  min-height: 180px; }
+    [v-cloak] { display: none; }
+    #msg { color: #aaa;  font-size: 11px; height: 12px;  margin: 8px 0 2px 0; text-align: right; }
+    #stateText { outline: none;  font-size: 11px;  white-space: pre;  box-sizing: border-box;
+      display: block;  border: 0.5px solid #b8b8b8; }
+    #info { padding-left: 10px; }
+    #info, #info a, #info a:visited { font-size: 12px;  color: #888; }
+    #info a:hover { color: #88f; }
   </style>
 
-  <script src="https://unpkg.com/document-register-element@1.7.2/build/document-register-element.js"></script>
-  <script src="https://unpkg.com/vue@2.5.16/dist/vue.min.js"></script>
-  <script src="https://unpkg.com/vue-custom-element@2.1.0/dist/vue-custom-element.js"></script>
+  <!-- Include a vsm-dictionary, and a cacher for speed. -->
+  <script src="https://unpkg.com/vsm-dictionary-local@2.6.0/dist/vsm-dictionary-local.min.js"></script>
+  <script src="https://unpkg.com/vsm-dictionary-cacher@1.2.0/dist/vsm-dictionary-cacher.min.js"></script>
 
+  <!-- Add a demo vsmdictionary for accessing a webservice (not required). -->
+  <script src="../../vsm-dictionary-remote-demo/dist/vsm-dictionary-remote-demo.min.js"></script>
+
+  <!-- Include Vue and webcomponent-supporting libraries, which are required for
+       the 'slim build' of 'vsm-box'.
+       With Vue not bundled inside a 'standalone' VsmBox here, it can support
+       additional Vue-activated elements, such as the `<div id="app">` below. -->
+  <script src="https://unpkg.com/vue@2.5.22/dist/vue.min.js"></script>
+  <script src="https://unpkg.com/vue-custom-element@3.2.6/dist/vue-custom-element.js"></script>
+  <script src="https://unpkg.com/document-register-element@1.13.1/build/document-register-element.js"></script>
+
+  <!-- Include the 'slim build' version of 'vsm-box'. -->
   <script src="../dist/vsm-box.min.js"></script>
+
+  <!-- Include two libraries for showing JS-objects in a readable way. -->
+  <script> // Minified, browser-compatible version of json-stringify-pretty-compact@1.2.0:
+    function stringify(n,r){r=r||{};var h=JSON.stringify([1],null,_gt(r,'indent',2)).slice(2,-3),s=_gt(r,'margins',!1),v
+    =''===h?1/0:_gt(r,'maxLength',80);return function f(u,n,r){u&&'function'==typeof u.toJSON&&(u=u.toJSON());var t=JSON
+    .stringify(u);if(void 0===t)return t;var i=v-n.length-r;if(t.length<=i){var e=prettify(t,s);if(e.length<=i)return e}
+    if('object'==typeof u&&null!==u){var g,o=n+h,a=[],l=function(n,r){return r===n.length-1?0:1};if(Array.isArray(u)){
+    for(var c=0;c<u.length;c++)a.push(f(u[c],o,l(u,c))||'null');g='[]'}else Object.keys(u).forEach(function(n,r,t){var i
+    =JSON.stringify(n)+': ',e=f(u[n],o,i.length+l(t,r));void 0!==e&&a.push(i+e)}),g='{}';if(0<a.length)return[g[0],h+a.
+    join(',\n'+o),g[1]].join('\n'+n)}return t}(n,'',0);function prettify(n,r){var soc=/("(?:[^\\"]|\\.)*")|[:,\][}{]/g,t
+    =r?' ':'',i={'{':'{'+t,'[':'['+t,'}':t+'}',']':t+']',',':', ',':':': '};return n.replace(soc,function(n,r){return r?
+    n:i[n]})}function _gt(n,r,t){return r in n?n[r]:t}}</script>
+  <script src="https://unpkg.com/json5@2.1.0/dist/index.min.js"></script>
 </head>
 
 
 <body>
 
-  <div id="app">
-    <p> Demo with &nbsp;'vsm-box.min.js'&nbsp; (Vue/etc-dependent web component),<br>
-        which does not include Vue or webcomponent-related dependencies. </p>
-    <p> So these are added separately,
-        in &lt;script&gt;s in the &lt;head&gt; section. </p><br>
+  <div id="app" v-cloak>
+    <p id="intro">
+    Demo of VsmBox based on 'vsm-box.min.js', which is not bundled together
+    with Vue or<br>webcomponent-related dependencies, so these are added in
+    the HTML-head section.
+    </p>
 
-    // TODO
     <vsm-box
-      id="vsm-box1"
-      :initial-count="init"
-      :data-source.prop="myDataSource"
-      @inc="incReported">
+      :vsm-dictionary.prop="vsmDictionary"
+      :autofocus="false"
+      :placeholder="placeholder"
+      :max-string-lengths.prop="maxStringLengths"
+      :initial-value.prop="initialValue"
+      :fresh-list-delay="0"
+      :advanced-search.prop="advancedSearch"
+      :allow-class-null="true"
+      :sizes.prop="sizes"
+      :custom-term.prop="customTerm"
+      @change="onChange"
+    >
     </vsm-box>
-    <br>
-    <vsm-box :initial-count="8" v-if="addNr2"></vsm-box>
+    <div
+      id="msg"
+      :style="{ width: stateTextWidth }"
+      v-html="msg"
+    ></div>
+    <textarea
+      id="stateText"
+      rows="31"
+      cols="80"
+      spellcheck="false"
+      v-model="stateText"
+      @keydown.tab.prevent="x => x"
+    ></textarea>
+    <button @click="onButtonClear">Clear</button>
+    <button @click="onButtonExample1">Example 1</button>
+    <button @click="onButtonExample2">Example 2</button>
+    <span id="info">
+      Info: <a href="https://vsmjs.github.io/">vsmjs.github.io</a>,&nbsp;
+      <a href="https://github.com/vsmjs/vsm-box">vsm-box</a>,&nbsp;
+      <a href="http://scicura.org/vsm/vsm.html">VSM</a>,&nbsp;
+      <a href="http://scicura.org/vsm/examples.html">examples</a>.
+    </span>
   </div>
 
 
-  <!-- Here we override a vsm-box / vsm-autocomplete's default styling -->
-  <style>
-    #vsm-box1 span { font-size: 16px; color: green; }
-    #vsm-box1 span.smaller { font-size: 10px; }
-    .vsm-box .vsm-autocomplete .item-type-literal { color: #800; }
-  </style>
+  <!-- Here one can override vsm-box & vsm-autocomplete's default CSS-styles --
+  <style> .vsm-box .vsm-autocomplete .item-type-literal { color: #55a; }
+  </style> <!-- -->
 
 
   <script>
-    // Register the webcomponent with Vue. (Both were loaded via a <script>-tag).
-    Vue.customElement('vsm-box', VsmBox.default);
+  // Register the webcomponent with Vue. (Both were loaded via a <script>-tag).
+  Vue.customElement('vsm-box', VsmBox.default);
 
-    // Activate Vue on (only) the #app element and its children.
-    new Vue({
-      el: '#app',
+  // Choose a VsmDictionary. It can be any VsmDictionary, after it is added
+  // in the HTML-head section. Here we demo a VsmDictionaryLocal (which does
+  // not depend on a term/ID-serving webservice), loaded with either no data,
+  // or some demo data.  We also wrap it in a cacher.
+  var useDemoData = true;
+  var dict = new (VsmDictionaryCacher(VsmDictionaryLocal)) (
+    !useDemoData ? undefined :
+    {
+      dictData: [ { id: 'http://d.org/A', name: 'Aaa', entries: [
+        { id: 'http://d.org/A/A:01', terms: [{ str: 'aaa' }, { str: 'aad' }] },
+        { id: 'http://d.org/A/A:02', terms: [{ str: 'aab' }] },
+        { id: 'http://d.org/A/A:03', terms: [{ str: 'abc' }], descr: 'example' }
+      ]}],
+      refTerms: ['it', 'they'],
+      delay: 200  // `VsmDictionaryCacher` will speed this up again.
+    }
+  );
 
-      data : {
-        init: 10,
-        addNr2: false,
-        // Demo use 1): give an Object as a prop.
-        // + Note that the _web-component_'s html-attr ":data-source.prop=..."
-        //   differs from a plain Vue-component's attribute ":data-source=...".
-        //   (See https://karol-f.github.io/vue-custom-element/#/demos/binding).
-        // + Note 2, however: when using the 'vsm-box' package directly
-        //   in another Vue project (which makes it use 'vsm-box.min.js'
-        //   as well, because our package.json's 'main'-property defines so),
-        //   then our Vue-component is _not_ wrapped into a web-component,
-        //   and one can simply use ":data-source=..." there.
-        myDataSource: class {
-          static getValue() {
-            return 39;
-          }
-        }
-      },
 
-      methods: {
-        // Demo use 2): attach an event listener.
-        // + Note: we must access `$emit()`'s args via `events.detail[]`. So it
-        //   differs for a webpacked webcomponent, vs. for a pure Vue-component.
-        incReported: (event) => {
-          console.log(event.detail[0]);
-          console.log(event.detail[1]);
-        }
-      },
 
-      created: function() {
-        // Demo use 3): change a prop on the webcomponent. We see it react to it.
-        // + Unlike in the code with the standalone webcomponent,
-        //   here we can change the prop it *from within the Vue code*.
-        // + (We could also change it from the outside, via `vm.$refs[elemID]
-        //   ._props.initialCount`. But that's a bad way, because the prop is
-        //   linked to (and so could change along with) the data->`init` above).
-        setTimeout(() => {
-          var orig = this.init;
-          this.init = 99;
-          setTimeout(() => { this.init = orig }, 1000);  // Restore.
-        }, 1000);
-
-        // Demo use 4): add one more component.
-        // + Unlike in the code with the standalone webcomponent, here we can
-        //   think in a data-driven way! We add by toggling a `v-if` directive.
-        //   + Or we could have done it by using a `v-for` directive, based on
-        //     a list of child-components, which we can dynamically grow).
-        setTimeout(() => { this.addNr2 = true }, 3000);
+  // ---------- Small demo, overriding the above one:
+  // Use 1 fixed subdictionary of the PubDictionaries webservice.
+  // (Requires a correctly resolving <script- tag in the HTML-head section).
+  //
+  var usePubDictionaries = true;
+  if (usePubDictionaries && window.VsmDictionaryRemoteDemo) {
+    class DictionaryPubDictionaries extends VsmDictionaryRemoteDemo {
+      constructor(options) {
+        super(options);
+        this.urlGetMatches = 'http://pubdictionaries.org' +
+          '/dictionaries/$filterDictID/prefix_completion?term=$str';
       }
-    });
+      getMatchesForString(str, options, cb) {
+        options = Object.assign({}, options,
+          { filter: { dictID: ['GO-BP'] } }
+        );
+        super.getMatchesForString(str, options, (err, res) => {
+          if (err)  return cb(err);
+          var arr = res.items.map(e => e.type ? e : ({
+            id:     e.identifier,
+            dictID: options.filter.dictID[0],
+            str:    e.label,
+            type:   e.label.startsWith(str) ? 'S' : 'T',
+          }));
+          cb(err, { items: arr });
+        });
+      }
+      getDictInfos(options, cb) {
+        cb(null, { items: [ { id: 'GO-BP', name: 'GO - BP' } ] });
+      }
+    }
+    dict = new (VsmDictionaryCacher(DictionaryPubDictionaries)) ();
+  }
+  // ----------
+
+
+
+  var lastAutoFilledText = '';
+
+
+  // Activate Vue on (only) the #app element and its children.
+  new Vue({
+    el: '#app',
+
+    data: function() { return {
+      /* + Note: the _web-component_'s html-attr ":vsm-dictionary.prop=..."
+           differs from a plain Vue-component's attr ":vsm-dictionary=...".
+           (See https://karol-f.github.io/vue-custom-element/#/demos/binding).
+         + Note 2, however: when using the 'vsm-box' package directly
+           in another Vue project (which makes it use 'vsm-box.min.js'
+           as well, because our package.json's 'main'-property defines so),
+           then our Vue-component is _not_ wrapped into a web-component,
+           and one can simply use ":data-source=..." there. */
+      vsmDictionary: dict,
+      placeholder: 'Type a term or doubleclick for menu',
+      maxStringLengths: { str: 100, strAndDescr: 120 },
+      initialValue: { terms: [ ], conns: [ ] },
+      sizes: { minWidth: 240 },
+      msg: '',
+      stateText: '',
+      stateTextWidth: 0,
+      useCustomTerm: false
+    }; },
+
+
+    watch: {
+      stateText: function() {             // Textarea changes ==> change VsmBox.
+        this.stateTextToBoxValue();
+      }
+    },
+
+
+    mounted: function() {
+      this.boxValueToStateText(this.initialValue); // Initial VsmBox ==>textarea.
+      this.setMsg('');
+      this.stateTextWidth =
+        getComputedStyle(document.getElementById('stateText')).width;
+    },
+
+
+    methods: {
+      /* Note: we can't set `:custom-term.prop` to `false` to deactivate it,
+        because its '.prop' requires that it is bound to an Object or Function.
+        So to disable it, you can either remove that binding from the HTML,
+        or return the default value `data.strs.str`, as shown below. */
+      customTerm(data) {
+        return !this.useCustomTerm ? { str: data.strs.str } :
+          { str: '<span style="font-size: 8px; color: #777;">' +
+            data.index + '.&nbsp; </span>' + data.strs.str };
+      },
+
+
+      /* Here we add a fake an advancedSearch function, just to show that
+         autocomplete will now show a 'Search' item at the bottom. */
+      advancedSearch(data, cb) {
+        setTimeout(() => cb({
+          str: data.str,  style: 'i',  id: (data.allowClassNull ? null : 'id123')
+        }), 150);
+      },
+
+
+      onChange(event) {                   // VsmBox changes ==> change textarea.
+        // Note: we must access `$emit()`'s args via `events.detail[]`. This is
+        // different for a webpacked webcomponent vs. a pure Vue-component.
+        this.boxValueToStateText(event.detail[0]);
+      },
+
+
+      boxValueToStateText(value) {              // (See vsm-box's index-dev.js).
+        lastAutoFilledText = this.stateText = stringify(value, { margins: true })
+          .replace(/ "([a-zA-Z]*)": /g, ' $1: ')
+          .replace(/{\n {2}terms:/, '{ terms:')
+          .replace(/, conns:/, ',\n  conns:')
+          .replace(/'/g, '\\\'') .replace(/"/g, '\'')
+          .replace(/\n {4}{\n {6}/g, '\n    { ')
+          .replace(/\n {6,10}([\]}],?\n)/g, ' $1')
+          .replace(/] }$/, ']\n}')
+          .replace(/] ?]\n}$/, ']\n  ]\n}')
+          .replace(/(: \[|\],) ?\[/g, '$1\n    [');
+        this.setMsg(1);
+      },
+
+
+      stateTextToBoxValue() {                   // (See vsm-box's index-dev.js).
+        var abort = lastAutoFilledText === this.stateText;
+        lastAutoFilledText = false;
+        if (abort)  return;
+
+        try {
+          this.initialValue = JSON5.parse(this.stateText);
+          this.setMsg(-1);
+        }
+        catch (err) {
+          this.setMsg(err.toString().replace('JSON5: ', ''));
+        }
+      },
+
+
+      setMsg(msg) {
+        var d = new Date();
+        d = '[' + ('0' + d.getHours()).slice(-2) + ':' +
+          ('0' + d.getMinutes()).slice(-2) + ':' +
+          ('0' + d.getSeconds()).slice(-2) + '.' +
+          ('00' + d.getMilliseconds()).slice(-3, -1) + ']';
+        this.msg = !msg ? '' :
+          ((msg == -1 ? '<---' : msg == 1 ? '--->' : msg) + ' &nbsp;' + d);
+      },
+
+
+      onButtonClear() {
+        this.fillBoth('Cleared', { terms: [], conns: [] })
+      },
+
+
+      onButtonExample1() {
+        var example1 = {
+          terms: [
+            { str: 'John',    classID: 'PRS:0510', instID: null },
+            { str: 'eats',    classID: 'CW:0101',  instID: null },
+            { str: 'chicken', classID: 'BIO:0042', instID: null,
+              dictID: 'http://x.org/BIO',  descr: 'the animal',
+              queryOptions: { sort: { dictID: ['http://x.org/BIO'] } } },
+            { str: 'with',    classID: 'CW:0105',  instID: null,
+              dictID: 'CW',  descr: 'to use' },
+            { str: 'fork',    classID: 'CW:0108',  instID: null }
+          ],
+          conns: [
+            { type: 'T', pos: [0, 1, 2] },
+            { type: 'T', pos: [1, 3, 4] }
+          ]
+        };
+        this.fillBoth('Example 1', example1)
+      },
+
+
+      onButtonExample2() {
+        var example2 = {
+          terms: [
+            { str: 'John',      classID: 'PRS:0510', instID: 'db-id20',
+              dictID: 'PRSNS',  descr: 'John Doe',
+              minWidth: 5, maxWidth: 80, editWidth: 50,
+              queryOptions: {
+                filter: { dictID: [ 'PRSNS', 'CW', 'VAR' ] },
+                sort: { dictID: [ 'CW' ] },
+                fixedTerms: [
+                  { id: 'PRS:0501', str: 'Alice' }, { id: 'BIO:0010' }  ] }
+            },
+            { str: 'activates', classID: 'BIO:0014', instID: null,
+              isFocal: true },
+            { str: 'burnt',     classID: 'CW:0109',  instID: null },
+            { str: 'chicken',   classID: 'BIO:0042', instID: null,
+              dictID: 'http://x.org/BIO',  descr: 'the animal',
+              queryOptions: { sort: { dictID: ['http://x.org/BIO'] } } },
+            { str: 'with',      classID: 'CW:0105',  instID: null,
+              dictID: 'CW',  descr: 'to use' },
+            { str: 'Ca2+', style: 'u2-4', descr: 'Calcium ion',
+              classID: 'BIO:0010', instID: null },  ///, minWidth: 47},
+            { str: 'with',      classID: 'CW:0106',  instID: null,
+              dictID: 'CW',  descr: 'to be accompanied by' },
+            { str: 'cls', classID: 'A:01', dictID: 'A', descr: 'descr-1' },
+            { str: 'lit' },
+            { editWidth: 20 },
+            { type: 'EC', editWidth: 20 },
+            { type: 'EL', editWidth: 20 },
+            { str: 'and',       classID: 'CW:0005',  instID: null,
+              dictID: 'CW',  descr: 'a set of items' },
+            { str: 'himself',   classID: 'PRS:0510', instID: 'db-id40',
+              parentID: 'db-id20'}
+          ],
+          conns: [
+            { type: 'T', pos: [ 3, -1, 2 ] },
+            { type: 'T', pos: [ 0, 1, 3 ] },
+            { type: 'T', pos: [ 1, 4, 5 ] },
+            { type: 'L', pos: [ 12, 7, 8, 9, 10, 11, 13 ] },
+            { type: 'T', pos: [ 1, 6, 12 ] },
+            { type: 'R', pos: [ 13, 0 ] }
+          ]
+        };
+        this.fillBoth('Example 2', example2)
+      },
+
+
+      fillBoth(name, data) {
+        this.initialValue = JSON.parse(JSON.stringify(data));  // Clone=>new Obj.
+        this.boxValueToStateText(this.initialValue);
+        this.setMsg(name);
+      }
+    }
+  });
   </script>
 
 </body>

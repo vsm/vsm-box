@@ -1,0 +1,33 @@
+<html>
+<head>
+  <meta charset="utf-8"/>
+
+  <script src="https://unpkg.com/vsm-dictionary-local@2.6.0/dist/vsm-dictionary-local.min.js"></script>
+  <script src="https://unpkg.com/vsm-dictionary-cacher@1.2.0/dist/vsm-dictionary-cacher.min.js"></script>
+  <script src="../dist/vsm-box.standalone.min.js"></script>
+</head>
+
+
+<body>
+  <vsm-box autofocus=true></vsm-box>
+  <br>
+  <textarea readonly></textarea>
+</body>
+
+
+<script>
+  var vsmbox = document.getElementsByTagName('vsm-box')[0];
+
+  vsmbox.vsmDictionary = new (VsmDictionaryCacher(VsmDictionaryLocal)) ({
+    dictData: [ { id: 'http://d.org/A',  name: 'Aaa',  entries: [
+      { id: 'http://d.org/A/A:01', terms: [{ str: 'aaa' }, { str: 'aab' }] },
+      { id: 'http://d.org/A/A:03', terms: [{ str: 'abc' }], descr: 'example' }
+    ]}]
+  });  // (Or use another dictionary interface, like vsm-dictionary-bioportal).
+
+
+  var text = document.getElementsByTagName('textarea')[0];  text.value = '';
+  function showOutput(e) { text.value = JSON.stringify(e.detail[0], null, 2) }
+  vsmbox.addEventListener('change', showOutput);
+</script>
+</html>

@@ -129,6 +129,7 @@ Notes:
   maximum allowed display-width, in pixels.
   `editWidth` is the width while it is being edited.
   + If a term has no `maxWidth` property, then `sizes.defaultMaxWidth` is used.  
+  + Making a term's `maxWidth` 0 removes any limit.
   + If an Edit-type term has no `editWidth` property or it is 0, then
     `sizes.defaultEditWidth` is used.
   + These widths pertain to a term's string-content only. A term's total width
@@ -157,7 +158,8 @@ Notes:
   targeted term-lookup, customizable per Edit-type term.  
   These properties may also be stored in VSM-sentences that were built with a
   VSM-template, so that they can use the same query-options when being re-edited.  
-  `queryOptions` accepts these optional sub-prop.s, as defined in vsm-dictionary:
+  `queryOptions` accepts these optional sub-properties, as defined in
+  vsm-dictionary:
   + `filter`: {Object}:
     + `dictID`: {Array(String)}:  
       a list of dictIDs. It returns only for these, combined in OR-mode.
@@ -165,10 +167,12 @@ Notes:
     + `dictID`: {Array(String)}:  
       sorts matches whose dictID is in this list, first; then sorts as usual.
       This enables defining 'preferred dictionaries'.
-  + `idts`: {Array(Object)}: a list of "fixedTerms", represented by a
+  + `fixedTerms`: {Array(Object)}: a list of "fixedTerms", represented by a
     classID + optional term-string: `[{ id:.., str:.. },  ...]`.  
-    Note: fixedTerms appear on top of the VSM-term's autocomplete result list,
-    and already appear when the term is focused and has no text input yet.  
+    + Note: fixedTerms appear on top of the VSM-term's autocomplete result list,
+      and already appear when the term is focused and has no text input yet.  
+    + Note!: everywhere else in the code and in other modules `fixedTerms` is
+      still called (more obscurely) `idts`, but that will be changed there soon.
   + `z`: {true|Array(String)}: to include a full, partial, or no z-object.
 
 <br>
@@ -257,16 +261,16 @@ stored `instID`s that are returned, it may look like (with example `instID`s):
 ```
 var vsmSentence = {
   terms: [
-    { str: 'John',          classID: 'EX:01', instID: 'myDB:10051' },
-    { str: 'eats',          classID: 'EX:02', instID: 'myDB:10052' },
-    { str: 'burnt',         classID: 'EX:03', instID: 'myDB:10053' },
-    { str: 'chicken',       classID: 'EX:04', instID: 'myDB:10054' },
-    { str: 'and',           classID: 'EX:05', instID: 'myDB:10055' },
-    { str: 'salad',         classID: 'EX:06', instID: 'myDB:10056' },
-    { str: 'perforated by', classID: 'EX:07', instID: 'myDB:10057' },
-    { str: 'it',            classID: 'EX:04', instID: 'myDB:10058', parentID: 'myDB:10054' },  // parentID is same as chicken's instID.
-    { str: 'with',          classID: 'EX:08', instID: 'myDB:10059' },
-    { str: 'fork',          classID: 'EX:09', instID: 'myDB:10060' }
+    { str: 'John',          classID: 'EX:01', instID: 'mydb:10011' },
+    { str: 'eats',          classID: 'EX:02', instID: 'mydb:10012' },
+    { str: 'burnt',         classID: 'EX:03', instID: 'mydb:10013' },
+    { str: 'chicken',       classID: 'EX:04', instID: 'mydb:10014' },
+    { str: 'and',           classID: 'EX:05', instID: 'mydb:10015' },
+    { str: 'salad',         classID: 'EX:06', instID: 'mydb:10016' },
+    { str: 'perforated by', classID: 'EX:07', instID: 'mydb:10017' },
+    { str: 'it',            classID: 'EX:04', instID: 'mydb:10018', parentID: 'mydb:10014' },  // parentID is same as chicken's instID.
+    { str: 'with',          classID: 'EX:08', instID: 'mydb:10019' },
+    { str: 'fork',          classID: 'EX:09', instID: 'mydb:10010' }
   ],
   conns: [
     { type: 'T', pos: [0, 1, 4] },
@@ -308,8 +312,8 @@ var vsmSentence = {
     { str: 'eats', classID: 'EX:02', instID: null, dictID: 'EX', descr: 'to eat' },
     { },
     { str: 'with', classID: 'EX:08', instID: null, dictID: 'EX', descr: 'using' },
-    { editWidth: 200, queryOptions:
-      { sort: { dictID: ['EX', 'EX22'] }, idts: [{ id: 'EX:09', str: 'fork' }] }
+    { editWidth: 160, queryOptions:
+      { sort: { dictID: ['EX', 'EX22'] }, fixedTerms: [{ id: 'EX:09', str: 'fork' }] }
     }
   ],
   conns: [
@@ -482,6 +486,8 @@ VsmBox
           not-null, i.e. a Term that refers to a Term in another VSM-sentence.
         + Like this, advancedSearch can generate any type of Term (R/I/C/L).
 - `sizes`: {Object}: an object with some or all of the following properties  
+  (they define settings for how the user-interface looks and behaves (sizes,
+  delays, and colors), that remain constant during the life of a VsmBox)  
   (any given one overrides a VsmBox default value for it):
   + `minWidth`: {Number}:  
     minimum width of the VsmBox. If the VsmBox is empty, this will be its
@@ -502,14 +508,6 @@ VsmBox
     then min/max/edit stringwidths can only contain less text than intended.
     Therefore, this custom multiplier will be applied to all stringwidths.
     (Applies to: min/max/editWidth, default...Width, minEndTerm...Width).
-  + `theConnsMarginBottom`: {Number}:  
-    Horizontal space at the bottom of TheConns, drawn not in TheConns-pane's
-    main color, but in the same color as TheTerms' background. It reads this
-    color from TheTerms' background-color CSS.  
-    This makes it appear that TheTerms (which has no real top-padding) has
-    padding on all sides, while a connector-leg's mousehover-highlighting
-    can still be drawn right until against a Term's top border
-    (by apparently intruding TheTerms' fake 'top padding').
   + `termDragThreshold`: {Number}:  
     The distance in pixels that a Term must be dragged before it starts moving.
   + `delayPopupShow`: {Number}: &nbsp; _(a 'size' in the time dimension)_  
@@ -519,6 +517,19 @@ VsmBox
     for another Term.
   + `delayPopupHide`: {Number}:  
     Delay before unhovering a Term (or ThePopup) will hide ThePopup.
+  + `theConnsMarginBottom`: {Number}:  
+    Horizontal space at the bottom of TheConns, drawn not in TheConns-pane's
+    main color, but in the same color as TheTerms' background. It reads this
+    color from TheTerms' background-color CSS.  
+    This makes it appear that TheTerms (which has no real top-padding) has
+    padding on all sides, while a connector-leg's mousehover-highlighting
+    can still be drawn right until against a Term's top border
+    (by apparently intruding TheTerms' fake 'top padding').
+  + `theConnsMinRows`: {Number}:  
+    ...
+  + `theConnsRowHeight`: {Number}:  
+    ...
+  + ...
 - `custom-term`: {Function|false}:  
   can build custom content for non-Edit-type Terms' labels.  
   See below, under: "Custom content for Term labels".
@@ -572,6 +583,8 @@ VsmBox
 
 <br>
 
+- `change-init`
+- `change`
 - //To do
 
 
@@ -821,7 +834,7 @@ It is called with one argument: an Object with useful properties & subproperties
     It is an Object with properties (Strings) that represent the different parts.  
     These parts may contain HTML tags, but will most commonly be just text.  
     All properties are guaranteed to be of type {String},
-    except for queryFilter/Sort/Idts, which are of type {Array(String)}.  
+    except for queryFilter/Sort/FixedTerms, which are of type {Array(String)}.  
     - `str`: `term.str` as the title-line of ThePopup, with any `style` applied;
     - `descr`: the Term's description `descr`;
     - `dict`: its `dictID`; or if dictInfo-data is available then it is a
@@ -835,8 +848,8 @@ It is called with one argument: an Object with useful properties & subproperties
     - `queryFilter` (Array): a list of dictionary-info strings, for each of
       the Term's `queryOptions.filter.dictID[*]`s (if any);
     - `querySort` (Array): similar, for any `queryOptions.sort.dictID[*]`s;
-    - `queryIdts` (Array): a list of string+ids, for each of
-      the `queryOptions.idts[*]` fixedTerms (if any);  
+    - `queryFixedTerms` (Array): a list of string+ids, for each of
+      the `queryOptions.fixedTerms[*]` (if any);  
       (the term-string part will be absent from this if no additional query
       results arrived yet; see note below);
     - `queryZ`: describes the z-object-property-filter in `queryOptions.z`,
@@ -847,14 +860,14 @@ It is called with one argument: an Object with useful properties & subproperties
       (or changes to) one of the Edit-types;
     - `widthScale`: the VsmBox's `sizes.widthScale` (or its auto-calculated
       value) (as a String), if it is different from its zero-effect value of 1;
-    - `extra`: if not-empty, makes an extra subpanel appear, which shows
+    - `infoExtra1`: if not-empty, makes an extra subpanel appear, which shows
       the given text/HTML content; this subpanel appears after the term-info
       subpanel, and before the settings subpanel;
-    - `extra2`: similar; this subpanel can appear under the settings subpanel,
+    - `infoExtra2`: similar; this subpanel appears under the settings subpanel,
       still inside the top scroll-pane.
-    - `extra3`: similar; this subpanel can appear on top of the menu-items,
+    - `menuExtra1`: similar; this subpanel appears on top of the menu-items,
       outside of the scroll-pane.
-    - `extra4`: similar; this subpanel can appear under the menu-items.
+    - `menuExtra2`: similar; this subpanel appears under the menu-items.
 
 `customPopup()` must return an Object like its argument `data.strs`.  
 It may simply return the given `strs` object, after directly modifying just
@@ -881,7 +894,7 @@ those properties it needs to.
 ### Custom content in autocomplete's match list
 
 Items in autocomplete's selection-panel can be customized
-via the `custom-item` and `custom-item-literal` props.  
+via the two props `custom-item` and `custom-item-literal`.  
 See [`vsm-autocomplete`](https://github.com/vsmjs/vsm-autocomplete)'s
 description of its props with the same name.
 
@@ -889,7 +902,7 @@ description of its props with the same name.
 <br>
 <br>
 
-## Other implementation details
+## Some implementation details
 
 <br>
 
@@ -1030,9 +1043,10 @@ data. This may include [some are To Do, at time of writing]:
 
 + At creation time or when updating the `initialValue` prop, VsmBox evaluates
   all `initialValue.terms`, and:
-  + It preloads any fixedTerms that terms may have in their `queryOptions.idts`.
+  + It preloads any fixedTerms that terms may have in their
+    `queryOptions.fixedTerms`.
     Preloading happens with `vsmDictionary.loadFixedTerms()`.  
-    For efficiency, it groups together all found fixedTerms ('idts') into one
+    For efficiency, it groups together all found fixedTerms into one
     preload-query (one per distinct `queryOptions.z`).  
     &rarr; Preloading fixedTerms is required for them to appear in autocomplete.
   + If `vsmDictionary` is wrapped in a 'vsm-dictionary-cacher' instance (which
@@ -1042,6 +1056,78 @@ data. This may include [some are To Do, at time of writing]:
     available in the cache before a VsmAutocomplete subcomponent may request it,
     which is likely in the case of a VSM-template and Edit-type Terms.  
     &rarr; Preloading dictInfos happens for efficiency only.
+
+<br>
+
+### Internal propagation of change-events
+
+Initially:
+- When VsmBox initializes, or when it gets a new `initialValue` prop:
+  - It sets TheConns' `orig-conns` prop to `false`.  
+    This will make TheConns reset its state (e.g. delete any connector-leg /
+    term-key mappings it had before), in anticipation of receiving new data.  
+    (TheConns will only be able to process new data after TheTerms initialized,
+    as it needs term-coordinates as a basis for its connector-leg coordinates).
+  - It sets TheTerms' `orig-terms` prop to `initialValue.terms`.
+- When TheTerms detects that its `orig-terms` prop changed, it:
+  - (Re/)Initializes: it calculates Term positions, widths, unique `key`s, etc.
+  - After that, it emits a `'change-init'`-event, with as argument: an array of
+    Term-data in the same form as what its `'change'`-event emits;
+    i.e. a cleaned-up version of its internally used `terms`, ready to be
+    emitted onward to the outside world (i.e. excluding term coordinates etc).
+- When VsmBox hears TheTerms' `'change-init'`-event:
+  - It stores the sent-along array in `this.latestTerms` for later use.
+  - It sets TheConns' `orig-conns` prop to `initialValue.conns`.
+- When TheConns detects that its `orig-conns` prop changed to not-`false`:
+  - It copies this into its `this.conns`, and calculates connector-leg
+    coordinates based on the latest Term coordinates.  
+    Note that TheConns is able to access the latest _full_ term data incl.
+    coordinates, via: `$parent.$refs.theTerms.terms`.
+  - After that, it emits a `'change-init'`-event, with as argument: an array of
+    Conn-data in the same form as what its `'change'`-event emits;
+    i.e. a cleaned-up version of its internally used `conns`, ready to emit
+    onward.
+- When VsmBox hears TheConns' `'change-init'`-event:  
+  It combines the received `conns` and the stored `latestTerms`, and emits them
+  together in a `'change-init'`-event.  
+  + Note: in order to behave similar to an HTML &lt;input&gt;-element,
+    &lt;vsm-box&gt; does not emit a `'change'` (see below) event at start.  
+    But it may be useful for external code to hear how `initialValue` was
+    accepted (maybe some properties/IDs were removed/updated), hence the
+    `'change-init'` event.
+
+
+Next:
+- When the user makes an edit to a term, TheTerms will process the effect
+  and then emit a `'change'` event + cleaned `terms`. Then:
+  - VsmBox hears TheTerms' `'change'` event, and stores the received array in
+    its `latestTerms` (to be combined with updated 'conns' data later, when it
+    becomes available).
+  - VsmBox then updates TheConns' numeric `terms-change-nr` property by adding 1.  
+    This is the signal that notifies TheConns of new changes in terms or
+    term-coordinates.
+  - TheConns detects the change in its `terms-change-nr` prop, and in response:
+    - It first updates the position of existing connector-legs, according to the
+      possibly new positions of Terms, based on the Terms' `key` properties
+      (whereby it remembers & compares which `key` was vs. is at each position).
+    - It then updates connector-leg coordinates.  
+      The above two updates make TheConns conform with the current TheTerms data
+      (which it directly accesses via `$parent.$ref....`).
+    - It then emits a `'change'`-event, + cleaned `conns` (i.e. a version of
+      `conns` without coordinates etc.), + the `terms-change-nr` that put these
+      changes in motion.
+  - VsmBox hears TheConns' `'change'`-event, and:
+    - If the sent-along `terms-change-nr` is not the one that it last gave to
+      TheConns, then it does nothing.  
+      (This protects against the (unlikely) problem where TheTerms would send
+      multiple 'change' events before TheConns would process them).
+    - Else, it combines the sent-along `conns` and the stored `latestTerms`, and
+      emits them together in a `'change'`-event.
+- When the user makes an edit to a connector, TheConns will process the effect
+  and emit a `'change'` event + a cleaned `conns` array +
+  `terms-change-nr: null`. Then:
+  - VsmBox hears TheConns' `'change'` event, combines the sent-along `conns` and
+    the stored `latestTerms`, and emits them together in a `'change'`-event.
 
 
 <br>

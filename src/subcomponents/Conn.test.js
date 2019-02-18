@@ -9,14 +9,37 @@ describe('sub/Conn', () => {
   const make = props => {
     w = mount(Conn, {
       propsData: Object.assign(
-        { index: 0,
-          paneHeight: 100,
-          conn: []
+        {
+          conn: {  // Make something like TheConns would produce.
+            type: 'T',
+            pos: [-1, 1, 2],
+            posA: 1,
+            posB: 2,
+            backLevel: 4,
+            footLevels: [-1, 3, 4],
+          },
+          sizes: {
+            theConnsMarginBottom: 5,
+            theConnsRowHeight: 20,
+            connRefDashes: '1 1',
+            connListBoneSep: 2,
+            connLineWidth: 1,
+            connBackDepth: 5,
+            connFootDepth: 15,
+            connBackColor: '#000'
+          },
+          levelTop: level => (level + 1) * 20 + 5,
+          termX1s: [1, 11, 21, 31, 41],
+          termX2s: [9, 19, 29, 39, 49]
         },
         props
       )
     });
   };
+
+
+
+  // --- TODO: Write more tests. ---
 
 
   it('initializes, when getting only the required props', () => {

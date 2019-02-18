@@ -1,4 +1,6 @@
 <template>
+  <!-- eslint-disable vue/multiline-html-element-content-newline -->
+  <!-- eslint-disable vue/singleline-html-element-content-newline -->
   <div
     :style="{
       top: px(term.y + term.height),
@@ -27,7 +29,7 @@
       class="hover-extend ext2"
     />
     <div class="hover-extend ext3" />
-    <div class="arrow"/>
+    <div class="arrow" />
     <div
       :class="['arrow-inner', {
         'no-info-panel': !hasInfo
@@ -102,11 +104,11 @@
             />
           </div>
           <div
-            v-if="strs.queryIdts.length"
-            class="query-idts list"
+            v-if="strs.queryFixedTerms.length"
+            class="query-fixedterms list"
           >
             <div
-              v-for="s in strs.queryIdts"
+              v-for="s in strs.queryFixedTerms"
               :key="s"
               v-html="s"
             />
@@ -246,7 +248,7 @@
             @click="onMenuRemove"
           >
             Remove
-            <help/>
+            <help />
           </div>
         </div>
         <div
@@ -261,6 +263,7 @@
       </div>
     </div>
   </div>
+  <!-- eslint-enable -->
 </template>
 
 
@@ -343,8 +346,8 @@ export default {
 
     hasSettings() {
       var o = this.strs;
-      return o.queryFilter.length || o.querySort.length || o.queryIdts.length ||
-        o.queryZ || this.hasWidths;
+      return o.queryFilter.length || o.querySort.length ||
+        o.queryFixedTerms.length || o.queryZ || this.hasWidths;
     },
 
     hasInfo() {
@@ -387,6 +390,11 @@ export default {
       immediate: true,
       handler() { this.initForNewTerm() }
     }
+
+    // Note: it does not need to respond to changes in other props than `term`,
+    // because ThePopup will only be shown after user-interaction, i.e. long
+    // after creation. (This is also true for the standalone version of vsm-box,
+    // for which props can only be updated to non-defaults, after creation).
   },
 
 
@@ -421,7 +429,7 @@ export default {
     loadNewData() {
       if (this.isTypeRIC && this.term.classID && (
         !this.dictID || !this.descr ||
-        (this.customPopup && this.zFilter.length != 0)  // (Only 0 for `[]`).
+        (this.customPopup && this.zFilter.length != 0)  // (0: only for `[]`).
       ))  this.loadTermData();
       else  this.loadDictInfos();
 
@@ -533,7 +541,8 @@ export default {
 
         queryFilter: this.filterIDs.map(id  => this.dictString(id)), // }Arrays..
         querySort:   this.sortIDs  .map(id  => this.dictString(id)), // }..of..
-        queryIdts:   this.idts    .map(obj => this.idtsString(obj)), // }..Strs.
+        queryFixedTerms:                                             // }..Strs.
+                     this.idts    .map(obj => this.idtsString(obj)),
         queryZ:      this.zString(),
 
         minWidth:   f(term.minWidth),
@@ -806,7 +815,7 @@ export default {
     content: "Autocomplete prioritizes: ";
   }
 
-  .query-idts::before {
+  .query-fixedterms::before {
     content: "Autocomplete's fixedTerms: ";
   }
 
@@ -882,10 +891,9 @@ export default {
   }
 
   .types:hover .type.selected {
-    padding-right: 5px; /* Compensates for no left/right border */
-    padding-left: 5px;  /* " */
     background-color: #add2f8;
-    border-width: 0;
+    border: 1px solid #add2f8;
+    border-width: 0 1px;
   }
 
   .types:hover .type:not(.selected):not(.inactive):hover {
