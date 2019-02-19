@@ -292,7 +292,8 @@
               queryOptions: { sort: { dictID: ['http://x.org/BIO'] } } },
             { str: 'with',    classID: 'CW:0105',  instID: null,
               dictID: 'CW',  descr: 'to use' },
-            { str: 'fork',    classID: 'CW:0108',  instID: null }
+            { str: 'fork',    classID: 'CW:0108',  instID: null,
+              queryOptions: { fixedTerms: [ { id: 'CW:0118', str: 'spoon' } ] } }
           ],
           conns: [
             { type: 'T', pos: [0, 1, 2] },

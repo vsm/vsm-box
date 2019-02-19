@@ -99,6 +99,7 @@
 import Conn from './Conn.vue';
 import ConnHighlight from './ConnHighlight.vue';
 import ConnRemoveIcon from './ConnRemoveIcon.vue';
+import co from './connOperations.js';
 
 const clone = obj => JSON.parse(JSON.stringify(obj));
 const hook   = window.addEventListener;
@@ -283,27 +284,6 @@ export default {
     },
 
 
-    prepConnToReceive(conn_0) {
-      var conn = clone(conn_0);
-      this.pruneProperties(conn);
-      return conn;
-    },
-
-
-    /**
-     * Remove extra properties from a connector-object that would interfere
-     * when receiving the data, or that are internal and should not be emitted.
-     */
-    pruneProperties(conn) {
-      delete conn.backLevel;
-      delete conn.footLevels;
-      delete conn.posA;
-      delete conn.posZ;
-      delete conn.isUC;  // =Is the connector "under-construction".
-      delete conn.justAdded;
-    },
-
-
     /**
      * Constructs and emits the current, publicly visible state of TheConns,
      * excluding any UC-conn (=a possibly-existing under-construction connector).
@@ -311,16 +291,9 @@ export default {
     emitValue(eventStr, termsChangeNr = null) {
       var conns = this.conns
         .filter(c => !c.isUC  &&  !c.justRemoved)
-        .map(this.prepConnToEmit);
+        .map(co.prepConnToEmit);
 
       this.$emit(eventStr || 'change', { conns, termsChangeNr });
-    },
-
-
-    prepConnToEmit(conn_0) {
-      var conn = clone(conn_0);
-      this.pruneProperties(conn);
-      return conn;
     },
 
 
@@ -334,7 +307,7 @@ export default {
         .map(conn =>
           Math.max(...conn.pos) > this.fullTerms.length - 2 ?
             false :  // Remove any conn. with a leg to where there is no Term.
-            this.prepConnToReceive(conn)
+            co.prepConnToReceive(conn)
         )
         .filter(c => c);
 
@@ -787,22 +760,12 @@ export default {
     },
 
 
-    /**
-     * TODO:
-     * Sorts all connectors in `this.conn` in a visually natural-looking order,
-     * and returns `true/false` which tells if any connector changed place.
-     */
     sortConnectors() {
-      var orderChanged = false;
-
+      this.conns = co.sortConnectors(this.conns);
       this.calcCoordinates();
-      return orderChanged;
     }
   }
 };
-
-///function J(obj) { console.log(JSON.parse(JSON.stringify(obj))) }  J;
-///function C(a) { console.log(a.map(JSON.stringify).join('\n') + ';') }  C;
 </script>
 
 

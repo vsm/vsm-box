@@ -27,10 +27,11 @@ function runDemo() {
       { str: 'eats',    classID: 'CW:0101',  instID: null },
       { str: 'chicken', classID: 'BIO:0042', instID: null,
         dictID: 'http://x.org/BIO',  descr: 'the animal',
-        queryOptions: { sort: { dictID: ['http://x.org/BIO'] } } },
+        queryOptions: { sort: { dictID: [ 'http://x.org/BIO' ] } } },
       { str: 'with',    classID: 'CW:0105',  instID: null,
         dictID: 'CW',  descr: 'to use' },
-      { str: 'fork',    classID: 'CW:0108',  instID: null }
+      { str: 'fork',    classID: 'CW:0108',  instID: null,
+        queryOptions: { fixedTerms: [ { id: 'CW:0118', str: 'spoon' } ] } }
     ],
     conns: [
       { type: 'T', pos: [0, 1, 2] },
@@ -189,6 +190,7 @@ function runDemo() {
             { type: 'L', pos: [ 12, 10, 11, 13, 11 ], isUC: true }
           ] ||
           0&&example1.conns ||
+          0&&example2.conns.reverse() ||
           1&&example2.conns ||
           1&&example3.conns || 1&&[],
       },
@@ -418,6 +420,7 @@ function createData() {
           ]
         },
         { id: 'CW:0108', terms: [{str: 'fork'}] },
+        { id: 'CW:0118', terms: [{str: 'spoon'}] },
         { id: 'CW:0109', terms: [{str: 'burnt'}] },
         { id: 'CW:0105', descr: 'to use', terms: [
           {str: 'with'},
