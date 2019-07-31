@@ -389,7 +389,6 @@ function createData() {
         { id: 'CW:0056', terms: [{str: 'no'}] },
         { id: 'CW:0013', terms: [{str: 'not'}] },
         { id: 'CW:0073', terms: [{str: 'now'}] },
-        { id: 'CW:0004', terms: [{str: 'of'}] },
         { id: 'CW:0014', terms: [{str: 'on'}] },
         { id: 'CW:0035', terms: [{str: 'one'}] },
         { id: 'CW:0075', terms: [{str: 'only'}] },
