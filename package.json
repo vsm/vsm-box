@@ -1,6 +1,6 @@
 {
   "name": "vsm-box",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "description": "Webcomponent for building and showing a VSM-sentence",
   "main": "dist/vsm-box.min.js",
   "scripts": {
@@ -77,6 +77,6 @@
   },
   "dependencies": {
     "string-style-html": "^1.1.4",
-    "vsm-autocomplete": "^1.8.2"
+    "vsm-autocomplete": "^1.8.3"
   }
 }
