@@ -371,6 +371,7 @@ export default {
 
   .vsm-box {
     box-sizing: content-box;
+    text-align: left;
     background-color: #fff;
     border: 1px solid #d3d9e5;
   }
