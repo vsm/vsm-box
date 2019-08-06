@@ -218,6 +218,82 @@ describe('sub/Term', () => {
     });
 
 
+    it('shows `term.placeholder` as the label, and adds \'label-placehold\' ' +
+       'CSS-class, only if `term.label` is empty, for an Edit-type term ' +
+        'that does not have the <input>', () => {
+      const _label = () => w.find('.label');
+
+      make({ term: { placeholder: 'P', str: '', type: 'EL' }, hasInput: false });
+      _label().text().should.equal('P');
+      _label().classes().should    .include('label-placehold');
+
+      make({ term: { placeholder: 'P', str: 'a', type: 'EL' }, hasInput: false});
+      _label().text().should.equal('a');
+      _label().classes().should.not.include('label-placehold');
+
+      make({ term: { placeholder: 'P', str: '', type: 'L' }, hasInput: false });
+      _label().text().should.equal('');
+      _label().classes().should.not.include('label-placehold');
+
+      make({ term: { placeholder: 'P', str: '', type: 'EL' }, hasInput: true });
+      _label().exists().should.equal(false);
+    });
+
+
+    it('makes plain-input placeholder like vsmAC\'s: with \'placehold\'-elem' +
+       'that changes style on focus, and hides when input has text', () => {
+      const make2 = term =>
+        make({ term: Object.assign(term, { type: 'EL' }), hasInput: true });
+      const _placeh = () => w.find('.placehold');
+
+      // (Similar to a number of tests at vsm-autocomplete's TheInput) :
+      // 1. Gives placehold a 'focus' class on focus; removes it on blur.
+      make2({ placeholder: 'plc', str: '' });
+      _placeh().classes().should.not.contain('focus');
+      _input ().trigger('focus');
+      _placeh().classes().should    .contain('focus');
+      _input ().trigger('blur');
+      _placeh().classes().should.not.contain('focus');
+
+      // 2. Gives it a 'hidden' class, only if `placeholder` and `str` are given.
+      make2({ placeholder: 'plc', str: '' });
+      _placeh().classes().should.not.contain('hidden');
+      make2({ placeholder: 'plc', str: 'a' });
+      _placeh().classes().should    .contain('hidden');
+
+      // 3. Does not add it if no `placeholder` is given.
+      make2({ placeholder: ''   , str: '' });
+      _placeh().exists().should.equal(false);
+      make2({ placeholder: false, str: '' });
+      _placeh().exists().should.equal(false);
+
+      // 4. Gives it a 'hidden' class, only if the input is not empty.
+      //    (Test-implem. differs from in vsmAC, as Term does not use v-model).
+      var term = { placeholder: 'plc', str: '', type: 'EL' };
+      make({ term, hasInput: true });
+      w.setProps({ term: Object.assign({}, term, { str : 'a' }) });
+      _placeh().classes().should    .contain('hidden');
+      w.setProps({ term: Object.assign({}, term, { str : '' }) });
+      _placeh().classes().should.not.contain('hidden');
+
+      // 5. Changes its content along with the `placeholder` prop.
+      term = { placeholder: 'plc', str: '', type: 'EL' };
+      make({ term, hasInput: true });
+      w.setProps({ term: Object.assign({}, term, { placeholder: 'plc2' }) });
+      _placeh().text().should.equal('plc2');
+    });
+
+
+    it('shows placeholder both given as `placeholder` (for endTerm), and as ' +
+       '`term.placeholder` (for other Terms)', () => {
+      make({ term: { str: '', type: 'ER', placeholder: 'P' }, hasInput: true });
+      w.find('.placehold').text().should.equal('P');
+
+      make({ term: { str: '', type: 'ER' }, placeholder: 'P', hasInput: true });
+      w.find('.placehold').text().should.equal('P');
+    });
+
+
     it('updates rendering when the `term` prop changes', () => {
       make({ term: {
         type: 'R', str: 'abc', label: 'abc',
@@ -279,30 +355,35 @@ describe('sub/Term', () => {
 
 
     it('passes `autofocus` and `placeholder` on to both <vsm-autocomplete> ' +
-       'and a plain input (if not focused)', () => {
+       'and a plain input', () => {
+      const _placehold = () => w.find('.placehold');
+
       // Part 1: for autocomplete input.
       make({
         term: { type: 'EI' }, hasInput: true,
         autofocus: true, placeholder: 'abc'
       });
-      _input().attributes().autofocus  .should.not.equal(undefined);
-      _input().attributes().placeholder.should    .equal('abc');
+      _input().attributes().autofocus.should.not.equal(undefined);
+      _placehold().text()            .should    .equal  ('abc');
+      _placehold().classes()         .should.not.include('hidden');
 
       // Part 2: for plain input.
       make({
         term: { type: 'EL' }, hasInput: true,
         autofocus: true, placeholder: 'abc'
       });
-      _input().attributes().autofocus  .should.not.equal(undefined);
-      _input().attributes().placeholder.should    .equal('abc');
+      _input().attributes().autofocus.should.not.equal(undefined);
+      _placehold().text()            .should    .equal  ('abc');
+      _placehold().classes()         .should.not.include('hidden');
 
       // Part 3: both input types do not set these attributes when not asked to.
       make({ term: { type: 'EI' }, hasInput: true });
       expect(_input().attributes().autofocus  ).to.equal(undefined);
-      expect(_input().attributes().placeholder).to.equal(undefined);
+      _placehold().exists().should.equal(false);
+
       make({ term: { type: 'EL' }, hasInput: true });
       expect(_input().attributes().autofocus  ).to.equal(undefined);
-      expect(_input().attributes().placeholder).to.equal(undefined);
+      _placehold().exists().should.equal(false);
     });
 
 

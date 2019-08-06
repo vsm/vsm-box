@@ -377,7 +377,8 @@ export default {
   }
 
   .vsm-box,
-  .vsm-box >>> input {  /* '>>>' overrides scoped child CSS */
+  .vsm-box >>> input,  /* '>>>' overrides scoped child CSS */
+  .vsm-box >>> .placehold {
     /* This sets both vsm-autocomplete and plain <input>'s style */
     font-family: tahoma, verdana, arial, sans-serif;
 
@@ -385,6 +386,10 @@ export default {
        may override this CSS-value; if so then `widthScale` will automatically
        update accordingly. */
     font-size: 11px;
+  }
+
+  .vsm-box,
+  .vsm-box >>> input {
     color: #000;
   }
 

@@ -77,6 +77,6 @@
   },
   "dependencies": {
     "string-style-html": "^1.1.4",
-    "vsm-autocomplete": "^1.8.3"
+    "vsm-autocomplete": "^1.9.2"
   }
 }

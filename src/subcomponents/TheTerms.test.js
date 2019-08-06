@@ -487,38 +487,38 @@ describe('sub/TheTerms', () => {
     });
 
 
-    it('sets `placeholder` attr. only on unfocused endTerm, and if there ' +
-       'are no real terms; and both so for plain & vsmAC endTerm-input', cb => {
-      // Test 1: sets `placeholder` on a lone, unfocused, vsmAC-having endTerm.
+    it('sets `placeholder` attr. on endTerm, only if there are no real terms; ' +
+       'and both so for plain & vsmAC endTerm-input', cb => {
+      const _placehold = () => w.find('.placehold');
+
+      // Test 1: sets `placeholder` on a lone, vsmAC-having endTerm.
       make({ origTerms: [], placeholder: 'abx' });
       vueTick(() => {
         _termInput(0).exists().should.equal(true); // endTerm's <input> at pos 0.
-        _termInput(0).attributes().placeholder.should.equal('abx');
-        _termITrig(0, 'focus');
-        expect(_termInput(0).attributes().placeholder).to.equal(undefined);
+        _placehold().text()   .should    .equal  ('abx');
+        _placehold().classes().should.not.include('hidden');
 
-        // Test 2: sets `placehol.` on lone, unfocs., plain-input-having endTerm.
+        // Test 2: sets `placehol.` on lone, plain-input-having endTerm.
         make({ origTerms: [], placeholder: 'abx' });
         vueTick(() => {
           _termInput  (0).exists().should.equal(true);
           _termCClick (0);  // Change endTerm's type: EI -> EC ..
           _termCClick (0);  // .. -> EL.
           _termClsTest(0, ['term', 'edit', 'inp', 'lit', 'end']);
-          _termInput  (0).attributes().placeholder.should.equal('abx');
-          _termITrig(0, 'focus');
-          expect(_termInput(0).attributes().placeholder).to.equal(undefined);
+          _placehold().text()   .should    .equal  ('abx');
+          _placehold().classes().should.not.include('hidden');
 
           // Test 3: omits `placeholder` on a non-lone endTerm.
           make({ origTerms: [{ str: 'aaa' }], placeholder: 'abx' });
           vueTick(() => {
             _termInput(1).exists().should.equal(true);
-            expect(_termInput(1).attributes().placeholder).to.equal(undefined);
+            _placehold() .exists().should.equal(false);
 
             // Test 4: omits `placehol.` on a real (non-endTerm), Edit-type Term.
             make({ origTerms: [{ type: 'EC' }], placeholder: 'abx' });
             vueTick(() => {
               _termInput(0).exists().should.equal(true);
-              expect(_termInput(0).attributes().placeholder).to.equal(undefined);
+              _placehold() .exists().should.equal(false);
               cb();
             });
           });
@@ -743,7 +743,7 @@ describe('sub/TheTerms', () => {
     });
 
 
-    it('emits a `change-init` event at start, with cleaned and cloned ' +
+    it('emits a \'change-init\' event at start, with cleaned and cloned ' +
        'Term data', cb => {
       // Test 1 also adds an invalid `parentID` (without classID and instID) to
       // show that TheTerms will just ignore it, and exclude it from output.
@@ -759,6 +759,26 @@ describe('sub/TheTerms', () => {
       // Extra test: it does not emit a plain 'change' event at start.
       _emitV(0, 'change').should.equal(false);
       cb();
+    });
+
+
+    it('emits a \'change\' event after changing prop `sizes', cb => {
+      make({ origTerms: [{ str: 'aa' }] });
+      _emitV(0, 'change').should.equal(false);
+
+      w.setProps({ sizes: { minWidth: 1243 } });
+      vueTick(() => {
+        _emitV(0, 'change').should.not.equal(false);
+        _emitV(1, 'change').should    .equal(false);
+
+        w.setProps({
+          customTerm: o => Object.assign(o.strs, { str: o.index+'.'+o.strs.str })
+        });
+        vueTick(() => {
+          _emitV(1, 'change').should.not.equal(false);
+          cb();
+        });
+      });
     });
   });
 

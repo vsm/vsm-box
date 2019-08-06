@@ -1223,7 +1223,7 @@ export default {
   }
   .edit:not(.inp),
   .edit:not(.focus) >>> input {
-    color: #888;
+    color: #7a7a7a;  /* Color for non-focused input, or Edit-term label text */
   }
 
   .inp >>> .list {
@@ -1323,13 +1323,60 @@ export default {
     outline: none;     /* $ */
     box-shadow: none;  /* $ */
   }
-  .term >>> .input::placeholder {
-    color: #777;
+
+  /*
+    Note: 'placehold' = input-label used as a placeholder.
+    Note: .placehold-related CSS is defined in vsm-autocomplete, but needs to be
+          mostly repeated here, so EL/ER terms get a same placeholder layout.
+    Note: some small positioning adjustments need to be made for vsmAC's
+          placehold only, for yet unknown reason.
+  */
+  .term >>> .input-wrap {
+    position: relative;
+    background-color: transparent;  /* different from vsmAC */
+  }
+
+  .term >>> .input-wrap:not(.plain) {
+    top: -2px;  /* 2px higher than in vsmAC */
+  }
+
+  .term >>> .placehold {
+    position: absolute;
+    top: 0;
+    left: 0;
+    color: #aaa;
+    pointer-events: none;
+    transition: 0.2s ease all;
+  }
+
+  .term >>> .placehold.focus {
+    top: -2px;
+    left: 1.5px;  /*    different from vsmAC */
+    font-size: 9px;  /* different from vsmAC */
+    color: #d0d0d0;  /* different from vsmAC */
+    opacity: 1;
+  }
+
+  .term >>> .placehold.hidden {
+    display: none;
+  }
+
+  .term >>> .placehold:not(.plain) {
+    top: 2px;  /* 2px lower than in vsmAC */
+  }
+
+  .term >>> .placehold:not(.plain).focus {
+    top: 0;  /*   2px lower than in vsmAC */
   }
 
   .term >>> .label,
   span.ruler {
     white-space: pre;
+  }
+
+  /* placeholder for Term not having the <input>. Cf.: `.term >>> .placehold` */
+  .term >>> .label-placehold {
+    color: #aaa;
   }
 
   .term.drag {

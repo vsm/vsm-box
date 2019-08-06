@@ -49,7 +49,8 @@ function runDemo() {
           filter: { dictID: [ 'PRSNS', 'CW', 'VAR' ] },
           sort: { dictID: [ 'CW' ] },
           fixedTerms: [
-            { id: 'PRS:0501', str: 'Alice' }, { id: 'BIO:0010' }  ] }
+            { id: 'PRS:0501', str: 'Alice' }, { id: 'BIO:0010' }  ] },
+        placeholder: 'person'
       },
       { str: 'activates', classID: 'BIO:0014', instID: null, isFocal: true },
       { str: 'burnt',     classID: 'CW:0109',  instID: null },
@@ -65,21 +66,22 @@ function runDemo() {
       { str: 'cls', classID: 'A:01', dictID: 'A', descr: 'descr-1' },
       { str: 'lit' },
       { editWidth: 20 },
-      { type: 'EC', editWidth: 20 },
-      { type: 'EL', editWidth: 20 },
+      { type: 'EC', editWidth: 20, placeholder: 'pl' },
+      { type: 'EL', editWidth: 20, placeholder: 'pl' },
+      { type: 'ER', editWidth: 20 },
       { str: 'and',       classID: 'CW:0005',  instID: null,
         dictID: 'CW',  descr: 'a set of items' },
       { str: 'himself',   classID: 'PRS:0510', instID: 'db-id40',
-        parentID: 'db-id20'}
+        parentID: 'db-id20', placeholder: 'person' }
     ],
     conns: [
       //{ type: 'T', pos: [ 3, 4, -1 ] },
       { type: 'T', pos: [ 3, -1, 2 ] },
       { type: 'T', pos: [ 0, 1, 3 ] },
       { type: 'T', pos: [ 1, 4, 5 ] },
-      { type: 'L', pos: [ 12, 7, 8, 9, 10, 11, 13 ] },
-      { type: 'T', pos: [ 1, 6, 12 ] },
-      { type: 'R', pos: [ 13, 0 ] }
+      { type: 'L', pos: [ 13, 7, 8, 9, 10, 11, 12, 14 ] },
+      { type: 'T', pos: [ 1, 6, 13 ] },
+      { type: 'R', pos: [ 14, 0 ] }
     ]
   };
 

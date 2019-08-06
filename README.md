@@ -30,16 +30,16 @@ For example, the most common type is an 'Instance'-term, which may look like:
 
 These are all the VSM-term types:
 
-| Type               | Required properties               | Optional properties           | Optional properties 2                       |
-|--------------------|-----------------------------------|-------------------------------|---------------------------------------------|
-| Literal            | str                               | isFocal, style                | minWidth, maxWidth, editWidth, queryOptions |
-| Class              | str, classID                      | isFocal, style, dictID, descr | minWidth, maxWidth, editWidth, queryOptions |
-| Instance           | str, classID, instID              | isFocal, style, dictID, descr | minWidth, maxWidth, editWidth, queryOptions |
-| Referring instance | str, classID, instID, parentID    | isFocal, style, dictID, descr | minWidth, maxWidth, editWidth, queryOptions |
-| Edit-Instance      | (none)                            | isFocal                       | minWidth, maxWidth, editWidth, queryOptions |
-| Edit-Class         | type `: 'EC'`                     | isFocal                       | minWidth, maxWidth, editWidth, queryOptions |
-| Edit-Literal       | type `: 'EL'`                     | isFocal                       | minWidth, maxWidth, editWidth, queryOptions |
-| Edit-Referring*    | type `: 'ER'`                     | isFocal                       | minWidth, maxWidth, editWidth, queryOptions |
+| Type               | Required properties               | Optional properties           | Optional properties 2                                    |
+|--------------------|-----------------------------------|-------------------------------|----------------------------------------------------------|
+| Literal            | str                               | isFocal, style                | minWidth, maxWidth, editWidth, queryOptions, placeholder |
+| Class              | str, classID                      | isFocal, style, dictID, descr | minWidth, maxWidth, editWidth, queryOptions, placeholder |
+| Instance           | str, classID, instID              | isFocal, style, dictID, descr | minWidth, maxWidth, editWidth, queryOptions, placeholder |
+| Referring instance | str, classID, instID, parentID    | isFocal, style, dictID, descr | minWidth, maxWidth, editWidth, queryOptions, placeholder |
+| Edit-Instance      | (none)                            | isFocal                       | minWidth, maxWidth, editWidth, queryOptions, placeholder |
+| Edit-Class         | type `: 'EC'`                     | isFocal                       | minWidth, maxWidth, editWidth, queryOptions, placeholder |
+| Edit-Literal       | type `: 'EL'`                     | isFocal                       | minWidth, maxWidth, editWidth, queryOptions, placeholder |
+| Edit-Referring*    | type `: 'ER'`                     | isFocal                       | minWidth, maxWidth, editWidth, queryOptions, placeholder |
 
 Notes:
 + About `classID`, for **Instance** and **Class** terms (_for Referring Terms,
@@ -167,13 +167,27 @@ Notes:
     + `dictID`: {Array(String)}:  
       sorts matches whose dictID is in this list, first; then sorts as usual.
       This enables defining 'preferred dictionaries'.
-  + `fixedTerms`: {Array(Object)}: a list of "fixedTerms", represented by a
+  + `fixedTerms`: {Array(Object)}:  
+    a list of "fixedTerms", represented by a
     classID + optional term-string: `[{ id:.., str:.. },  ...]`.  
     + Note: fixedTerms appear on top of the VSM-term's autocomplete result list,
       and already appear when the term is focused and has no text input yet.  
     + Note!: everywhere else in the code and in other modules `fixedTerms` is
       still called (more obscurely) `idts`, but that will be changed there soon.
-  + `z`: {true|Array(String)}: to include a full, partial, or no z-object.
+  + `z`: {true|Array(String)}:  
+    determines to include a full, partial, or no z-object (via empty array).
+  + `perPage` {int}:  
+    how many matches should be queried from the VsmDictionary;
+    i.e. the maximum number of items that should appear in the autocomplete
+    result-list, excluding special items.
++ `placeholder`: the String that will be shown in a light color,
+  in an empty Edit-type term, to suggest what kind of data the user is
+  supposed to enter there. E.g. 'protein', or 'location'.  
+  For a non-Edit-type term, this placeholder would be shown when the user
+  converts it to Edit-type, and then clears the input-field's content.  
+  This prop is used both by EI/EC-terms' VsmAutocomplete,
+  and with ER/EL-terms' plain input-field.
+
 
 <br>
 
@@ -370,7 +384,8 @@ VsmBox
   given as prop to VsmAutocomplete,
   see [`there`](https://github.com/vsmjs/vsm-autocomplete).
 - `placeholder`: {String|Boolean}:  
-  given as prop to VsmAutocomplete.
+  given as prop to VsmAutocomplete.  
+  Defines what text should be shown in an empty VsmBox (in its empty 'endTerm').
 - `max-string-lengths`: {Object}:  
   given as prop to VsmAutocomplete:  
   limits the string-length of match-items in autocomplete's selection panel.

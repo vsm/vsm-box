@@ -1,5 +1,7 @@
 <template>
   <!-- eslint-disable vue/multiline-html-element-content-newline -->
+  <!-- eslint-disable vue/html-indent -->
+  <!-- eslint-disable vue/html-closing-bracket-newline -->
   <div
     :style="{
       width: term.width + 'px',
@@ -9,7 +11,7 @@
       margin: 0
     }"
     :class="['term', {
-      'edit': term.type && term.type[0] == 'E',
+      'edit': isEditType,
       'lit': term.type == 'L' || term.type == 'EL',
       'class': term.type == 'C' || term.type == 'EC',
       'inst': term.type == 'I' || term.type == 'R',
@@ -34,30 +36,39 @@
     @click.left.exact.self.prevent.stop="onClick_div"
     @click.left.exact.stop="onClick"
     @dblclick.left.exact="onDblclick"
-  ><input
+  ><div
     v-if="showPlain"
-    ref="input_plain"
-    :value="term.str"
-    :autofocus="autofocus"
-    :placeholder="!hasFocus && placeholder"
-    class="input"
-    spellcheck="false"
-    @input="event => onInput(event.target.value)"
-    @focus="onFocus"
-    @blur="onBlur"
-    @keydown.esc.exact.prevent="onKeyEsc"
-    @keydown.8.exact="onKeyBksp_plain"
-    @keydown.enter.exact="onKeyEnter_plain"
-    @keydown.enter.ctrl.exact="onKeyCtrlEnter"
-    @keydown.enter.shift.exact="onKeyShiftEnter"
-    @keydown.tab.exact.prevent="() => onKeyTab('')"
-    @keydown.tab.shift.exact.prevent="() => onKeyTab('shift')"
+    class="input-wrap plain"
+    ><input
+      ref="input_plain"
+      :value="term.str"
+      :autofocus="autofocus"
+      class="input plain"
+      spellcheck="false"
+      @input="event => onInput(event.target.value)"
+      @focus="onFocus"
+      @blur="onBlur"
+      @keydown.esc.exact.prevent="onKeyEsc"
+      @keydown.8.exact="onKeyBksp_plain"
+      @keydown.enter.exact="onKeyEnter_plain"
+      @keydown.enter.ctrl.exact="onKeyCtrlEnter"
+      @keydown.enter.shift.exact="onKeyShiftEnter"
+      @keydown.tab.exact.prevent="() => onKeyTab('')"
+      @keydown.tab.shift.exact.prevent="() => onKeyTab('shift')"
+    ><span
+      v-if="finalPlaceholder"
+      :class="['placehold plain', {
+        'focus': hasFocus,
+        'hidden': !showPlainPlaceholder
+      }]"
+      v-text="finalPlaceholder"
+    /></div
   ><vsm-autocomplete
     v-else-if="showAutocomplete"
     ref="vsmac"
     :vsm-dictionary="vsmDictionary"
     :autofocus="autofocus"
-    :placeholder="placeholder"
+    :placeholder="finalPlaceholder"
     :query-options="term.queryOptions"
     :max-string-lengths="maxStringLengths"
     :fresh-list-delay="freshListDelay"
@@ -79,8 +90,10 @@
     @mouseover-input="onMouseenter"
   /><span
     v-else
-    class="label"
-    v-html="term.label"
+    :class="['label', {
+      'label-placehold': !term.label && finalPlaceholder
+    }]"
+    v-html="term.label || finalPlaceholder"
   /></div>
   <!-- eslint-enable -->
 </template>
@@ -159,11 +172,25 @@ export default {
 
 
   computed: {
+    isEditType() {
+      return this.term.type && this.term.type[0] == 'E';
+    },
+
     showPlain() {
       return this.hasInput && (this.term.type == 'EL' || this.term.type == 'ER');
     },
+
     showAutocomplete() {
       return this.hasInput && !this.showPlain;
+    },
+
+    finalPlaceholder() {
+      return this.isEditType ?
+        (this.term.placeholder || this.placeholder || '') : '';
+    },
+
+    showPlainPlaceholder() {
+      return this.showPlain && this.finalPlaceholder && !this.term.str;
     }
   },
 
