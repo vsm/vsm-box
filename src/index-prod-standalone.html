@@ -90,7 +90,11 @@
 
   var lastAutoFilledText = '';
 
-  var initialValue = { terms: [], conns: [] };
+  var initialValue = {
+    terms: [], conns: []
+    ///terms: [ { str: 'a', id: '01' }, { str: 'aa', id: '02' }, { str: 'aaaa', id: '04' } ],
+    ///conns: [ { type: 'T', pos: [ 0, 1, 2 ] } ]
+  };
 
 
   /* Set props and an event listener on the vsm-box webcomponent.
@@ -105,7 +109,7 @@
   elBox.initialValue = initialValue;  // We must assign either Objects..
   elBox.freshListDelay = '0';         // ..or Strings, to the attributes.
   elBox.allowClassNull = 'true';
-  elBox.sizes = { minWidth: 240 };
+  elBox.sizes = { minWidth: 550 };
 
   /* Although one can set a Function on the `customTerm` prop, it appears that
      then it does not accept a `false` anymore, even when given as a String.

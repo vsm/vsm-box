@@ -247,10 +247,12 @@ export default {
     sizes: function() {
       this.measureSizes();
       this.setTermCoordinates();
+      this.emitValue('change');  // Ensure that TheConns updates along.
     },
 
     customTerm: function() {
       this.setTermCoordinates();
+      this.emitValue('change');
     },
 
     hasEndTermFocus: function(val) { // Recalc. endTerm coo.s; may need to widen.
@@ -282,7 +284,7 @@ export default {
 
 
     /**
-     * This measures some sizes set by CSS, that will not change after creation.
+     * This measures some sizes set by CSS, as an initialization step.
      */
     measureSizes() {
       var style = getComputedStyle(this.$el);  // --1-- TheTerms's style.
