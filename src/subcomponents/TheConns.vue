@@ -692,8 +692,8 @@ export default {
         }
         else if (!conn.pos.slice(0, n - 1).includes(p))  conn.pos.push(p);
         else {
-          conn.pos = [ conn.pos[0] ]
-            .concat( conn.pos.slice(1, n - 1).sort((a, b) => a - b) );
+          conn.pos.pop();
+          co.sortListConnElemPos(conn);
           conn.justAdded = true;
         }
       }
@@ -736,6 +736,7 @@ export default {
       }
       else if (conn.type == 'L'  &&  conn.pos.length > 2)  {
         conn.pos.pop();
+        co.sortListConnElemPos(conn);
         conn.justAdded = true;
       }
 

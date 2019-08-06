@@ -33,6 +33,17 @@ var co = {  // Here starts the exported Object.
 
 
   /**
+   * Ensures that the given list-connector's list-element indexes
+   * (i.e. conn.pos[1-..]) are sorted in ascending order, no matter in which
+   * order they were added (clicked above) during construction.
+   * Changes the given `conn`'s `pos` property.
+   */
+  sortListConnElemPos(conn) {
+    conn.pos = [ conn.pos[0] ].concat( conn.pos.slice(1).sort((a, b) => a - b) );
+  },
+
+
+  /**
    * Returns an array in which all connectors in `conns`
    * are sorted in a visually natural-looking order.
    *
