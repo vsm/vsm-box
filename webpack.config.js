@@ -64,6 +64,15 @@ module.exports = (env = {}) => {
     },
 
 
+    PROD ? {} : {
+      performance: {
+        hints: false,
+        maxEntrypointSize: 512000,
+        maxAssetSize: 512000
+      }
+    },
+
+
     {
       devtool: PROD ? (sourceMapInProd ? 'hidden-source-map' : false) :
                DEV  ? 'inline-source-map' :
