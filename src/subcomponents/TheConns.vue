@@ -85,7 +85,7 @@
  * A connector has:
  * - a 'back' or 'backbone': the horizontal top line, (or for a list-connector:
  *   two parallel backbones);
- * - one 'leg' per Term it connects: a vertical line in the middle  above
+ * - one 'leg' per Term it connects: a vertical line in the middle above
  *   each Term, and reaching down from the backbone;
  * - one 'foot' per leg: a horizontal line of about the Term's width, at the
  *   bottom of each leg. The foot makes it easier to see which Term a leg is
@@ -373,7 +373,7 @@ export default {
       //  That makes changes visually easier to follow).
       var gones = Object.keys(gone);
       if (gones.length) {
-        gones.sort().reverse().forEach(p => {
+        gones.sort((a, b) => a - b).reverse().forEach(p => {
           this.highLevels.splice(p, 1);
           this.cellOwner .splice(p, 1);
         });
@@ -668,7 +668,7 @@ export default {
       var n = conn.pos.length;
       var p = cell.pos;
 
-      if (n == 1) {
+      if (n == 1) {  // (This includes the UC-leg).
         this.setShiftCtrlListeners(false);
         conn.pos.push(p);
       }
@@ -691,7 +691,11 @@ export default {
           conn.pos.push(p);
         }
         else if (!conn.pos.slice(0, n - 1).includes(p))  conn.pos.push(p);
-        else  conn.justAdded = true;
+        else {
+          conn.pos = [ conn.pos[0] ]
+            .concat( conn.pos.slice(1, n - 1).sort((a, b) => a - b) );
+          conn.justAdded = true;
+        }
       }
       else if (type == 'R') {
         if (conn.pos[0] == p)  return this.removeUCConn();
