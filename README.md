@@ -4,9 +4,15 @@
 
 ## Intro
 
-This component is in development.
+This component is in development, but it is ready for use.  
 
-See a working prototype on the VSM-pages' [examples page](http://scicura.org/vsm/examples.html). &lt;---
+See a live vsm-box web-component [here](http://scicura.org/vsm-box),  
+or see a minimal usage example [here](https://vsmjs.github.io/),
+or in this [nice poster](https://f1000research.com/posters/8-442).
+
+Or see an earlier prototype with many VSM-sentence examples,
+on the [VSM-pages](http://scicura.org/vsm/examples.html).
+
 
 <br>
 <br>
