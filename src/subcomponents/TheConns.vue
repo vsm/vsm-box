@@ -766,7 +766,17 @@ export default {
 
 
     sortConnectors() {
-      this.conns = co.sortConnectors(this.conns);
+      var arr = co.sortConnectors(this.conns);
+
+      // If sorting changed the connector-array's order, then emit 'change'.
+      // (Because it's nice to output them in the order they are stacked).
+      for (var i = 0, n = arr.length;  i < n;  i++) {
+        if (this.conns[i] != arr[i])  break;
+      }
+
+      this.conns = arr;
+      if (i < n)  this.emitValue();
+
       this.calcCoordinates();
     }
   }
