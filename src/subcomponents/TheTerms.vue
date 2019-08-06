@@ -554,6 +554,16 @@ export default {
     },
 
 
+    /**
+     * Moves the input to the endTerm and focus it.
+     * This function is called by VsmBox, after a click on TheConns's area above
+     * avoethe endTerm.
+     */
+    moveInputToEndTerm(unsel = false) {
+      this.moveInputTo(this.terms.length - 1, unsel);
+    },
+
+
 
     //
     // --- CHANGING TERM-TYPE --------------------------------------------------

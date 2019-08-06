@@ -10,6 +10,7 @@
       :terms-change-nr="termsChangeNr"
       @change="onConnsChange"
       @change-init="onConnsChangeInit"
+      @click-above-end-term="onClickAboveEndTerm"
     />
     <the-terms
       ref="theTerms"
@@ -325,6 +326,11 @@ export default {
       if (!o.termsChangeNr  ||  o.termsChangeNr == this.termsChangeNr) {
         this.emitValue(o.conns);
       }
+    },
+
+
+    onClickAboveEndTerm() {
+      this.$refs.theTerms.moveInputToEndTerm(true);
     },
 
 

@@ -552,7 +552,8 @@ export default {
       if (cell.pos == this.fullTerms.length - 1) {
         // If enabled, next line makes click above endTerm stop UC-Conn-constr.
         ///if (this.hasActiveUCConn)  this.stopUCConn();  else
-        return this.$emit('click-above-end-term');
+        if (!this.hasActiveUCConn)  this.$emit('click-above-end-term');
+        return;
       }
 
       this.handleUCConnAfterMousedown(event, cell);
