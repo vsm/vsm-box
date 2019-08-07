@@ -6,7 +6,7 @@
     unselectable="on"
     @mousemove="onMousemove"
     @mouseleave="onMouseleave"
-    @mousedown.stop="onMousedown"
+    @mousedown.left.stop="onMousedown"
   >
     <rect
       :y="height - sizes.theConnsMarginBottom"
