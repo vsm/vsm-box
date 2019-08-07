@@ -15,6 +15,7 @@
     <the-terms
       ref="theTerms"
       :vsm-dictionary="vsmDictionary"
+      :query-options="queryOptions"
       :autofocus="autofocus"
       :placeholder="placeholder"
       :max-string-lengths="maxStringLengths"
@@ -156,6 +157,10 @@ export default {
         getEntries:   (o, c) => c(null, { items: [] }),
         getMatchesForString: (s, o, c) => c(null, { items: [] })
       })
+    },
+    queryOptions: {
+      type: [Object, Boolean],
+      default: false
     },
     autofocus: {
       type: Boolean,

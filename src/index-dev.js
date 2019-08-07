@@ -117,6 +117,7 @@ function runDemo() {
 
     data: function() { return {
       vsmDictionary: dict,
+      queryOptions: false,  ///{ perPage: 5 },
       placeholder: 'Type a term or doubleclick for menu',  ///false,
       maxStringLengths: undefined &&  // Change to !undefined to activate this.
         { str: 5,  strAndDescr: 30  },

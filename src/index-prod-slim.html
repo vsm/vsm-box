@@ -62,6 +62,7 @@
 
     <vsm-box
       :vsm-dictionary.prop="vsmDictionary"
+      :query-options="queryOptions"
       :autofocus="false"
       :placeholder="placeholder"
       :max-string-lengths.prop="maxStringLengths"
@@ -182,6 +183,7 @@
            then our Vue-component is _not_ wrapped into a web-component,
            and one can simply use ":data-source=..." there. */
       vsmDictionary: dict,
+      queryOptions: {},
       placeholder: 'Type a term or doubleclick for menu',
       maxStringLengths: { str: 100, strAndDescr: 120 },
       initialValue: {

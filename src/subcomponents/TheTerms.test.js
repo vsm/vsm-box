@@ -211,12 +211,26 @@ describe('sub/TheTerms', () => {
   // Prevent false warning caused by 'vue-test-utils', saying: 'Avoid mutating
   // a prop directly ... [prop-name]"'. Happens for some _setInput() cases.
   function fixWarnHandler(name) {
+    var oldWarnHandler = Vue.config.warnHandler;  // Support multiple fixes.
     Vue.config.warnHandler = (msg, vm, trace) => {
       if (msg.includes(`Prop being mutated: "${name}"`))  return;
-      console.log(`${msg}${trace}`);
+      if (oldWarnHandler)  oldWarnHandler(msg, vm, trace);
+      else console.log(`${msg}${trace}`);
     };
   }
   afterEach (() => { Vue.config.warnHandler = undefined });  // Reset every time.
+
+
+  beforeEach(() => {
+    // Prevent false warning "Avoid mutating..." warning when using setProps().
+    Vue.config.warnHandler = () => {
+      if ((new Error().stack).split('\n')
+        .some(line => line.startsWith('    at VueWrapper.setProps (')))  return;
+    };
+
+    // Prevent this for all tests, as many showed false warning, after we..
+    fixWarnHandler('queryOptions');  // ..supported the `queryOptions` prop.
+  });
 
 
   // Triggers a Click on TheTerms' (padding) itself, not on one of its Terms.
@@ -504,22 +518,24 @@ describe('sub/TheTerms', () => {
           _termInput  (0).exists().should.equal(true);
           _termCClick (0);  // Change endTerm's type: EI -> EC ..
           _termCClick (0);  // .. -> EL.
-          _termClsTest(0, ['term', 'edit', 'inp', 'lit', 'end']);
-          _placehold().text()   .should    .equal  ('abx');
-          _placehold().classes().should.not.include('hidden');
-
-          // Test 3: omits `placeholder` on a non-lone endTerm.
-          make({ origTerms: [{ str: 'aaa' }], placeholder: 'abx' });
           vueTick(() => {
-            _termInput(1).exists().should.equal(true);
-            _placehold() .exists().should.equal(false);
+            _termClsTest(0, ['term', 'edit', 'inp', 'lit', 'end']);
+            _placehold().text()   .should    .equal  ('abx');
+            _placehold().classes().should.not.include('hidden');
 
-            // Test 4: omits `placehol.` on a real (non-endTerm), Edit-type Term.
-            make({ origTerms: [{ type: 'EC' }], placeholder: 'abx' });
+            // Test 3: omits `placeholder` on a non-lone endTerm.
+            make({ origTerms: [{ str: 'aaa' }], placeholder: 'abx' });
             vueTick(() => {
-              _termInput(0).exists().should.equal(true);
+              _termInput(1).exists().should.equal(true);
               _placehold() .exists().should.equal(false);
-              cb();
+
+              // Test 4: omits `placeh.` on a real (non-endTerm), Edit-type Term.
+              make({ origTerms: [{ type: 'EC' }], placeholder: 'abx' });
+              vueTick(() => {
+                _termInput(0).exists().should.equal(true);
+                _placehold() .exists().should.equal(false);
+                cb();
+              });
             });
           });
         });
@@ -3238,7 +3254,8 @@ describe('sub/TheTerms', () => {
       make({
         origTerms: [{ type: 'EC', queryOptions }],
         allowClassNull: false,
-        advancedSearch
+        advancedSearch,
+        queryOptions: { perPage: 5 }  // It should not merge this into the above.
       });
       vueTick(() => {
         _setInput(0, 'aabbc');

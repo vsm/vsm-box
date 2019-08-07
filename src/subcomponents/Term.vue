@@ -69,7 +69,7 @@
     :vsm-dictionary="vsmDictionary"
     :autofocus="autofocus"
     :placeholder="finalPlaceholder"
-    :query-options="term.queryOptions"
+    :query-options="finalQueryOptions"
     :max-string-lengths="maxStringLengths"
     :fresh-list-delay="freshListDelay"
     :initial-value="term.str"
@@ -108,6 +108,7 @@
 
 // `vsm-autocomplete` pkg is (for now) uncompiled Vue code, so include it like..
 import VsmAutocomplete from '../../node_modules/vsm-autocomplete'; // ..<-this.
+import to from './termOperations.js';
 
 
 export default {
@@ -133,6 +134,10 @@ export default {
     vsmDictionary: {
       type: Object,
       required: true
+    },
+    queryOptions: {
+      type: [Object, Boolean],
+      default: false
     },
     autofocus: {
       type: Boolean,
@@ -182,6 +187,11 @@ export default {
 
     showAutocomplete() {
       return this.hasInput && !this.showPlain;
+    },
+
+    finalQueryOptions() {
+      return to.clone(
+        Object.assign({}, this.queryOptions, this.term.queryOptions) );
     },
 
     finalPlaceholder() {

@@ -330,6 +330,37 @@ describe('sub/Term', () => {
     });
 
 
+    it('passes a combined `queryOptions` and `term.queryOptions` on to ' +
+       '<vsm-autocomplete>, with term\'s taking priority', () => {
+      const test = (itemCount, props) => {
+        make( Object.assign(props, {
+          vsmDictionary: new VsmDictionaryLocal({ dictData: [
+            { id: 'A', name: 'Aaa', entries: [
+              { id: 'A:01', dictID: 'A', terms: [{ str: 'a' }] },
+              { id: 'A:02', dictID: 'A', terms: [{ str: 'a' }] },
+              { id: 'A:03', dictID: 'A', terms: [{ str: 'a' }] }
+            ]}
+          ]}),
+          hasInput: true
+        }));
+        _ifocus();
+        w.findAll('.list .item-part-str').length.should.equal(itemCount);
+      };
+
+      test(3, { term: { type: 'EI', str: 'a' } } );
+      test(2, { term: { type: 'EI', str: 'a', queryOptions: { perPage: 2 } } });
+      test(2, { term: { type: 'EI', str: 'a' },  queryOptions: { perPage: 2 } });
+      test(1, {
+        term: { type: 'EI', str: 'a', queryOptions: { perPage: 1 } }, // <--- =1.
+        queryOptions: { perPage: 2 }
+      });
+      test(2, {
+        term: { type: 'EI', str: 'a', queryOptions: { perPage: 2 } }, // <--- =2.
+        queryOptions: { perPage: 1 }
+      });
+    });
+
+
     it('uses `term.str` as initial value in both <vsm-autocomplete> ' +
        'and a plain input (Term type EL/ER)', () => {
       make({ term: { type: 'EI', str: 'a' }, hasInput: true });

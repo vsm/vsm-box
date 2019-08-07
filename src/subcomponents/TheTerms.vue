@@ -18,6 +18,7 @@
       :index="index"
       :has-input="index == inputIndex"
       :vsm-dictionary="vsmDictionary"
+      :query-options="queryOptions"
       :autofocus="index == inputIndex && autofocus"
       :placeholder="terms.length == 1 && placeholder"
       :fresh-list-delay="freshListDelay"
@@ -109,6 +110,10 @@ export default {
     vsmDictionary: {
       type: Object,
       required: true
+    },
+    queryOptions: {
+      type: [Object, Boolean],
+      default: false
     },
     autofocus: {
       type: Boolean,
@@ -846,7 +851,7 @@ export default {
 
     launchAdvancedSearch(index) {
       var term = this.terms[index];
-      var qOpt = to.clone(term.queryOptions || {});
+      var qOpt = to.clone(term.queryOptions || {}); // (No merge w `this.que..`).
       delete qOpt.sort;  // Don't let adv-search use this; according to the spec.
 
       this.$nextTick(() =>  // Let VsmBox update before calling an external func.

@@ -386,6 +386,14 @@ VsmBox
   the [`vsm-dictionary`](https://github.com/vsmjs/vsm-dictionary) subclass that
   will be used by this VsmBox's
   [`vsm-autocomplete`](https://github.com/vsmjs/vsm-autocomplete) component.
+- `queryOptions`: {Object|Boolean} (default `false`):  
+  given as prop to VsmAutocomplete, which uses it when querying string-matches.  
+  This can e.g. be used to make all the Edit-Terms in a VSM-template
+  query with the same `perPage` option, without having to set a
+  `term.queryOptions.perPage` on each individual Term.  
+  When a property (like `perPage`) is set in both the VsmBox's `queryOptions`
+  and in some Term's own `term.queryOptions`, then that property of the Term
+  overrides that of the VsmBox.
 - `autofocus`: {Boolean} (default `false`):  
   given as prop to VsmAutocomplete,
   see [`there`](https://github.com/vsmjs/vsm-autocomplete).
