@@ -862,6 +862,8 @@ It is called with one argument: an Object with useful properties & subproperties
   - `strs`: the default content for the different parts of ThePopup.  
     It is an Object with properties (Strings) that represent the different parts.  
     These parts may contain HTML tags, but will most commonly be just text.  
+    A class/inst/parentID that is a URI, will come embedded in a
+    `<a href="...">` link.  
     All properties are guaranteed to be of type {String},
     except for queryFilter/Sort/FixedTerms, which are of type {Array(String)}.  
     - `str`: `term.str` as the title-line of ThePopup, with any `style` applied;

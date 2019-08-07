@@ -435,6 +435,22 @@ describe('sub/ThePopup', () => {
     });
 
 
+    it('shows a URI-type class/parent/instID embedded in a link', () => {
+      var classID  = 'http://xy.org/DA/A:01';
+      var parentID = 'http://mydomain.org/i012345';
+      var instID   = 'http://mydomain.org/i012398';
+      make({ str: 's', classID, parentID, instID, type: 'R' });
+      _cid().find('a').attributes().href.should.equal(classID);
+      _pid().find('a').attributes().href.should.equal(parentID);
+      _iid().find('a').attributes().href.should.equal(instID);
+
+      make({ str: 'a', classID: null, instID: null, parentID: null, type: 'R' });
+      _cid().find('a').exists().should.equal(false);
+      _pid().find('a').exists().should.equal(false);
+      _iid().find('a').exists().should.equal(false);
+    });
+
+
     it('hides parentID/instID/classID after its Term changed type R->I, ' +
        'I->C, C->L resp.', () => {
       // Note: a Term's type is only changed by updating its `type`,
@@ -887,6 +903,8 @@ describe('sub/ThePopup', () => {
       _descr().text().should.equal('_stored_');
       _dict ().text().should.equal('_[DA]_');
       _cid().text().should.equal('_A:01_');
+      _cid().find('a').attributes().href        // For a URI-type ID, it got..
+        .should.equal('http://xy.org/DA/A:01'); // ..and kept the <a href> link.
       _pid().text().should.equal('_pp123_');
       _iid().text().should.equal('_…_');
       _qFiltD().at(0).text().should.equal('_[DB]_');

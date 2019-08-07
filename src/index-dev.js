@@ -25,8 +25,9 @@ function runDemo() {
     terms: [
       { str: 'John',    classID: 'PRS:0510', instID: null },
       { str: 'eats',    classID: 'CW:0101',  instID: null },
-      { str: 'chicken', classID: 'BIO:0042', instID: null,
-        dictID: 'http://x.org/BIO',  descr: 'the animal',
+      { str: 'chicken',
+        classID: 'http://x.org/BIO/BIO:0042',  // URI, shown in ThePopup as link.
+        instID : null,  dictID: 'http://x.org/BIO',  descr: 'the animal',
         queryOptions: { sort: { dictID: [ 'http://x.org/BIO' ] } } },
       { str: 'with',    classID: 'CW:0105',  instID: null,
         dictID: 'CW',  descr: 'to use' },
@@ -54,8 +55,8 @@ function runDemo() {
       },
       { str: 'activates', classID: 'BIO:0014', instID: null, isFocal: true },
       { str: 'burnt',     classID: 'CW:0109',  instID: null },
-      { str: 'chicken',   classID: 'BIO:0042', instID: null,
-        dictID: 'http://x.org/BIO',  descr: 'the animal',
+      { str: 'chicken',   classID: 'http://x.org/BIO/BIO:0042', instID : null,
+        dictID : 'http://x.org/BIO',  descr: 'the animal',
         queryOptions: { sort: { dictID: ['http://x.org/BIO'] } } },
       { str: 'with',      classID: 'CW:0105',  instID: null,
         dictID: 'CW',  descr: 'to use' },
@@ -71,8 +72,10 @@ function runDemo() {
       { type: 'ER', editWidth: 20 },
       { str: 'and',       classID: 'CW:0005',  instID: null,
         dictID: 'CW',  descr: 'a set of items' },
-      { str: 'himself',   classID: 'PRS:0510', instID: 'db-id40',
-        parentID: 'db-id20', placeholder: 'person' }
+      { str: 'himself',   classID: 'PRS:0510',
+        instID: 'db-id40', parentID: 'db-id20',
+        ///instID: 'https://me.org/db-id40', parentID: 'https://me.org/db-id20',
+        placeholder: 'person' }
     ],
     conns: [
       //{ type: 'T', pos: [ 3, 4, -1 ] },
@@ -90,7 +93,7 @@ function runDemo() {
     terms: [
       { str: 'John', classID: 'PRS:0510', instID: null },
       { str: 'eats', classID: 'CW:0101', instID: null },
-      { str: 'chicken', classID: 'BIO:0042', instID: null,
+      { str: 'chicken', classID: 'http://x.org/BIO/BIO:0042', instID: null,
         queryOptions: { sort: { dictID: [ 'http://x.org/BIO' ] } } },
       { str: 'with', classID: 'CW:0106', instID: null },
       { str: 'Alice', classID: 'PRS:0501', instID: null },
@@ -542,7 +545,8 @@ function createData() {
             'which marks it for degradation by a proteasome',
           terms: [{str: 'ubiquitinates'}]
         },
-        { id:'BIO:0042', descr: 'the animal',         terms: [{str: 'chicken'}] },
+        { id:'http://x.org/BIO/BIO:0042',  // Example of a URI-type identifier.
+          descr: 'the animal', terms: [{str: 'chicken'}] },
         { id:'BIO:0101', descr: 'example molecule A', terms: [{str: 'A'}] },
         { id:'BIO:0102', descr: 'example molecule B', terms: [{str: 'B'}] },
         { id:'BIO:0103', descr: 'example molecule C', terms: [{str: 'C'}] },

@@ -572,7 +572,11 @@ export default {
 
 
     idCalc(id) {
-      return id === undefined ?  '' :  this.uriTail(id) || '&hellip;';
+      var s = id === undefined ?  '' :  this.uriTail(id) || '&hellip;';
+      if (/^https?:\/\/./.test(id)) {
+        s = `<a href="${ id }" target="_blank">${ s }</a>`;
+      }
+      return s;
     },
 
 
@@ -767,6 +771,15 @@ export default {
 
   .grey {
     color: #888;
+  }
+
+  .info >>> a {  /* `>>>` makes it work with `v-html`-injected HTML-code. */
+    color: #6a88d4;
+    text-decoration: none;
+  }
+
+  .info >>> a:hover {
+    text-decoration: underline;
   }
 
   .info-settings {
