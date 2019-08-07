@@ -791,4 +791,10 @@ export default {
     padding: 0;
     background-color: #fbfbfb;
   }
+
+  /* This seems to prevent the problem of sometimes not receiving a 'mouseleave',
+     which could leave a connector highlighted after the mouse left TheConns. */
+  .conns *:not(.conn-remove-icon) {
+    pointer-events: none;
+  }
 </style>
