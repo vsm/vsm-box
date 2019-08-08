@@ -345,20 +345,26 @@ var vsmSentence = {
 
 <br>
 
-## Subcomponents: tree overview
+## Subcomponents: overview
 
 This is the structure of `vsm-box`, in terms of its subcomponents:
 
 ```
 VsmBox
-├─┬ TheConns
-│ └── Conn      (multiple ones)
-└─┬ TheTerms
-  ├── Term      (multiple ones, plus endTerm)
-  └── ThePopup  (only 1 or 0)
+├─ TheConns
+│  ├─ ConnHighlight   (0 or 1)
+│  ├─ Conn            (multiple ones)
+│  │  ├─ ConnLeg      (multiple ones)
+│  │  └─ ConnLegStub  (only 1 for bidents)
+│  └─ ConnRemoveIcon  (0 or 1)
+└─ TheTerms
+   ├─ Term            (multiple ones, plus endTerm)
+   │  └─ //VsmAutocomplete/<input>/text (1 of them)
+   └─ ThePopup        (0 or 1)
+      └─ Help
 ```
 
-+ Notes:  
++ Notes on VSM-Terms:  
   + Each VSM-term is represented by a '`Term`' component in the implementation,
     and we will call it a Term from now on.
   + There is an additional 'Term' component at the end, which we call the
@@ -366,6 +372,51 @@ VsmBox
     It behaves just like an Edit-type Term, except that it has an invisible
     border when not mouse-hovered, and it is used to create/append new Terms
     to a VSM-sentence.  
++ Terminology: a VSM-connector has:
+  + a *back* or *backbone*: the horizontal top line. A list-connector has
+    two parallel backbones.
+  + one *leg* per Term it connects to: a vertical line above the middle of
+    each Term. It starts from the backbone, and reaches down either to the 
+    bottom of TheConns, or to just above the backbone of the next connector
+    under it.
+  + one *foot* per leg: a horizontal line of about the Term's width, at the
+    bottom of each leg. The foot makes it easier to see which Term a leg is
+    connected to, as legs do not always extend all the way down to their
+    Term.
+  + zero or one *pointer* per leg: the leg's identifying decoration,
+    being one of: trident-relation triangle, trident-object arrow,
+    list-relation square, coreference-parent arrow.
+  + zero or one *stub*, when the connector is a bident.
+    A stub is the small indicator of the bident's missing leg's type.  
+    A relation-leg stub is drawn between the (real) subject- an object-legs;
+    while a subject- or object-leg stub is drawn at the opposite side of the
+    (real) relation-leg, compared to the (real) object- or subject-leg, resp.
+  + zero or one *under-construction leg* (UC-leg), when the connector is still
+    in the process of being constructed (i.e. does not have all its legs yet).  
+    This is the movable leg that follows the mouse while the user moves it
+    to where they want to fix that leg with a next click.  
+    The unfinished connector to which this leg belongs is then also called
+    the *under-construction connector* (UC-conn).  
+  + zero or one *connector-highlight*, which appears while a connector is
+    mouse-hovered. This makes it easy to focus on one connector among possibly
+    many, and to see clearly which Terms it connects to.  
+    For a description of its two possible parts, see `sizes.connHLColor`
+    and `sizes.connHLColorLight` further below.
+  + zero or one *remove-icon*, which appears while a connector is hovered.  
+    When the user clicks this 'x'-cross icon, the highlighted connector is
+    removed.  
+    This icon can have three states: unhovered, hovered (when the mouse hovers
+    it), and pushed-down (when the mouse button is pressed down on it).
++ About about TheConns, i.e. the panel where connectors are drawn:
+  + A *level* is a horizontal row, which holds vertical space for just one
+    connector's backbone.  
+    Connectors can be on the same level side-by-side, but not on top of
+    each other in one level.
+  + TheConns, and thus also VsmBox, automatically grows or shrinks as
+    more or less space is required for holding all the stacked connectors.  
+    In addition it keeps one extra empty level on top of this, where the
+    one-legged UC-conn appears, and where the user can create a new connector
+    (as described in the User-interaction section, further below).
 
 <br>
 <br>
@@ -534,8 +585,11 @@ VsmBox
   + `widthScale`: {Number|Boolean} (default `false`, which gets replaced by an
     automatically calculated Number, see earlier):  
     If an external stylesheet makes VsmBox use a larger font-size than default,
-    then min/max/edit stringwidths can only contain less text than intended.
-    Therefore, this custom multiplier will be applied to all stringwidths.
+    then Edit-terms, whose width is determined by min/max/edit-stringwidths,
+    would contain less text than intended.
+    Therefore, this multiplier will be applied to all stringwidths,
+    so that an Edit-term's width will scale along with a larger/smaller
+    font-size, relative to VsmBox's default font-size.
     (Applies to: min/max/editWidth, default...Width, minEndTerm...Width).
   + `termDragThreshold`: {Number}:  
     The distance in pixels that a Term must be dragged before it starts moving.
@@ -547,18 +601,165 @@ VsmBox
   + `delayPopupHide`: {Number}:  
     Delay before unhovering a Term (or ThePopup) will hide ThePopup.
   + `theConnsMarginBottom`: {Number}:  
-    Horizontal space at the bottom of TheConns, drawn not in TheConns-pane's
-    main color, but in the same color as TheTerms' background. It reads this
-    color from TheTerms' background-color CSS.  
+    Height (in px) of the space at the bottom of TheConns, drawn not in
+    TheConns-pane's main color, but in the same color as TheTerms' background
+    (which it reads from TheTerms' background-color CSS).  
     This makes it appear that TheTerms (which has no real top-padding) has
-    padding on all sides, while a connector-leg's mousehover-highlighting
-    can still be drawn right until against a Term's top border
-    (by apparently intruding TheTerms' fake 'top padding').
-  + `theConnsMinRows`: {Number}:  
-    ...
-  + `theConnsRowHeight`: {Number}:  
-    ...
-  + ...
+    padding on all sides, while still enabling that a connector-highlight can
+    be drawn until right against its Terms' top border
+    (by appearing to intrude TheTerms' fake 'top padding').
+  + --- (For connector-related properties that follow: see their values
+    in the source code as a basis for making adjustments) --- :
+  + `theConnsSpaceBelow`: {Number}:  
+    The vertical space (in pixels) between the TheTerms' fake top-margin
+    (see `theConnsMarginBottom`) and the bottom of the lowest Conn-'level'.
+    This gap area is drawn in the same background-color as the rest of TheConns
+    (unlike the fake margin which is drawn in TheTerms' background-color).
+  + `theConnsMinLevels`: {Number}:  
+    How many levels are shown initially in an empty VsmBox.
+    (See also the definition of *level* further above).  
+  + `theConnsLevelHeight`: {Number}:  
+    How high each level in TheConns is, in pixels.
+  + `theConnsResortDelay`: {Number}:  
+    How long to wait (in ms) after adding or removing a connector, before
+    re-sorting the connectors (i.e. stacking them in optimal order).  
+    This delay allows users to first see just the result of their action,
+    before resorting may move connectors to different positions.
+  + `connLineWidth`: {Number}:  
+    This is by default 1. It may also be 2, or a non-integer value
+    like 1.2, or 0.8, etc.  
+    + Note that hereby, connectors' coordinates are calculated in a way that
+      makes the browser draw lines as sharply as possible, i.e. with
+      minimal anti-alias blur; and no blur at all for integer linewidths.  
+      (These calculations are fairly complex; to see why, see the explanation
+      in [Conn.vue](src/subcomponents/Conn.vue)).
+  + `connBackDepth`: {Number}:  
+    A Conn's back is drawn this many pixels below the top of its level.
+  + `connFootDepth`: {Number}:  
+    A Conn's foot is drawn this many pixels below the top of its level.
+  + `connBackColor`: {html-color String} (e.g. `'#7a7a7a'`):  
+    Color for connectors' backbone/s.
+  + `connLegColor`: {html-color String}:  
+    Color for connectors' legs.
+  + `connFootColor`: {html-color String}:  
+    Color for connectors' legs' foot.
+  + `connFootIndent`: {Number}:  
+    How many pixels a foot should not cover, left and right above its Term.
+  + `connFootVisible`: {Boolean}:  
+    In order to not draw any feet, make this `false`.  
+    (Note: just making `connFootColor` draw feet in TheConns' background-color
+    (which is set via CSS) would not work, because the feet would become visible
+    again when mouse-hovering puts a highlight-color under the connector).
+  + `connTridRelW`: {Number}:  
+    The trident's relation-leg's pointer's *half*-width (in pixels).  
+    Half-width is used as it makes calculations simpler than with full width.
+  + `connTridRelH`: {Number}:  
+    The trident's relation-leg's pointer's full height.
+  + `connTridObjW`: {Number}:  
+    The trident's object-leg's pointer's *half*-width.
+  + `connTridObjH`: {Number}:  
+    The trident's object-leg's pointer's full height.
+  + `connListBoneSep`: {Number}:  
+    The vertical space (in px) between the list-connector's two backbones.
+  + `connListRelW`: {Number}:  
+    The list-connector's list-relation leg's pointer's *half*-width.
+  + `connListRelH`: {Number}:  
+    The list-connector's list-relation leg's pointer's full height.
+  + `connRefDashes`: {String}:  
+    The SVG-property 'stroke-dasharray', used for drawing the dashed lines of
+    coreference-connectors. This is represented as a space-separated String
+    of dash+gap sizes in pixels, like: `'2 1'`.
+  + `connRefParW`: {Number}:  
+    The coreference's parent-leg's pointer's *half*-width.
+  + `connRefParH`: {Number}:  
+    The coreference's parent-leg's pointer's full height.
+  + `connStubBackColor`: {html-color String}:  
+    Color for a bident's stub's backbone (which extends either left or right
+    from the bident's 'real' backbone).
+  + `connStubLegColor`: {html-color String}:  
+    Color for a bident's stub's leg.
+  + `connStubFootColor`: {html-color String}:  
+    Color for a bident's stub's foot.
+  + `connStubSubBackW`: {Number}:  
+    Width of the backbone extension for a bident's subject-leg stub.
+  + `connStubObjBackW`: {Number}:  
+    Width of the backbone extension for a bident's object-leg stub.
+  + `connStubSubLegH`: {Number}:  
+    A bident subject-stub leg's height. This is less high than the two below,
+    as it needs no space for a triangle/arrow pointer.
+  + `connStubRelLegH`: {Number}:  
+    A bident relation-stub leg's height (between backbone and foot).
+  + `connStubObjLegH`: {Number}:  
+    A bident object-stub leg's height.
+  + `connStubSubFootW`: {Number}:  
+    A bident subject-stub foot's width.
+  + `connStubRelFootW`: {Number}:  
+    A bident relation-stub foot's width.
+  + `connStubObjFootW`: {Number}:  
+    A bident object-stub foot's width.
+  + `connStubRelW`: {Number}:  
+    A bident relation-stub pointer's width.
+  + `connStubRelH`: {Number}:  
+    A bident relation-stub pointer's height.
+  + `connStubObjW`: {Number}:  
+    A bident object-stub pointer's width.
+  + `connStubObjH`: {Number}:  
+    A bident object-stub pointer's height.
+  + `connUCLegColor`: {html-(transparent-)color String}
+    (e.g. `'rgba(46,72,255,0.56)'`):  
+    The under-construction (UC) leg's color.  
+    It is important to use a transparent color here, because the UC-leg will at
+    some point be at the same location as an existing leg of its UC-conn.  
+    This already happens after a click that fixes a leg.
+    Then, the UC-leg's pointer should not opaquely cover the existing leg.
+    For a good visual experience, the existing fixed (real) leg should be left
+    partly visible under/through the pointer of the UC-leg.
+  + `connUCFootColor`: {html-color String}:  
+    The UC-leg's foot's color.
+  + `connUCLegShorter`: {Number}:  
+    The number of pixels that an UC-leg is drawn shorter than a fixed leg.
+    This is the gap (in px) between an UC-leg's line's bottom end, and its foot.  
+    The function of this gap is to make clear to the user that the leg is not
+    connected yet. Only after a click, will it 'sink' down to the foot and
+    connect to it.
+  + `connHLColor`: {html-color String}:  
+    The background-color for a connector-highlight's main part,
+    i.e. the part that includes the backbone, and the legs from the backbone
+    down to their feet; but not necessarily down to their connected Term.
+  + `connHLColorLight`: {html-color String}:  
+    The background-color for a connector-highlight's lighter part,
+    i.e. the part from under legs' feet, down to their connected Term (if the
+    connector has such parts).  
+    This color is also used for highlighting the entire column above a Term,
+    when an UC-leg is shown above it.  
+    The function of these colored areas is to make it visually easy to see
+    what Term a leg is connected to, especially if there are several levels of
+    other connectors that separate a connector leg's foot from its linked Term.
+  + `connHLBackHeight`: {Number}:  
+    Height (in px) of the gapless rectangle that highlights a backbone.
+  + `connHLLegOutdent`: {Number}:  
+    A rectangle that highlights a connector-leg, covers the width of the leg's
+    linked Term, plus `connHLLegOutdent` px, both left and right above the Term.  
+    It is possible to do this (and to still leave a gap between the different
+    leg-highlights) because there is a horizontal gap between each Term
+    in TheTerms.
+  + `connHLBorderRadius`: {Number}:  
+    The CSS 'border-radius' used for rounding the top-left- and top-right-corner
+    of a connector-highlight.  
+    This value is also used for rounding the remove-icon, as it should fit
+    right against/inside a connector-highlight's top-right corner.
+  + `connRIW`: {Number}:  
+    Width and also height of a connector's remove-icon (RI).
+  + `connRIPadding`: {Number}:  
+    Padding of a connector's remove-icon, i.e. the space between its 'x' cross
+    and the border of its rectangle in the background.
+  + `connRILineWidth`: {Number}:  
+    Linewidth for the remove-icon's cross.
+  + `connRIFGColor`: {Array of 3 html-color Strings}:  
+    Foreground-color (i.e. the cross) for the remove-icon in its three states
+    (unhovered, hovered, pushed down).
+  + `connRIBGColor`: {Array of 3 html-color Strings}:  
+    Background-color (i.e. rectangle) for the remove-icon in its three states.
 - `custom-term`: {Function|false}:  
   can build custom content for non-Edit-type Terms' labels.  
   See below, under: "Custom content for Term labels".
@@ -612,9 +813,19 @@ VsmBox
 
 <br>
 
-- `change-init`
-- `change`
-- //To do
+- `change` + current VSM-sentence data (i.e. `{ terms:.., conns:.. }`):  
+  This is emitted whenever the user makes a change to the content of the VSM-box.
+- `change-init` + current VSM-sentence data:  
+  emits the same data as `change`, but does so at the start when the VsmBox
+  is initialized, or when it gets a new `initialValue`.  
+  This is useful when creating one function that keeps track of the current
+  content of the vsm-box, from the start onwards, rather than just after a
+  change happens.
+
+To make your code respond to these emitted events and data, add an
+event-listener function. For example in the standalone build, this would be like:
+`document.getElementById('my-vsm-box').addEventListener('change', function(eventData) { ... });`  
+See the example code in the files at `src/index-prod-*.html` for more details.
 
 
 <br>
@@ -770,7 +981,67 @@ VsmBox
 
 ### User interaction on the VSM-connector panel
 
-- //To do
+User interactions:
+- To add a VSM-connector:  
+  - **Trident**:&nbsp;  
+    1)&nbsp;click above the term that functions as the subunit's _subject_,&nbsp;
+    2)&nbsp;then above the one that functions as its _relation_,&nbsp;
+    3)&nbsp;and then its _object_.  
+    - *Bident with no subject*:&nbsp; 
+      1)&nbsp;click twice above the relation term (this skips the subject),&nbsp;
+      2)&nbsp;click above the object.
+    - *Bident with no relation*:&nbsp; 
+      1)&nbsp;click above the subject,&nbsp;
+      2)&nbsp;click twice above the object (skips the relation).
+    - *Bident with no object*:&nbsp;
+      1)&nbsp;click above subject,&nbsp;
+      2)&nbsp;click above object,&nbsp;
+      3)&nbsp;press `Esc`, or click outside the VSM-box (skips the object).
+  - **List**-connector:&nbsp;  
+    1)&nbsp;`Shift` + click above the list-relation,&nbsp;
+    2)&nbsp;click above each list-element,&nbsp;
+    3)&nbsp;press `Esc`, or click outside the VSM-box, or click above an
+      existing list-element once more (this finishes the list).
+  - **Coreference**:&nbsp;  
+    1)&nbsp;`Ctrl` + click above the child term,&nbsp;
+    2)&nbsp;click above the parent term.
+  + Note: The first click must always happen in the free space above a Term
+    and above (/not on) any existing connectors.
+    A temporary 'under-construction' leg follows the mouse when it moves there:
+    in the area that is above a Term and that is not yet occupied by another
+    connector.
+- To remove a VSM-connector:  
+  mouse-hover it and click the remove-icon `x` that appears on its top right.
+- Hovering a VSM-connector:  
+  this highlights it, all the way down to the VSM-terms it connects. This makes
+  it easier to inspect connectors that link terms that may be far apart.
+
+Automated reactions:
+- Connectors in a VsmBox are automatically 'sorted' in a nice-looking way.  
+  I.e. they are stacked on top of each other in an order that makes the
+  VSM-sentence's syntax intuitively understandable.
+- As soon as the user mousehovers the empty space above a Term,
+  a single-legged under-construction connector (UC-conn) appears,
+  and disappears again if the user hovers away without clicking.  
+  A click fixes this as the first leg of the UC-conn, and then the connector's
+  next leg in sequence appears as a new UC-leg. And so on, until building
+  the connector is cancelled or finished.
+- Shortly after creating a new connector (which is always built above the
+  existing connectors), it gets automatically sorted among the existing ones.  
+  A delay before sorting exists, so that users can more easily follow, as the
+  new connector 'falls into' its right place, after they completed its creation.
+- When a newly added connector fills the topmost available 'level' (see earlier),
+  then a new empty level is added automatically, so that the user can still
+  add more connectors. Hereby, the total height of the VsmBox increases.  
+  Alternatively, if a connector is removed, and this causes there to be more
+  than one empty level (and the VsmBox has more than `sizes.theConnsMinLevels`
+  levels), then the total height of the VsmBox decreases.
+- When a Term is removed, all connectors linked to it are removed as well,
+  and a re-sort happens shortly afterwards.
+- Once a connector leg is attached to a particular Term, it remains fixed to it.  
+  As a result, if the user drags Terms to a new place, connector legs will
+  follow along with their Terms' new positions. Meanwhile, connectors also
+  get automatically re-sorted.
 
 
 <br>
@@ -1043,7 +1314,7 @@ functions.
 Because: when users construct a VSM-sentence step by step, they will
 likely progress through states that are semantically invalid,
 but that are necessary or nice-to-progress-through,
-on their way building the final result.  
+on their way to building the final result.  
 > For example: Users should not be blocked in their editing process
 > by software that would refuse to add a new connector, before some incompatible
 > connector is deleted.
@@ -1066,7 +1337,7 @@ data. This may include [some are To Do, at time of writing]:
 - Removing `isFocal`, if it would be assigned to a Literal Term.
 - When prop `allowClassNull == false`, it prevents that users would change
   an L/R-type Term to an I/C-type Term, when that L/R-type Term
-  never had a classID associated with it.
+  never had a classID (stored as a backup) associated with it.
 
 <br>
 
@@ -1164,7 +1435,9 @@ Next:
 <br>
 
 ## FYI
-This project's configuration (webpack + npm + Vue + testing + linting) will be as described in:  
-&nbsp;&nbsp; [github.com/stcruy/building-a-reusable-vue-web-component](https://github.com/stcruy/building-a-reusable-vue-web-component),  
-in order to build `vsm-box` as:  
-&nbsp;&nbsp; 1) a standalone web-component, 2) a slim web-component, and 3) a Vue component.
+This project's configuration (webpack + npm + Vue + testing + linting) is as
+described in
+[github.com/stcruy/building-a-reusable-vue-web-component](https://github.com/stcruy/building-a-reusable-vue-web-component).  
+This makes that `vsm-box` is built, or can be used as:
+1)&nbsp;a standalone web-component, 2)&nbsp;a slim web-component,
+and 3)&nbsp;a Vue component.
