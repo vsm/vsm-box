@@ -22,7 +22,7 @@ describe('sub/Conn', () => {
             theConnsMarginBottom: 5,
             theConnsRowHeight: 20,
             connRefDashes: '1 1',
-            connListBoneSep: 2,
+            connListBackSep: 2,
             connLineWidth: 1,
             connBackDepth: 5,
             connFootDepth: 15,

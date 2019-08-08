@@ -23,9 +23,9 @@
     <line
       v-if="isList && drawBack"
       :x1="backX1 - lwh"
-      :y1="backY + h + sizes.connListBoneSep"
+      :y1="backY + h + sizes.connListBackSep"
       :x2="backX2 + lwh + h + h"
-      :y2="backY + h + sizes.connListBoneSep"
+      :y2="backY + h + sizes.connListBackSep"
       :style="backStyle"
       class="back two"
     />

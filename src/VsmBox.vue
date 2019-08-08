@@ -93,7 +93,7 @@ const DefaultSizes = {
   connTridRelH: 6.9, // Trident-connector Relation-leg pointer *full*-height.
   connTridObjW: 3.5,
   connTridObjH: 4.72,
-  connListBoneSep: 1.79,
+  connListBackSep: 1.79,
   connListRelW: 3.2,
   connListRelH: 5.8,
   connRefDashes: '2 1',  // The SVG 'stroke-dash-array' for Ref-connectors.
