@@ -127,7 +127,11 @@ export default {
 
     footY ()   { return this.leg.y2 + this.l.h },
     footXM()   { return (this.leg.footX1 + this.leg.footX2 - 1) / 2 + 0.5 },
-    showFoot() { return !this.leg.isUC || !this.leg.doublesUp },
+
+    showFoot() {
+      return this.sizes.connFootVisible &&
+        (!this.leg.isUC || !this.leg.doublesUp);
+    },
 
     legColor() {
       return this.leg.isUC ?

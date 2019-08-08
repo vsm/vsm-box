@@ -87,6 +87,7 @@ const DefaultSizes = {
   connLegColor:  '#7a7a7a',
   connFootColor: '#b6b6b6',
   connFootIndent: 1, // How many pixels to not cover, left&right above its Term.
+  connFootVisible: true,
 
   connTridRelW: 3.9, // Trident-connector Relation-leg pointer *half*-width.
   connTridRelH: 6.9, // Trident-connector Relation-leg pointer *full*-height.
