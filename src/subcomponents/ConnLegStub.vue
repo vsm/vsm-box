@@ -32,18 +32,18 @@
     <path
       v-if="stub.type == 'R'"
       :d="
-        `M${ x                         } ${ l.h + y2 - sizes.connStubBidRelH } `+
-        `L${ x + sizes.connStubBidRelW } ${ y2                               } `+
-        `H${ x - sizes.connStubBidRelW } Z`"
+        `M${ x                      } ${ l.h + y2 - sizes.connStubRelH } `+
+        `L${ x + sizes.connStubRelW } ${ y2                            } `+
+        `H${ x - sizes.connStubRelW } Z`"
       :style="`fill: ${ sizes.connStubLegColor }; stroke-width: 0;`"
       class="stub-pointer relation"
     />
     <path
       v-if="stub.type == 'O'"
       :d="
-        `M${ x - sizes.connStubBidObjW } ${ y2 + l.h - sizes.connStubBidObjH } `+
-        `L${ x                         } ${ y2 - l.h - l.lwh                 } `+
-        `L${ x + sizes.connStubBidObjW } ${ y2 + l.h - sizes.connStubBidObjH }`"
+        `M${ x - sizes.connStubObjW } ${ y2 + l.h - sizes.connStubObjH } `+
+        `L${ x                      } ${ y2 - l.h - l.lwh              } `+
+        `L${ x + sizes.connStubObjW } ${ y2 + l.h - sizes.connStubObjH }`"
       :style="`
         fill: none; stroke: ${sizes.connStubLegColor}; stroke-width: ${l.lw};`"
       class="stub-pointer object"
@@ -80,8 +80,8 @@ export default {
     // `x` is the x-coord of the stub-leg, away from the main backbone.
     x() {
       return this.stub.x + this.l.h + this.stub.side *
-        ( this.stub.type == 'S' ? this.sizes.connStubBidSubBackW :
-          this.stub.type == 'O' ? this.sizes.connStubBidObjBackW : 0);
+        ( this.stub.type == 'S' ? this.sizes.connStubSubBackW :
+          this.stub.type == 'O' ? this.sizes.connStubObjBackW : 0);
     },
 
     // The Y-coordinate at the stub-leg's top, one linewidth under the backbone.
@@ -92,15 +92,15 @@ export default {
     // The Y-coordinate at the stub-leg's foot.
     y2() {
       return this.stub.y1 + (
-        this.stub.type     == 'S' ? this.sizes.connStubBidSubLegH :
-          this.stub.type   == 'R' ? this.sizes.connStubBidRelLegH :
-            this.stub.type == 'O' ? this.sizes.connStubBidObjLegH : 0);
+        this.stub.type     == 'S' ? this.sizes.connStubSubLegH :
+          this.stub.type   == 'R' ? this.sizes.connStubRelLegH :
+            this.stub.type == 'O' ? this.sizes.connStubObjLegH : 0);
     },
 
     footW() {
-      return this.stub.type == 'S' ? this.sizes.connStubBidSubFootW :
-        this     .stub.type == 'R' ? this.sizes.connStubBidRelFootW :
-          this   .stub.type == 'O' ? this.sizes.connStubBidObjFootW : 0;
+      return this.stub.type == 'S' ? this.sizes.connStubSubFootW :
+        this     .stub.type == 'R' ? this.sizes.connStubRelFootW :
+          this   .stub.type == 'O' ? this.sizes.connStubObjFootW : 0;
 
     }
   }

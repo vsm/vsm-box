@@ -104,21 +104,21 @@ const DefaultSizes = {
   connStubLegColor:  '#c3c3c3',
   connStubFootColor: '#cbcbcb',
 
-  connStubBidSubBackW:  9,  // Bident stub-subject's extended-backbone width.
-  connStubBidObjBackW: 10,
+  connStubSubBackW:  9,  // Bident stub-subject's extended-backbone width.
+  connStubObjBackW: 10,
 
-  connStubBidSubLegH: 3.5,  // Less high, as it has no triangle/arrow pointer.
-  connStubBidRelLegH: 4.5,  // Height of this stub leg, between backbone & foot.
-  connStubBidObjLegH: 4.5,
+  connStubSubLegH: 3.5,  // Less high, as it has no triangle/arrow pointer.
+  connStubRelLegH: 4.5,  // Height of this stub leg, between backbone and foot.
+  connStubObjLegH: 4.5,
 
-  connStubBidSubFootW: 2.7,
-  connStubBidRelFootW: 2.8,
-  connStubBidObjFootW: 2.8,
+  connStubSubFootW: 2.7,
+  connStubRelFootW: 2.8,
+  connStubObjFootW: 2.8,
 
-  connStubBidRelW: 1.7,
-  connStubBidRelH: 3.55,
-  connStubBidObjW: 1.8,
-  connStubBidObjH: 3.7,
+  connStubRelW: 1.7,
+  connStubRelH: 3.55,
+  connStubObjW: 1.8,
+  connStubObjH: 3.7,
 
   connUCLegColor:  'rgba(46,72,255,0.56)',  // Under-construction color.
   connUCFootColor: '#e6e6e6',
