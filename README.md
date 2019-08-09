@@ -4,18 +4,35 @@
 
 ## Intro
 
-This component is in development, but it is ready for use.  
+`vsm-box` is a web-component for building and showing a VSM-sentence.
 
-See a live vsm-box web-component [here](http://scicura.org/vsm-box),  
-or see a minimal usage example [here](https://vsmjs.github.io/),
-or in this [nice poster](https://f1000research.com/posters/8-442).
+A **VSM-sentence** is a computer-understandable, natural-looking statement,
+where each term is linked to an ID, and terms are organized with VSM-connectors.
 
-Or see an earlier prototype with many VSM-sentence examples,
-on the [VSM-pages](http://scicura.org/vsm/examples.html).
+**VSM** (Visual Syntax Method) is an intuitive method to translate any
+knowledge, no matter its type or complexity, into an elegant form that is
+understandable by both humans and computers. - A full description of this
+general-purpose method for structuring information into a computable form,
+is available on [scicura.org/vsm](http://scicura.org/vsm).
 
+A **web-component** is something that can be shown in a web page by simply
+inserting an HTML-tag, like a `<button>`, `<input>`, or here a `<vsm-box>`.
 
-<br>
-<br>
+See [vsmjs.github.io](http://vsmjs.github.io) for a concise introduction of
+how to use a vsm-box in your curation project's web-interface. - Or
+see a larger intro in this [poster](https://f1000research.com/posters/8-442).
+
+Interact with a live vsm-box [here](http://scicura.org/vsm-box). - Or
+see many explained VSM examples (using an earlier vsm-box prototype)
+[here](http://scicura.org/vsm/examples.html).
+
+<br>A vsm-box is a lot larger on the inside than it looks on the
+outside. - For users who use it to curate (collect & structure) information,
+it looks compact and easy to use, especially when just filling in
+VSM-templates. - For web-developers who incorporate a vsm-box in some
+web application, it has a large amount of customization possibilities,
+to support the needs of various user groups.
+
 <br>
 
 ## VSM-sentence data model
@@ -407,7 +424,7 @@ VsmBox
     removed.  
     This icon can have three states: unhovered, hovered (when the mouse hovers
     it), and pushed-down (when the mouse button is pressed down on it).
-+ About about TheConns, i.e. the panel where connectors are drawn:
++ About TheConns, i.e. the panel where connectors are drawn:
   + A *level* is a horizontal row, which holds vertical space for just one
     connector's backbone.  
     Connectors can be on the same level side-by-side, but not on top of
@@ -565,10 +582,14 @@ VsmBox
           not-null, then it creates an R-Term with `classID` and `parentID`
           not-null, i.e. a Term that refers to a Term in another VSM-sentence.
         + Like this, advancedSearch can generate any type of Term (R/I/C/L).
-- `sizes`: {Object}: an object with some or all of the following properties  
-  (they define settings for how the user-interface looks and behaves (sizes,
-  delays, and colors), that remain constant during the life of a VsmBox)  
-  (any given one overrides a VsmBox default value for it):
+- `sizes`: {Object}:  
+  An object with settings that define how the user-interface should look and
+  behave (sizes, colors, delays, etc.). It accepts an Object with some or all
+  of the properties listed below. For properties that are not given, VsmBox
+  uses a default value.  
+  Note: always give a new Object for the `sizes` prop, in order to make VsmBox
+  apply new settings; as it will not immediately respond to later changes in
+  properties of an already received Object.
   + `minWidth`: {Number}:  
     minimum width of the VsmBox. If the VsmBox is empty, this will be its
     initial width. (This width includes 'TheTerms'-subcomponent's padding).
