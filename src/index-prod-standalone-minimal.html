@@ -1,9 +1,10 @@
+<!DOCTYPE html>
 <html>
 <head>
   <meta charset="utf-8"/>
 
-  <script src="https://unpkg.com/vsm-dictionary-local@2.6.0/dist/vsm-dictionary-local.min.js"></script>
-  <script src="https://unpkg.com/vsm-dictionary-cacher@1.2.0/dist/vsm-dictionary-cacher.min.js"></script>
+  <script src="https://unpkg.com/vsm-dictionary-local@^2.6.0/dist/vsm-dictionary-local.min.js"></script>
+  <script src="https://unpkg.com/vsm-dictionary-cacher@^1.2.0/dist/vsm-dictionary-cacher.min.js"></script>
   <script src="../dist/vsm-box.standalone.min.js"></script>
 </head>
 
@@ -26,6 +27,12 @@
   });  // (Or use another dictionary interface, like vsm-dictionary-bioportal).
 
 
+  // Fill in something. (Uncomment this:)
+  //vsmbox.initialValue = {
+  //  terms: [ {}, { str: 'aaa', classID: 'http://d.org/A/A:01', instID: null }, {} ],
+  //  conns: [ { type: 'T', pos: [ 0, 1, 2 ] } ] };
+
+  // Show changes in the textarea.
   var text = document.getElementsByTagName('textarea')[0];  text.value = '';
   function showOutput(e) { text.value = JSON.stringify(e.detail[0], null, 2) }
   vsmbox.addEventListener('change', showOutput);
