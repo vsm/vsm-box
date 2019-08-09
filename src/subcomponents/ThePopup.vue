@@ -886,7 +886,7 @@ export default {
   .item.inactive,
   .types .type.inactive,
   .hotkey.help {
-    color: #9d9d9d;
+    color: #8a8a8a;
   }
 
   .item.inactive:hover {
