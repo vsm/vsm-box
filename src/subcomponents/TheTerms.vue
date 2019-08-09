@@ -817,7 +817,6 @@ export default {
       this.terms = terms2;
 
       this.emitValue();
-      this.$emit('move', { from, to });
     },
 
 

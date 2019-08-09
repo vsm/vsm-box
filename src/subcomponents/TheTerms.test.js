@@ -2942,7 +2942,7 @@ describe('sub/TheTerms', () => {
 
 
   describe('user-interaction: Alt+Up/Alt+Down moves an Edit-Term, and ' +
-     'emits both `change` + terms, and `move` + `{from, to}`', () => {
+     'emits `change` + terms', () => {
 
     it('they have no effect when there is only 1 real Term', cb => {
       make({ origTerms: [{ }] });
@@ -2951,7 +2951,6 @@ describe('sub/TheTerms', () => {
         _termITrigAUp(0);
         _termITrigADown(0);
         _emit(0, 'change').should.equal(false);
-        _emit(0, 'move'  ).should.equal(false);
         cb();
       });
     });
@@ -2964,14 +2963,13 @@ describe('sub/TheTerms', () => {
         _termITrigAUp(2);
         _termITrigADown(2);
         _emit(0, 'change').should.equal(false);
-        _emit(0, 'move'  ).should.equal(false);
         cb();
       });
     });
 
 
     it('they move an Edit-Term left / right, cyclingly, keep input focused, ' +
-       'and emit `change` and `move`', cb => {
+       'and emit `change`', cb => {
 
       var origTerms = [{ str: 'a' }, { }, { str: 'b' }, { type: 'EL'}];
       var lastOrder = [0, 1, 2, 3];
@@ -2988,8 +2986,7 @@ describe('sub/TheTerms', () => {
         vueTick(() => {
           var newTerms = newOrder.map(pos => origTerms[pos]);
           lastOrder = newOrder;
-          _emitV(moveNr  , 'change').should.deep.equal(newTerms);
-          _emitV(moveNr++, 'move'  ).should.deep.equal({ from, to });
+          _emitV(moveNr++, 'change').should.deep.equal(newTerms);
           _thereIsFocusedInputAt(to);
           _input().element.value.should.equal(termNr == 1 ? 'Aaa' : 'Bbb');
           cbf();
@@ -3750,7 +3747,6 @@ describe('sub/TheTerms', () => {
       _termCoos(0)  .should.deep.equal(co0);
       _dragPlh().exists().should.equal(false);
       _emitV(0, 'change').should.equal(false);
-      _emitV(0, 'move'  ).should.equal(false);
       cb();
     });
 
@@ -3763,7 +3759,6 @@ describe('sub/TheTerms', () => {
       _termCoos(0)  .should.deep.equal(co0);   // It didn't move yet.
       _dragPlh().exists().should.equal(false); // No placeholder there yet.
       _emitV(0, 'change').should.equal(false);
-      _emitV(0, 'move'  ).should.equal(false);
       _windBlur();  // This detaches the window-listeners. Note that..
       cb();              // .. an `afterEach()` does this already too!
     });
@@ -3778,7 +3773,6 @@ describe('sub/TheTerms', () => {
       _dragPlhCoos().should.deep.equal(co0); // Plh. at Term's orig pos & size.
       _dragPlh().exists().should.equal(true);
       _emitV(0, 'change').should.equal(false);
-      _emitV(0, 'move'  ).should.equal(false);
       cb();
     });
 
@@ -3791,7 +3785,6 @@ describe('sub/TheTerms', () => {
       _termCoos(0)  .should.deep.equal(co0);  // Term back at its orig. pos.
       _dragPlh().exists().should.equal(false);
       _emitV(0, 'change').should.equal(false);
-      _emitV(0, 'move'  ).should.equal(false);
       cb();
     });
 
@@ -3803,7 +3796,6 @@ describe('sub/TheTerms', () => {
       _termCoos(0)  .should.deep.equal(co0);  // Term back at its orig. pos.
       _dragPlh().exists().should.equal(false);
       _emitV(0, 'change').should.equal(false);
-      _emitV(0, 'move'  ).should.equal(false);
       cb();
     });
 
@@ -3932,7 +3924,6 @@ describe('sub/TheTerms', () => {
       _dragPlhCoos().should.deep.equal({
         x: co1.x,  y: co1.y,  w: co1.w,  h: co1.h });
       _emitV(0, 'change').should.equal(false);
-      _emitV(0, 'move'  ).should.equal(false);
 
       // But when moving the mouse to before the middle of Term 0,
       // the Terms 1 and 0 switch place.
@@ -3942,7 +3933,6 @@ describe('sub/TheTerms', () => {
       _dragPlhCoos().should.deep.equal({
         x: co0.x,  y: co0.y,  w: co1.w,  h: co1.h });
       _emitV(0, 'change').should.deep.equal([{ str: 'bbbb' }, { str: 'aa' },{}]);
-      _emitV(0, 'move'  ).should.deep.equal({ from: 1, to: 0 });
       cb();
     });
 
@@ -3959,7 +3949,6 @@ describe('sub/TheTerms', () => {
       _dragPlhCoos().should.deep.equal({
         x: co1.x,  y: co1.y,  w: co1.w,  h: co1.h });
       _emitV(0, 'change').should.equal(false);
-      _emitV(0, 'move'  ).should.equal(false);
 
       // But when moving the mouse to after the middle of Term 2,
       // the Terms 1 and 2 switch place.
@@ -3969,7 +3958,6 @@ describe('sub/TheTerms', () => {
       _dragPlhCoos().should.deep.equal({
         x: co2.x + co2.w - co1.w,  y: co1.y,  w: co1.w,  h: co1.h });
       _emitV(0, 'change').should.deep.equal([{ str: 'aa' }, {}, { str: 'bbbb'}]);
-      _emitV(0, 'move'  ).should.deep.equal({ from: 1, to: 2 });
       cb();
     });
 
@@ -3991,7 +3979,6 @@ describe('sub/TheTerms', () => {
       _term(1).text().should.equal('bbbb');
       _dragPlhCoos().should.deep.equal(co1);    // Placeholder at Term 1's pos.
       _emitV(0, 'change').should.equal(false);  // No real change yet.
-      _emitV(0, 'move'  ).should.equal(false);
 
       // 4) Move the Term to the end.
       _windMMove(1000, 1000);                                        ///DCoos();
@@ -3999,7 +3986,6 @@ describe('sub/TheTerms', () => {
       _dragPlhCoos().x.should.equal(co2.x + co2.w - co1.w);  // Placeholder @end.
       _emitV(0, 'change').should.deep.equal(      // It emitted a first 'change'.
         [{ str: 'aa' }, { }, { str: 'bbbb' }]);
-      _emitV(0, 'move'  ).should.deep.equal({ from: 1, to: 2 });
 
       // 5) Move & drop the Term to/at the front.
       _windMUp(1, -1000, 0);                                         ///DCoos();
@@ -4009,7 +3995,6 @@ describe('sub/TheTerms', () => {
       _dragPlh().exists().should.equal(false);  // No more placeholder.
       _emitV(1, 'change').should.deep.equal(    // It emitted a second 'change'.
         [{ str: 'bbbb' }, { str: 'aa' }, { }]);
-      _emitV(1, 'move'  ).should.deep.equal({ from: 2, to: 0 });
 
       w.vm.terms[0].key.should.equal(key1);  // Term 1 actually moved to pos. 0.
       cb();
@@ -4026,7 +4011,6 @@ describe('sub/TheTerms', () => {
       _dragPlhCoos().x.should.equal(co0.x);
       _emitV(0, 'change').should.deep.equal(  // It emitted a first 'change'.
         [{ str: 'bbbb' }, { str: 'aa' }, { }]);
-      _emitV(0, 'move'  ).should.deep.equal({ from: 1, to: 0 });
 
       // 2) Blur the browser window: == mouse-up, but without new coordinates.
       _windBlur(1);
@@ -4035,7 +4019,6 @@ describe('sub/TheTerms', () => {
         x: co0.x,  y: co0.y,  w: co1.w,  h: co1.h });
       _dragPlh().exists().should.equal(false);
       _emitV(1, 'change').should.equal(false);  // It emitted no second 'change'.
-      _emitV(1, 'move'  ).should.equal(false);
 
       w.vm.terms[0].key.should.equal(key1);  // Term 1 actually moved to pos. 0.
       cb();
@@ -4055,7 +4038,6 @@ describe('sub/TheTerms', () => {
       _termHasCssClassInp(1);
       _emitV(0, 'change').should.deep.equal(  // (Just an extra check).
         [{ str: 'aa' }, { }, { str: 'bbbb' }]);
-      _emitV(0, 'move'  ).should.deep.equal({ from: 1, to: 2 });
 
       // PART 2: drag our Term (now at 2) back to left of the Edit-Term (now @1).
       _windMMove(co1.x, 0);
@@ -4064,7 +4046,6 @@ describe('sub/TheTerms', () => {
       _termHasCssClassInp(2);
       _emitV(1, 'change').should.deep.equal(
         [{ str: 'aa' }, { str: 'bbbb' }, { }]);
-      _emitV(1, 'move'  ).should.deep.equal({ from: 2, to: 1 });
       cb();
     });
 
