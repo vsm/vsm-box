@@ -8,6 +8,7 @@
       :width="width"
       :sizes="sizesFull"
       :terms-change-nr="termsChangeNr"
+      :enabled="isTheConnsEnabled"
       @change="onConnsChange"
       @change-init="onConnsChangeInit"
       @click-above-end-term="onClickAboveEndTerm"
@@ -34,6 +35,8 @@
       @change.native.stop="x => x"
       @change.exact="onTermsChange"
       @change-init="onTermsChangeInit"
+      @drag-start="onDragStart"
+      @drag-stop="onDragStop"
     />
   </div>
 </template>
@@ -226,7 +229,8 @@ export default {
     origConns: [],
     latestTerms: [],
     termsChangeNr: 1,
-    width: 0  // Will be calculated by and received from TheTerms.
+    width: 0,  // Will be calculated by and received from TheTerms.
+    isTheConnsEnabled: true
   }; },
 
 
@@ -337,6 +341,16 @@ export default {
 
     onClickAboveEndTerm() {
       this.$refs.theTerms.moveInputToEndTerm(true);
+    },
+
+
+    onDragStart() {
+      this.isTheConnsEnabled = false;
+    },
+
+
+    onDragStop() {
+      this.isTheConnsEnabled = true;
     },
 
 

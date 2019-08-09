@@ -975,6 +975,8 @@ export default {
           this.$set(term, 'drag', { x: term.x,  y: term.y });
           this.inputElement().blur();  // Makes any autocomplete-list close.
           setGrabCursor();
+
+          this.$emit('drag-start');
         }
 
         // Proceed with dragging.
@@ -1013,6 +1015,7 @@ export default {
           this.$delete(this.terms[index], 'drag');
           setGrabCursor(false);
           this.tempDisablePopup();
+          this.$emit('drag-stop');
         }
       };
 

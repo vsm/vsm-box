@@ -18,7 +18,8 @@ describe('sub/TheConns', () => {
         { origConns: [],
           width: 400,
           sizes,
-          termsChangeNr: 1
+          termsChangeNr: 1,
+          ///enabled: true
         },
         props,
         { sizes: Object.assign({}, sizes, props.sizes) }

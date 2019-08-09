@@ -11,7 +11,7 @@
     <rect
       :y="height - sizes.theConnsMarginBottom"
       :height="sizes.theConnsMarginBottom"
-      :style="'fill:' + ($parent.$refs.theTerms || {}).bkgrColor"
+      :style="`fill: ${ ($parent.$refs.theTerms || {}).bkgrColor };`"
       x="0"
       width="100%"
       class="terms-top-margin"
@@ -131,6 +131,10 @@ export default {
     termsChangeNr: {
       type: Number,
       required: true
+    },
+    enabled: {  // If `false`, TheConns does not respond to mouse-events, ..
+      type: Boolean,  // ..e.g. during Term-dragging.
+      default: true
     }
   },
 
@@ -229,6 +233,13 @@ export default {
 
     height: function() {
       this.calcCoordinates();
+    },
+
+    enabled: function(val) {
+      if (!val) {
+        this.hlConnNr = -1;
+        if (this.hasUCConn)  this.removeUCConn();
+      }
     }
   },
 
@@ -534,6 +545,7 @@ export default {
 
 
     onMousemove(event) {
+      if (!this.enabled)  return;
       var cell = this.eventToCell(event);
       this.updateHLConnNr(cell);
       this.handleUCConnAfterMousemove(event, cell);
@@ -541,12 +553,14 @@ export default {
 
 
     onMouseleave() {
+      if (!this.enabled)  return;
       this.hlConnNr = -1;
       if (this.hasUCConn  &&  !this.hasActiveUCConn)  this.removeUCConn();
     },
 
 
     onMousedown(event) {
+      if (!this.enabled)  return;
       var cell = this.eventToCell(event);
 
       if (cell.pos == this.fullTerms.length - 1) {
@@ -569,6 +583,7 @@ export default {
 
 
     onConnRemove(index) {
+      if (!this.enabled)  return;
       this.hlConnNr = -1;
       this.$set(this.conns[index], 'justRemoved', true);
       this.emitValue();

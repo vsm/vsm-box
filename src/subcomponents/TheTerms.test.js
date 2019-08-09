@@ -3759,13 +3759,15 @@ describe('sub/TheTerms', () => {
       _termCoos(0)  .should.deep.equal(co0);   // It didn't move yet.
       _dragPlh().exists().should.equal(false); // No placeholder there yet.
       _emitV(0, 'change').should.equal(false);
+      _emit (0, 'drag-start').should.equal(false);
       _windBlur();  // This detaches the window-listeners. Note that..
       cb();              // .. an `afterEach()` does this already too!
     });
 
 
-    it('mousedown + mousemove at/past `termDragThreshold`: moves a Term, and ' +
-       'puts a same-sized drag-placeholder at its original place', cb => {
+    it('mousedown + mousemove at/past `termDragThreshold`: moves a Term, ' +
+       'puts a same-sized drag-placeholder at its original place, and ' +
+       'emits `drag-start`', cb => {
       _termMDown(0, co0.x + 0, co0.y + 0);
       _windMMove(co0.x + 3, co0.y + 0);  // 3*3+0*0 >= termDragThreshold^2.
 
@@ -3773,18 +3775,25 @@ describe('sub/TheTerms', () => {
       _dragPlhCoos().should.deep.equal(co0); // Plh. at Term's orig pos & size.
       _dragPlh().exists().should.equal(true);
       _emitV(0, 'change').should.equal(false);
+      _emit (0, 'drag-start').should.equal(true);
+      _emit (0, 'drag-stop' ).should.equal(false);
       cb();
     });
 
 
     it('mousedown + small mousemove at/past `termDragThreshold`, then mouseup' +
-       ': restores the Term at its original position', cb => {
+       ': restores the Term at its original position, and ' +
+       'emits `drag-start` and `drag-stop`', cb => {
       _termMDown(0, co0.x + 0, co0.y + 0);
       _windMMove(co0.x + 3, co0.y + 0);
       _windMUp  (co0.x + 3, co0.y + 0);  // Mouse-up, at coos of last position.
       _termCoos(0)  .should.deep.equal(co0);  // Term back at its orig. pos.
       _dragPlh().exists().should.equal(false);
       _emitV(0, 'change').should.equal(false);
+      _emit (0, 'drag-start').should.equal(true);
+      _emit (0, 'drag-stop' ).should.equal(true);
+      _emit (1, 'drag-start').should.equal(false);  // This is not emitted twice.
+      _emit (1, 'drag-stop' ).should.equal(false);  // " .
       cb();
     });
 
@@ -3796,6 +3805,8 @@ describe('sub/TheTerms', () => {
       _termCoos(0)  .should.deep.equal(co0);  // Term back at its orig. pos.
       _dragPlh().exists().should.equal(false);
       _emitV(0, 'change').should.equal(false);
+      _emit (0, 'drag-start').should.equal(true);
+      _emit (0, 'drag-stop' ).should.equal(true);
       cb();
     });
 
