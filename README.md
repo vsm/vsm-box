@@ -813,9 +813,9 @@ VsmBox
 
 <br>
 
-- `change` + current VSM-sentence data (i.e. `{ terms:.., conns:.. }`):  
+- `'change'` + current VSM-sentence data (i.e. `{ terms:.., conns:.. }`):  
   This is emitted whenever the user makes a change to the content of the VSM-box.
-- `change-init` + current VSM-sentence data:  
+- `'change-init'` + current VSM-sentence data:  
   emits the same data as `change`, but does so at the start when the VsmBox
   is initialized, or when it gets a new `initialValue`.  
   This is useful when creating one function that keeps track of the current
@@ -1019,7 +1019,10 @@ User interactions:
 Automated reactions:
 - Connectors in a VsmBox are automatically 'sorted' in a nice-looking way.  
   I.e. they are stacked on top of each other in an order that makes the
-  VSM-sentence's syntax intuitively understandable.
+  VSM-sentence's syntax intuitively understandable.  
+  Note: no 'change'-event is emitted after the elements of the internal `conns`
+  array are reordered (which determines bottom-to-top stacking), because their
+  order makes no difference to the meaning of a VSM-sentence.
 - As soon as the user mousehovers the empty space above a Term,
   a single-legged under-construction connector (UC-conn) appears,
   and disappears again if the user hovers away without clicking.  
