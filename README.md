@@ -1472,10 +1472,10 @@ Next:
   - VsmBox hears TheConns' `'change'` event, combines the sent-along `conns` and
     the stored `latestTerms`, and emits them together in a `'change'`-event.
 
-
 <br>
 
-## FYI
+### Build configuration
+
 This project's configuration (webpack + npm + Vue + testing + linting) is as
 described in
 [github.com/stcruy/building-a-reusable-vue-web-component](https://github.com/stcruy/building-a-reusable-vue-web-component).  
