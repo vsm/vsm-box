@@ -427,7 +427,7 @@ export default {
         // the Terms, starting from level 0.
         // Stack the connectors on top of each other (in given order),
         // whereby their feet reach down to the connector below, or to TheTerms.
-        conn.footLevels = [];
+        conn = Object.assign({}, conn, { footLevels: [] });
         conn.pos.forEach((p, i) => {
           conn.footLevels[i] = p < 0 ? p :
             conn.pos.slice(0, i).includes(p) ? highLevels[p] : // =Pos occurs 2x?
@@ -777,7 +777,6 @@ export default {
 
 
     sortConnectors() {
-      if (this.hasUCConn)  this.removeUCConn();
       this.conns = co.sortConnectors(this.conns);
       this.calcCoordinates();
     }
