@@ -73,6 +73,28 @@ var to = {  // Here starts the exported Object.
 
 
   /**
+   * Returns a prepped *clone* of a Term that was received through a Paste
+   * request. It:
+   * - calls `prepToReceive()` on it;
+   * - deletes properties that are used internally in VsmBox;
+   * - removes template- and sentence-related properties that must be kept in
+   *   the Edit-Term into which it is being pasted;
+   * - (keeps any other properties).
+   */
+  prepToReceiveForPaste(term_0) {
+    var term = to.prepToReceive(term_0, false); // (false=>no new `key`).
+    to.deleteInternallyUsedProperties(term);
+    delete term.isFocal;
+    delete term.minWidth;
+    delete term.maxWidth;
+    delete term.editWidth;
+    delete term.queryOptions;
+    delete term.placeholder;
+    return term;
+  },
+
+
+  /**
    * Modifies the given Term (which is an Object in standard form like VsmBox
    * accepts it), by inferring and setting its `type` property.
    */
@@ -125,6 +147,7 @@ var to = {  // Here starts the exported Object.
 
     delete term.label;
     delete term.backup;
+    delete term.drag;
   },
 
 
@@ -213,13 +236,23 @@ var to = {  // Here starts the exported Object.
     var e    = to.isEditable(term);
     to.pruneProperties(term);
     if (e)  delete term.str;
-    delete term.label;
     if (!e || term.type == 'EI')  delete term.type;
+    to.deleteInternallyUsedProperties(term);
+    return term;
+  },
+
+
+  /**
+   * Modifies a given Term, so it no longer has any properties that are
+   * used internally by VsmBox.
+   */
+  deleteInternallyUsedProperties(term) {
+    delete term.label;
     delete term.key;
     delete term.x;  delete term.width;
     delete term.y;  delete term.height;
-    delete term.drag;  delete term.isEndTerm;
-    return term;
+    delete term.isEndTerm;
+    delete term.drag;  delete term.backup;
   },
 
 
@@ -345,15 +378,20 @@ var to = {  // Here starts the exported Object.
 
 
   /**
-   * Returns a *clone* of the given Term, in which 'core' properties of a (clone
-   * of) the second given Term (=received data from `termPaste`) are merged.
+   * Returns a *clone* of the given Term, in which the (cloned) properties of
+   * the second given Term (=received data from `termPaste`) are merged.
+   * + Does not copy template- or VSM-sentence-related properties. These are
+   *   kept as they are in the first term.
+   * + Any extra properties are copied (as long as they are non-conflicting
+   *   for the internal workings of VsmBox). This may be useful for tracking
+   *   what was pasted where in a VSM-template.
    */
   prepForPaste(term, term2) {
     var t = to.clone(term);
     delete t.style;  // Can be overwritten by `term2`.
     delete t.label;  // Should be set by TheTerms only.
     return Object.assign(t,
-      to.keepCoreProps(to.prepToReceive(term2, false)), // (false=>no new `key`).
+      to.prepToReceiveForPaste(term2),
       { instID: null }  // Required for R/I-Terms; no problem for C/L-Terms.
     );
   }

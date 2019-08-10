@@ -13,7 +13,7 @@ describe('sub/termOperations', () => {
     type: 'I',
     str: 'ab',  style: 'i',  label: '<i>ab</i>',
     classID: 'A:01',  instID: 'id5',
-    queryOptions: { z: [] },
+    queryOptions: { z: [] },  placeholder: 'plh',
     minWidth: 10,  maxWidth: 20,  editWidth: 30,
     x: 1,  y: 1,  width: 8, height: 4,
     isFocal: true,  isEndTerm: true,
@@ -111,6 +111,19 @@ describe('sub/termOperations', () => {
     expect(to.prepToReceive(_termI({ dictID: '', descr: '' })) .dictID)
       .to.equal(undefined);
     expect(to.prepToReceive(_termI({ type: 'XX' })) .type).to.equal('I');
+  });
+
+
+  it('prepToReceiveForPaste()', () => {
+    var t1 = _term({ tag: 'abc123' });
+    var t2 = to.prepToReceiveForPaste(t1);
+    t2.should.deep.equal({
+      type: 'I',
+      str: 'ab',  style: 'i',
+      classID: 'A:01',  instID: 'id5',
+      aa: { bb: 1 },
+      tag: 'abc123'
+    });
   });
 
 
@@ -297,7 +310,8 @@ describe('sub/termOperations', () => {
     to.prepToEmit(t).should.deep.equal({
       // No more label, x, y, width, height, key, backup, drag, isEndTerm.
       str: 'ab',  style: 'i',  classID: 'A:01',  instID: 'id5',
-      queryOptions: { z: [] }, minWidth: 10,  maxWidth: 20,  editWidth: 30,
+      queryOptions: { z: [] }, placeholder: 'plh',
+      minWidth: 10,  maxWidth: 20,  editWidth: 30,
       isFocal: true,
       aa: { bb: 1 }  // It keeps other properties though.
     });
@@ -325,6 +339,22 @@ describe('sub/termOperations', () => {
     to.prepToEmit(_termTER()).type.should.equal('ER');
     to.prepToEmit(_termTEC()).type.should.equal('EC');
     to.prepToEmit(_termTEL()).type.should.equal('EL');
+  });
+
+
+  it('deleteInternallyUsedProperties()', () => {
+    var t = _term({ tag: 'abc123' });
+    to.deleteInternallyUsedProperties(t);
+    t.should.deep.equal({
+      type: 'I',
+      str: 'ab',  style: 'i',
+      classID: 'A:01',  instID: 'id5',
+      queryOptions: { z: [] },  placeholder: 'plh',
+      minWidth: 10,  maxWidth: 20,  editWidth: 30,
+      isFocal: true,
+      aa: { bb: 1 },
+      tag: 'abc123'
+    });
   });
 
 
@@ -432,6 +462,7 @@ describe('sub/termOperations', () => {
       str: 's',  style: 'b',  dictID: 'A', descr: 'D',  // Note: deletes `label`.
       classID: 'M:99',  instID: null,
       queryOptions: { z: [] },           // It keeps all properties from here on.
+      placeholder: 'plh',
       minWidth: 10,  maxWidth: 20,  editWidth: 30,
       x: 1,  y: 1,  width: 8, height: 4,
       isFocal: true,  isEndTerm: true,  key: 'xx',  aa: { bb: 1 }
@@ -563,20 +594,31 @@ describe('sub/termOperations', () => {
     var t3 = to.prepForPaste(t, t2);
     t .aa = 8;
     t2.aa = 9;
-    expect(t3.aa).to.equal(undefined);
+    expect(t3.aa).to.equal(7);
 
     // It can return a Term with:  - pasted `str`,
     // - removed `style` when needed,  - removed `label`,
-    // - pasted `type`,  - pasted IDs,  - whereby `instID` is made null,
-    // - and keeping all other properties as they were before.
+    // - inferred `type`,  - pasted IDs,  - whereby `instID` is made null,
+    // - keeping all template/sentence-related properties as they were before,
+    // - and pasted any extra, non-conflicting properties.
     t = to.prepForPaste(
       _term(),
-      { str: 'p',  classID: 'X:99', instID: 'id3', parentID: 'id5' }
+      { str: 'p', classID: 'X:99', instID: 'id3', parentID: 'id5', // No `style`.
+        label: 'QQ',  type: 'QQ',
+        queryOptions: { z: ['QQ'] },  placeholder: 'QQ',
+        minWidth: 55,  maxWidth: 55,  editWidth: 55,
+        x: 55,  y: 55,  width: 55, height: 55,
+        isFocal: 0,  isEndTerm: 55,  key: 'QQ',
+        backup: 'QQ',  drag: 'QQ',
+        aa: { cc: 77 },  tag: 'abc123'
+      }
     ).should.deep.equal({
       str: 'p',  classID: 'X:99',  instID: null,  parentID: 'id5', type: 'R',
-      queryOptions: { z: [] },  minWidth: 10,  maxWidth: 20,  editWidth: 30,
+      queryOptions: { z: [] },  placeholder: 'plh',
+      minWidth: 10,  maxWidth: 20,  editWidth: 30,
       x: 1,  y: 1,  width: 8, height: 4,
-      isFocal: true,  isEndTerm: true,  key: 'xx',  aa: { bb: 1 }
+      isFocal: true,  isEndTerm: true,  key: 'xx',
+      aa: { cc: 77 },  tag: 'abc123'
     });
 
     // It can paste an I-Term in a non-EI-type Edit-Term.

@@ -795,7 +795,8 @@ VsmBox
   + Argument:
     + `term`: {Object}: follows the VSM-term data model (see earlier).
       + Except: it never has a
-        `isFocal`/`minWidth`/`maxWidth`/`editWidth`/`queryOptions` property.
+        `isFocal`/`minWidth`/`maxWidth`/`editWidth`/`queryOptions`/`placeholder`
+        property.
         This means that it copies only the core semantic data of a term,
         isolated from its role in a VSM-sentence or settings in a `vsm-box`.  
       + `dictID`/`descr` are included if they are available in the copied Term.
@@ -808,7 +809,7 @@ VsmBox
       to the copy's `parentID`. This makes that later when Pasting,
       the pasted Term will refer to the 'reference-copied' Term.  
       This menu-item is only available on Inst. and Ref. Inst. Terms that
-      have a not-null 'instID`.
+      have a not-null `instID`.
     + The main reason why the Copy (Ref) / Paste functionality exists,
       is to support the creation of references between sentences,
       i.e. between multiple `vsm-box`es.
@@ -824,8 +825,23 @@ VsmBox
   after `term-copy` receives a `term` for the first time.  
   If invalid data is given (e.g. an Instance Term with `classID==null` while
   the vsm-box's prop `allowClassNull==false`), then pasting will abort.
-  + Returns a `term`: {Object}:  
-    same form as `term-copy`'s argument.
+  + Returns a `term`: {Object}: follows the VSM-term data model (see earlier).  
+    + Note: template- and sentence-related properties in the pasted `term` are
+      ignored:
+      `isFocal`/`minWidth`/`maxWidth`/`editWidth`/`queryOptions`/`placeholder`.
+      When pasting, the resulting term keeps these settings as they were
+      in the original Edit-Term.
+    + However, if the `term` that is given for pasting contains other extra
+      properties, they will be kept (if they do not interfere with VsmBox's
+      internal working). Then, when VsmBox emits 'change', these properties
+      will remain visible to 'change'-listeners.  
+      This may be useful e.g. when using a VsmBox for a curation task,
+      next to a display of text-mining results.
+      External code could show selectable, text-mined terms, each augmented
+      with a tag/property of its location in the source text.
+      Then after a curator pasted such terms in a VSM-template, the external
+      code could find out exactly what was chosen and pasted. This location data
+      could be useful for further training the text-mining software.
 
 
 <br>

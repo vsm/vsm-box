@@ -5295,12 +5295,14 @@ describe('sub/TheTerms', () => {
 
 
     it('Paste on Edit-Term: calls `termPaste`, fills in a cleaned clone of ' +
-       'given Object, with no `isFocal/*width/queryOptions`; ' +
-       'emits `change`', cb => {
+       'given Object, with no `isFocal/*width/queryOptions/placeholder`, ' +
+       'keeps extras; emits `change`', cb => {
       makeWithPopup({}, {}, () => {
         termCopied = {
           str: 'aa', style: 'i', classID: 'X', instID: 'Y', parentID: 'Z',
           isFocal: true, minWidth: 10, maxWidth: 20, editWidth: 30,
+          placeholder: 'test',
+          tag: 'abc123', data: { a: 1 },
           queryOptions: { z: [] }
         };
         _ppItemClick('paste');
@@ -5309,7 +5311,8 @@ describe('sub/TheTerms', () => {
           // It also set an incorrectly given not-null instID, to null.
           _emitV(0, 'change').should.deep.equal([
             { str: 't0' },
-            { str: 'aa', style: 'i', classID: 'X', instID: null, parentID: 'Z' }
+            { str: 'aa', style: 'i', classID: 'X', instID: null, parentID: 'Z',
+              tag: 'abc123', data: { a: 1 } }
           ]);
 
           // Test that a clone of the given data was used.
@@ -5364,11 +5367,11 @@ describe('sub/TheTerms', () => {
     });
 
 
-    it('Paste, then Edit: keeps original `isFocal/*width/queryOptions` ' +
-       'properties; emits `change` twice', cb => {
+    it('Paste, then Edit: keeps original `isFocal/*width/queryOptions/' +
+       'placeholder` properties; emits `change` twice', cb => {
       var editTerm  = {
         isFocal: true, minWidth: 80, maxWidth: 200, editWidth: 123,
-        queryOptions: { z: [{ id: 'xy' }] }
+        queryOptions: { z: [{ id: 'xy' }], placeholder: 'plh' }
       };
       var coreCopyTerm  = { str: 'aa', style: 'b', classID: 'X', instID: null };
       var newTerm       = Object.assign({}, editTerm, coreCopyTerm);
