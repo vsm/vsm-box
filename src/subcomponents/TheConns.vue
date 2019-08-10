@@ -260,12 +260,6 @@ export default {
   },
 
 
-  mounted: function() {
-    ///setTimeout(() => { this.conns.push({ type: 'T', pos: [0, -1, 1] });
-    ///  this.calcCoordinates();  this.emitValue(); }, 2000);
-  },
-
-
   methods: {
     /**
      * Updates the direct reference to TheTerms' full `terms` data,
@@ -694,6 +688,7 @@ export default {
           conn.pos.push(p);
         }
         else {
+          if (conn.pos[0] == p)  return;
           if (conn.pos[1] == p) {
             if (conn.pos[0] == -1)  return this.removeUCConn();
             conn.pos[1] = -1;
@@ -782,6 +777,7 @@ export default {
 
 
     sortConnectors() {
+      if (this.hasUCConn)  this.removeUCConn();
       this.conns = co.sortConnectors(this.conns);
       this.calcCoordinates();
     }
