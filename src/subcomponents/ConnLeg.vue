@@ -120,7 +120,9 @@ export default {
         t    .leg.type == 'R' ? (t.sizes.connTridRelH - v - t.l.h - t.l.lw) :
           t  .leg.type == 'L' ? (t.sizes.connListRelH - v - t.l.h) :
             t.leg.type == 'P' ? (t.sizes.connRefParH  + v) :
-              t.l.lwh );
+              (!t.sizes.connFootVisible && t.leg.type != 'O' && !t.leg.isUC) ?
+                (t.l.lwh - t.l.lw) :
+                t.l.lwh );
     },
 
     y2lwh()  { return this.y2 + this.l.lwh + this.l.h + this.l.h },

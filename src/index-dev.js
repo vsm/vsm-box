@@ -203,6 +203,7 @@ function runDemo() {
       sizes: {
         ///minWidth: 80,  // 360,
         ///widthScale: 2,
+        ///connFootVisible: false,
       },
       customTerm: false && function(o) {
         return o.type == 'L' ? o.strs : { str:

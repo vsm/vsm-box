@@ -668,9 +668,10 @@ VsmBox
     How many pixels a foot should not cover, left and right above its Term.
   + `connFootVisible`: {Boolean}:  
     In order to not draw any feet, make this `false`.  
-    (Note: just making `connFootColor` draw feet in TheConns' background-color
-    (which is set via CSS) would not work, because the feet would become visible
-    again when mouse-hovering puts a highlight-color under the connector).
+    (Note: just giving `connFootColor` the background-color, or a fully
+    transparent color (so it would not show up in a highlighted connector
+    either) is not ideal, because of certain pixel-alignments of undecorated
+    legs. Use this setting instead).
   + `connTridRelW`: {Number}:  
     The trident's relation-leg's pointer's *half*-width (in pixels).  
     Half-width is used as it makes calculations simpler than with full width.
