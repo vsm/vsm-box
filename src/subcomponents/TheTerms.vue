@@ -35,6 +35,7 @@
       @key-alt-up="onKeyAltUp"
       @key-alt-down="onKeyAltDown"
       @key-ctrl-delete="onKeyCtrlDelete"
+      @key-ctrl-bksp="onKeyCtrlBksp"
       @key-shift-enter="onKeyShiftEnter"
       @mouseenter="onMouseenter"
       @mouseleave="onMouseleave"
@@ -729,6 +730,16 @@ export default {
       this.moveInputTo(index2, true);
       this.setTermCoordinates(index);
       this.emitValue();
+    },
+
+
+    /**
+     * Deletes the Term before it, if there is one.
+     * For a lone endTerm, resets it.
+     */
+    onKeyCtrlBksp(index) {
+      if (index)  this.onKeyCtrlDelete(index - 1);
+      else if (this.terms.length == 1)  this.onKeyCtrlDelete(0);
     },
 
 

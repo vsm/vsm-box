@@ -661,6 +661,43 @@ describe('sub/Term', () => {
     });
 
 
+    it('emits `key-ctrl-bksp`+index, for both plain and ' +
+       'vsmAC-input, but only if empty or only-whitespace', () => {
+      function testCase(type, str, result) {
+        var term = { type };
+        if (str)  term.str = str;
+        make({ term, hasInput: true });
+        _input().element.selectionStart = str.length;
+        _input().element.selectionEnd   = str.length;
+        _itrigger('keydown.backspace', { ctrlKey: true });
+        _emitV(0, 'key-ctrl-bksp').should.equal(result ? 55 : false);
+      }
+      testCase('ER', '', 1);  testCase('ER', ' ' , 1);  testCase('ER', 'aa', 0);
+      testCase('EI', '', 1);  testCase('EI', '\n', 1);  testCase('EI', 'aa', 0);
+      testCase('EC', '', 1);  testCase('EC', '\t', 1);  testCase('EC', 'aa', 0);
+      testCase('EL', '', 1);  testCase('EL', '  ', 1);  testCase('EL', 'aa', 0);
+    });
+
+
+    it('Ctrl+Bksp empties non-empty input, only if cursor at start', () => {
+      function testCase(type, cursorPos, emptied) {
+        var term = { type };
+        term.str = 'aaa';
+        make({ term, hasInput: true });
+        _input().element.selectionStart = cursorPos;
+        _input().element.selectionEnd   = cursorPos;
+        _itrigger('keydown.backspace', { ctrlKey: true });
+        if (emptied)  _emitL(1, 'input')[1].should.equal('');
+        else          _emitV(1, 'input')   .should.equal(false);
+        _emitV(0, 'key-ctrl-bksp').should.equal(false);  // No other emit.
+      }
+      testCase('ER', 3, false);  testCase('ER', 0, true);
+      testCase('EI', 3, false);  testCase('EI', 0, true);
+      testCase('EC', 3, false);  testCase('EC', 0, true);
+      testCase('EL', 3, false);  testCase('EL', 0, true);
+    });
+
+
     it('emits `key-shift-enter`+index, for both plain and ' +
        'vsmAC-input, both filled and empty', () => {
       function testCase(type, str) {

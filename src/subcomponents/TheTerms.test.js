@@ -172,6 +172,7 @@ describe('sub/TheTerms', () => {
   const _termITrigBksp   = i => _termITrig(i, 'keydown.backspace');
   const _termITrigEsc    = i => _termITrig(i, 'keydown.esc');
   const _termITrigCDel   = i => _termITrig(i, 'keydown.delete', {ctrlKey: true});
+  const _termITrigCBksp  = i => _termITrig(i,'keydown.backspace',{ctrlKey:true});
   const _termITrigCEnter = i => _termITrig(i, 'keydown.enter', {ctrlKey: true});
   const _termITrigDown   = i => _termITrig(i, 'keydown.down');
   const _termITrigAUp    = i => _termITrig(i, 'keydown.up',   { altKey: true });
@@ -2502,8 +2503,9 @@ describe('sub/TheTerms', () => {
 
 
 
-  describe('user-interaction: Bksp/Ctrl+Del/Ctrl+Enter on empty Edit-Term ' +
-     'edits-prev / deletes current / inserts Edit-Term; emits `change`', () => {
+  describe('user-interaction: Bksp/Ctrl+Del|Bksp/Ctrl+Enter on empty ' +
+     'Edit-Term edits-prev / deletes current|previous / inserts Edit-Term; ' +
+     'emits `change`', () => {
 
     it('Backspace on a non-empty EI-type Edit-Term: has no effect', cb => {
       make({ origTerms: [{ str: 'aaa' }, { }] });
@@ -2690,7 +2692,7 @@ describe('sub/TheTerms', () => {
               _thereIsFocusedInputAt(1);
               _term(0).text().should.equal('aaa');
               _termIsTypeL (0);
-              _termIsTypeEI(1);  // The endTerm reverted to type EI
+              _termIsTypeEI(1);  // The endTerm reverted to type EI.
               _terms().length.should.equal(1);
               _emit(1, 'change').should.equal(false);
               cbf();
@@ -2828,6 +2830,91 @@ describe('sub/TheTerms', () => {
         testCase(    'EI', () =>
           testCase(  'EC', () =>
             testCase('EL', cb))));
+    });
+
+
+    // Just simple tests for Ctrl+Bksp, as it shares most of its implementation
+    // with Ctrl+Del.
+    it('Ctrl+Bksp on lone endTerm: resets it', cb => {
+      make({ origTerms: [] });
+      vueTick(() => {
+        _termCClick(0);
+        _termIsTypeEC(0);
+        _termITrigCBksp(0);
+        vueTick(() => {
+          _thereIsFocusedInputAt(0);
+          _termIsTypeEI(0);  // The endTerm reverted to type EI.
+          _emit(0, 'change').should.equal(false);
+          cb();
+        });
+      });
+    });
+
+
+    it('Ctrl+Bksp on endTerm: deletes Term before it, but does not reset ' +
+       'endTerm', cb => {
+      make({ origTerms: [{ str: 'aaa' }, { str: 'bbb' }] });
+      vueTick(() => {
+        _termCClick(2);
+        _termIsTypeEC(2);
+        _termITrigCBksp(2);  // Ctrl+Bksp in endTerm removes the second term.
+        vueTick(() => {
+          _thereIsFocusedInputAt(1);
+          _termIsTypeEC(1);  // The endTerm was not reset.
+          _emitV(0, 'change').should.deep.equal([{ str: 'aaa' }]);
+          cb();
+        });
+      });
+    });
+
+
+    it('Ctrl+Bksp on Edit-Term: deletes Term before it', cb => {
+      make({ origTerms: [{ str: 'aaa' }, {}, { str: 'bbb' }] });
+      vueTick(() => {
+        _termClick(1);
+        _termITrigCBksp(1);
+        vueTick(() => {
+          _thereIsFocusedInputAt(0);
+          _emitV(0, 'change').should.deep.equal([{}, { str: 'bbb' }]);
+          cb();
+        });
+      });
+    });
+
+
+    it('Ctrl+Bksp on Edit-Term at start: does nothing', cb => {
+      make({ origTerms: [{}, { str: 'aaa' }] });
+      vueTick(() => {
+        _termClick(0);
+        _termITrigCBksp(0);
+        vueTick(() => {
+          _thereIsFocusedInputAt(0);
+          _emitV(0, 'change').should.equal(false);
+          cb();
+        });
+      });
+    });
+
+    it('Ctrl+Bksp on non-empty Edit-Term: does nothing (apart from the ' +
+       'browser\'s default acton on Ctrl+Bksp)', cb => {
+      make({ origTerms: [{ str: 'aaa' }, {}, { str: 'bbb' }] });
+      vueTick(() => {
+        _termClick(1);
+        vueTick(() => {
+          _thereIsFocusedInputAt(1);
+          _setInput(1, 'QQQ');
+          var el = _termInput(1).element;
+          el.selectionStart = el.selectionEnd = 2;
+          vueTick(() => {
+            _termITrigCBksp(1);
+            vueTick(() => {
+              _thereIsFocusedInputAt(1);
+              _emitV(0, 'change').should.equal(false);
+              cb();
+            });
+          });
+        });
+      });
     });
 
 
@@ -4360,8 +4447,8 @@ describe('sub/TheTerms', () => {
     });
 
 
-    it('hides on: on an Edit-Term: Esc/Tab/Shift-Tab/Ctrl+Del/Ctrl+Enter' +
-       'Shift+Enter/Alt+Up/Alt+Down', cb => {
+    it('hides on: on an Edit-Term: Esc/Tab/Shift-Tab/Ctrl+Del/Ctrl+Bksp/' +
+       'Ctrl+Enter/Shift+Enter/Alt+Up/Alt+Down', cb => {
       function testCase(trigFunc, cbf) {
         make({ origTerms: [{ str: 'aa' }, { str: 'bbbb' }, { }] });
         vueTick(() => {
@@ -4372,14 +4459,15 @@ describe('sub/TheTerms', () => {
         });
       }
 
-      testCase(              _termITrigEsc,    () =>
-        testCase(            _termITrigTab,    () =>
-          testCase(          _termITrigSTab,   () =>
-            testCase(        _termITrigCDel,   () =>
-              testCase(      _termITrigCEnter, () =>
-                testCase(    _termITrigSEnter, () =>
-                  testCase(  _termITrigAUp,    () =>
-                    testCase(_termITrigADown,  cb))))))));
+      testCase(                _termITrigEsc,    () =>
+        testCase(              _termITrigTab,    () =>
+          testCase(            _termITrigSTab,   () =>
+            testCase(          _termITrigCDel,   () =>
+              testCase(        _termITrigCBksp,  () =>
+                testCase(      _termITrigCEnter, () =>
+                  testCase(    _termITrigSEnter, () =>
+                    testCase(  _termITrigAUp,    () =>
+                      testCase(_termITrigADown,  cb)))))))));
     });
 
 

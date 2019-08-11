@@ -26,6 +26,7 @@
     @keydown.up.alt.exact="onKeyAltUp"
     @keydown.down.alt.exact="onKeyAltDown"
     @keydown.46.ctrl.exact="onKeyCtrlDelete"
+    @keydown.8.ctrl.exact="onKeyCtrlBksp"
     @mouseover="onMouseenter"
     @mouseleave="onMouseleave"
     @mousedown.left.exact.self.prevent.stop="onMousedown_div"
@@ -50,6 +51,7 @@
       @blur="onBlur"
       @keydown.esc.exact.prevent="onKeyEsc"
       @keydown.8.exact="onKeyBksp_plain"
+      @keydown.8.ctrl.exact.stop="onKeyCtrlBksp"
       @keydown.enter.exact="onKeyEnter_plain"
       @keydown.enter.ctrl.exact="onKeyCtrlEnter"
       @keydown.enter.shift.exact="onKeyShiftEnter"
@@ -232,6 +234,11 @@ export default {
     },
 
 
+    inputElement() {
+      return this.$el.querySelector('input');
+    },
+
+
     onKeyBksp_plain() {  // Backspace on plain <input>-element. Not on autocompl.
       // If only whitespace and cursor at start, empty first. Then, if empty,
       // call the real `onKeyBksp()`. (This mimics VsmAutocomplete's behavior).
@@ -240,6 +247,16 @@ export default {
         this.emitInput(el.value = '');
       }
       if (!el.value)  this.onKeyBksp();
+    },
+
+    onKeyCtrlBksp() {  // If empty/whitespace, emit 'key-ctrl-bksp'.
+      // If not empty: if cursor at start, make input get emptied;
+      // else, let browser handle Ctrl+Bksp.
+      if (!this.term.str.trim())  this.emit2('key-ctrl-bksp');
+      else {
+        var el = this.inputElement();
+        if (el && !el.selectionStart)  this.emitInput(el.value = '');
+      }
     },
 
     onKeyEsc()        { this.emit2('key-esc') },
@@ -276,9 +293,7 @@ export default {
      * + Does not `$emit()`, as `onMousedown()` will do that.
      */
     onMousedown_div() {
-      if (this.showPlain || this.showAutocomplete) { // Both types use same CSS..
-        this.$el.querySelector('.input').focus();    // ..class on their <input>.
-      }
+      if (this.showPlain || this.showAutocomplete)  this.inputElement().focus();
     },
 
     // `onMousedown()` detects `mousedown` on entire Term, incl. possible input.
@@ -318,7 +333,7 @@ export default {
      */
     sendToAC(eventStr) {
       var el = this.$refs.vsmac;
-      if (el)  el = el.$el.querySelector('input');
+      if (el)  el = this.inputElement();
       if (el)  el.dispatchEvent(new MouseEvent(eventStr, { bubbles: false }));
     }
   }

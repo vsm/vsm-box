@@ -1,13 +1,13 @@
 <template>
   <span
     title="--Terms--
-Doubleclick: show popup for empty Term
+Doubleclick: show popup for empty Term, or edit normal Term
 Mousehover: show popup for normal Term
 Mousedrag: move normal Term
 Ctrl+Shift+Mousedrag: move empty Term
 Alt+Up/Down: move empty Term
-Ctrl+Del: remove empty Term
-Ctrl+Del: reset the end-Term
+Ctrl+Del: remove empty Term, or reset empty end-Term
+Ctrl+Bksp: remove Term to the left
 Ctrl+Enter: insert empty Term to the right
 Alt+Click: assign Term as sentence head
 --Connectors--

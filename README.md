@@ -914,6 +914,8 @@ See the example code in the files at `src/index-prod-*.html` for more details.
     (or more so that VsmBox is at least `minWidth` wide). (This is useful for
     resetting VsmBox width after its content became a lot narrower, e.g.
     after many Deletes or Enters).
+  - Ctrl+Backspace:  
+    when pressed in an empty Edit-Term, this deletes the Term to the left of it.
   - Ctrl+Enter:  
     + if the input contains certain string-codes: converts them to special
       characters, e.g. '\beta' to &beta;.
