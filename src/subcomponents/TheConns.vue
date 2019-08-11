@@ -329,6 +329,7 @@ export default {
     updateAfterTermsChange(termsChangeNr) {
       this.hlConnNr = -1;
       this.updateTermsRef();
+      if (this.hasUCConn)  this.removeUCConn();
 
       this.makeLegsFollowTerms();  // (Updates coordinates as well).
       this.emitValue(0, termsChangeNr);
