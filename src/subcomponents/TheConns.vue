@@ -306,6 +306,7 @@ export default {
      * Called at start and after TheTerms calculated new Term coordinates.
      */
     initForNewConns() {
+      this.hlConnNr = -1;
       this.lastKeys = this.getCurrentTermKeys();
 
       this.conns = this.origConns
