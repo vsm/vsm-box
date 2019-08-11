@@ -419,6 +419,8 @@ export default {
 
       // 2) Enrich each connector (object in `conns[]`) with useful data.
       this.conns = this.conns.map(conn => {
+        conn = Object.assign({}, conn);
+
         this.setConnPosAZ(conn);
 
         if (!updateStacking)  return conn;
@@ -427,7 +429,7 @@ export default {
         // the Terms, starting from level 0.
         // Stack the connectors on top of each other (in given order),
         // whereby their feet reach down to the connector below, or to TheTerms.
-        conn = Object.assign({}, conn, { footLevels: [] });
+        conn.footLevels = [];
         conn.pos.forEach((p, i) => {
           conn.footLevels[i] = p < 0 ? p :
             conn.pos.slice(0, i).includes(p) ? highLevels[p] : // =Pos occurs 2x?
