@@ -122,6 +122,7 @@ function runDemo() {
       vsmDictionary: dict,
       queryOptions: false,  ///{ perPage: 5 },
       placeholder: 'Type a term or doubleclick for menu',  ///false,
+      cycleOnTab: true,
       maxStringLengths: undefined &&  // Change to !undefined to activate this.
         { str: 5,  strAndDescr: 30  },
       freshListDelay: 0, ///1000,

@@ -124,6 +124,10 @@ export default {
       type: [String, Boolean],
       default: false
     },
+    cycleOnTab: {
+      type: Boolean,
+      default: false
+    },
     maxStringLengths: {
       type: Object,
       required: true
@@ -492,18 +496,35 @@ export default {
 
 
     moveInputToNextEditTerm(index, step) {
-      this.moveInputTo( this.getNextEditTermIndex(index, step) );
+      this.hidePopup();
+      var j = this.getNextEditTermIndex(index, step);
+      if (j == index  &&  !this.cycleOnTab)  this.focusNextOutsideTheTerms(step);
+      else  this.moveInputTo(j);
     },
 
 
-    getNextEditTermIndex(index, step) {  // `step`: 1 = rightward, -1 = leftward.
+    getNextEditTermIndex(index, step) {  // `step`: 1/-1: to right/left.
       var n = this.terms.length;
       var pos = index;
       while (1) {                   // eslint-disable-line no-constant-condition
-        if      ((pos += step) >= n)  pos = 0;      // Search, moving one step..
-        else if ( pos          <  0)  pos = n - 1;  // ..right/left, cyclingly.
-        if (pos == index || to.isEditable(this.terms[pos]))  return pos;
+        pos = (pos + step + n) % n; // Search moving 1 step right/left cyclingly.
+        if (pos == index || to.isEditable(this.terms[pos]))  break;
       }
+      // If cycling not allowed but it did, return the given `index`.
+      return !this.cycleOnTab && step * pos <= step * index ? index : pos;
+    },
+
+
+    focusNextOutsideTheTerms(step) {
+      var a = [].map.call( document.querySelectorAll([
+        'input', 'select', 'a[href]', 'textarea', 'button', '[tabindex]'
+      ]), (e, i) => ({ e, i }) )
+        .filter(o => o.e.tabIndex >= 0 && !o.e.disabled && o.e.offsetParent)
+        .sort((o, p) => o.e.tabIndex === p.e.tabIndex ? o.i - p.i :
+          (o.e.tabIndex || 9e9) - (p.e.tabIndex || 9e9))
+        .map(o => o.e);
+      var e = a[(a.indexOf(this.inputElement()) + step + a.length) % a.length];
+      if (e)  e.focus();
     },
 
 

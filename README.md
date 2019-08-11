@@ -454,20 +454,24 @@ VsmBox
   the [`vsm-dictionary`](https://github.com/vsmjs/vsm-dictionary) subclass that
   will be used by this VsmBox's
   [`vsm-autocomplete`](https://github.com/vsmjs/vsm-autocomplete) component.
-- `queryOptions`: {Object|Boolean} (default `false`):  
+- `query-options`: {Object|Boolean} (default `false`):  
   given as prop to VsmAutocomplete, which uses it when querying string-matches.  
   This can e.g. be used to make all the Edit-Terms in a VSM-template
   query with the same `perPage` option, without having to set a
   `term.queryOptions.perPage` on each individual Term.  
-  When a property (like `perPage`) is set in both the VsmBox's `queryOptions`
+  When a property (like `perPage`) is set in both the VsmBox's `query-options`
   and in some Term's own `term.queryOptions`, then that property of the Term
   overrides that of the VsmBox.
 - `autofocus`: {Boolean} (default `false`):  
   given as prop to VsmAutocomplete,
   see [`there`](https://github.com/vsmjs/vsm-autocomplete).
-- `placeholder`: {String|Boolean}:  
+- `placeholder`: {String|Boolean} (default `false`):  
   given as prop to VsmAutocomplete.  
   Defines what text should be shown in an empty VsmBox (in its empty 'endTerm').
+- `cycle-on-tab`: {Boolean} (default `false`):  
+  determines if Tab/Shift+Tab should cycle among this VsmBox's Edit-Terms,
+  when used at the last/first Edit-Term. If so, then the input-focus will stay
+  within the VsmBox; if not, then it can move to an input outside of it.
 - `max-string-lengths`: {Object}:  
   given as prop to VsmAutocomplete:  
   limits the string-length of match-items in autocomplete's selection panel.

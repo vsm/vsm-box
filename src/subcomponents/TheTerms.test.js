@@ -47,7 +47,8 @@ describe('sub/TheTerms', () => {
         { vsmDictionary: dict,
           maxStringLengths: {},
           freshListDelay: 0,
-          origTerms: []
+          origTerms: [],
+          ///cycleOnTab: false,
         },
         props,
         { sizes: Object.assign({}, sizes, props.sizes) }
@@ -1433,8 +1434,8 @@ describe('sub/TheTerms', () => {
   describe('user-interaction: changing input location', () => {
 
     it('lets Tab/Shift+Tab move the input forward/backward between ' +
-       'Edit-type Terms, cyclingly', cb => {
-      make({ origTerms: [
+       'Edit-type Terms, cyclingly if told so', cb => {
+      make({ cycleOnTab: true, origTerms: [
         //0,   1,              2,             3,               4,           [5].
         { }, { str: 'aaa' }, { type: 'EC' }, { type: 'EL' }, { type: 'ER' }
       ]});
@@ -1468,6 +1469,26 @@ describe('sub/TheTerms', () => {
         _termITrigSTab(5);
 
         _termInput(4).exists().should.equal(true);
+        cb();
+      });
+    });
+
+
+    it('lets Tab/Shift+Tab work, not cyclingly by default', cb => {
+      make({ origTerms: [{ }] });  /// , cycleOnTab: false
+      vueTick(() => {
+        _termITrigTab(0);
+
+        _termInput(1).exists().should.equal(true);  // It moved to endTerm.
+        _termITrigTab(1);
+
+        _termInput(1).exists().should.equal(true);  // It moved no further.
+        _termITrigSTab(1);
+
+        _termInput(0).exists().should.equal(true);  // It moved to Term 0.
+        _termITrigSTab(0);
+
+        _termInput(0).exists().should.equal(true);  // It moved no further back.
         cb();
       });
     });

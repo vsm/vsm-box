@@ -19,6 +19,7 @@
       :query-options="queryOptions"
       :autofocus="autofocus"
       :placeholder="placeholder"
+      :cycle-on-tab="cycleOnTab"
       :max-string-lengths="maxStringLengths"
       :fresh-list-delay="freshListDelay"
       :advanced-search="advancedSearch"
@@ -172,6 +173,10 @@ export default {
     },
     placeholder: {
       type: [String, Boolean],
+      default: false
+    },
+    cycleOnTab: {
+      type: Boolean,
       default: false
     },
     maxStringLengths: {  // See `vsm-autocomplete`.
