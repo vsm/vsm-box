@@ -21,6 +21,7 @@
       :query-options="queryOptions"
       :autofocus="index == inputIndex && autofocus"
       :placeholder="terms.length == 1 && placeholder"
+      :tab-listen-mode="index == inputIndex ? inputTabListenMode : 3"
       :fresh-list-delay="freshListDelay"
       :max-string-lengths="maxStringLengths"
       :has-item-literal="!!(allowClassNull || advancedSearch)"
@@ -205,6 +206,16 @@ export default {
   computed: {
     height() {
       return this.termHeight + this.padTop + this.padBottom;
+    },
+
+
+    inputTabListenMode() {
+      if (this.cycleOnTab)  return 3;
+      for (var i = 0, a = [];  i < this.terms.length;  i++) {
+        if (to.isEditable(this.terms[i]))  a.push(i);
+      }
+      return (this.inputIndex == a[a.length - 1] ? 0 : 1) +
+        (     this.inputIndex == a[0]            ? 0 : 2);
     },
 
 
@@ -490,16 +501,19 @@ export default {
     },
 
 
+    /**
+     * This will be called with `str` == '' for a Tab-press, or 'shift' for
+     * a Shift+Tab. Or 'ignore' for Tab at the endTerm, or for Shift+Tab at
+     * the first Edit-Term. On 'ignore', Term lets the event pass to the browser.
+     */
     onKeyTab(index, str) {
+      if (str == 'ignore')  return this.hidePopup();
       this.moveInputToNextEditTerm(index, str ? -1 : 1);
     },
 
 
     moveInputToNextEditTerm(index, step) {
-      this.hidePopup();
-      var j = this.getNextEditTermIndex(index, step);
-      if (j == index  &&  !this.cycleOnTab)  this.focusNextOutsideTheTerms(step);
-      else  this.moveInputTo(j);
+      this.moveInputTo( this.getNextEditTermIndex(index, step) );
     },
 
 
@@ -508,23 +522,8 @@ export default {
       var pos = index;
       while (1) {                   // eslint-disable-line no-constant-condition
         pos = (pos + step + n) % n; // Search moving 1 step right/left cyclingly.
-        if (pos == index || to.isEditable(this.terms[pos]))  break;
+        if (pos == index || to.isEditable(this.terms[pos]))  return pos;
       }
-      // If cycling not allowed but it did, return the given `index`.
-      return !this.cycleOnTab && step * pos <= step * index ? index : pos;
-    },
-
-
-    focusNextOutsideTheTerms(step) {
-      var a = [].map.call( document.querySelectorAll([
-        'input', 'select', 'a[href]', 'textarea', 'button', '[tabindex]'
-      ]), (e, i) => ({ e, i }) )
-        .filter(o => o.e.tabIndex >= 0 && !o.e.disabled && o.e.offsetParent)
-        .sort((o, p) => o.e.tabIndex === p.e.tabIndex ? o.i - p.i :
-          (o.e.tabIndex || 9e9) - (p.e.tabIndex || 9e9))
-        .map(o => o.e);
-      var e = a[(a.indexOf(this.inputElement()) + step + a.length) % a.length];
-      if (e)  e.focus();
     },
 
 

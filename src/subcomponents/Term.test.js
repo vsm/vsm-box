@@ -631,6 +631,30 @@ describe('sub/Term', () => {
     });
 
 
+    it('emits `key-tab`+index+\'\'/\'shift\'/\'ignore\', depending on ' +
+       '`tabListenMode` (0/1/2/3)', () => {
+      function testCase(shiftKey, tabListenMode, str) {
+        make({ term: { }, hasInput: true, tabListenMode });
+        _itrigger('keydown.tab', shiftKey ? { shiftKey } : undefined);
+        _emitL(0, 'key-tab').should.deep.equal([55, str]);
+      }
+      // - For cycleOnTab==false
+      //   - In rightmost input => mode 2 => emit 'ignore'/'shift' (<-Tab/STab).
+      testCase(false, 2, 'ignore');
+      testCase(true,  2, 'shift');
+      //   - In leftmost  input => mode 1 => emit ''/'ignore' (for Tab/Shft+Tab).
+      testCase(false, 1, '');
+      testCase(true,  1, 'ignore');
+      // + If both left&rightmost=>mode 0 => emit 'ignore'/'ignore'.
+      testCase(false, 0, 'ignore');
+      testCase(true,  0, 'ignore');
+      //   - In any other input => mode 3 => emit ''/'shift'.
+      // - For cycleOnTab==true => mode 3 => emit ''/'shift'.
+      testCase(false, 3, '');
+      testCase(true,  3, 'shift');
+    });
+
+
     it('emits `key-alt-up/down`+index, for both plain and ' +
        'vsmAC-input', () => {
       function testCase(type, arrow) {

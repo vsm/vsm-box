@@ -27,6 +27,8 @@
     @keydown.down.alt.exact="onKeyAltDown"
     @keydown.46.ctrl.exact="onKeyCtrlDelete"
     @keydown.8.ctrl.exact="onKeyCtrlBksp"
+    @keydown.tab.exact="onKeyTab"
+    @keydown.tab.shift.exact="onKeyShiftTab"
     @mouseover="onMouseenter"
     @mouseleave="onMouseleave"
     @mousedown.left.exact.self.prevent.stop="onMousedown_div"
@@ -55,8 +57,6 @@
       @keydown.enter.exact="onKeyEnter_plain"
       @keydown.enter.ctrl.exact="onKeyCtrlEnter"
       @keydown.enter.shift.exact="onKeyShiftEnter"
-      @keydown.tab.exact.prevent="() => onKeyTab('')"
-      @keydown.tab.shift.exact.prevent="() => onKeyTab('shift')"
     ><span
       v-if="finalPlaceholder"
       :class="['placehold plain', {
@@ -85,7 +85,6 @@
     @key-bksp="onKeyBksp"
     @key-ctrl-enter="onKeyCtrlEnter"
     @key-shift-enter="onKeyShiftEnter"
-    @key-tab="onKeyTab"
     @item-select="onItemSelect"
     @list-open="onListOpen"
     @mouseover.native.stop="x => x"
@@ -148,6 +147,10 @@ export default {
     placeholder: {
       type: [String, Boolean],
       default: false
+    },
+    tabListenMode: {  // One of : 0,1,2,3.
+      type: Number,
+      default: 3
     },
     maxStringLengths: {
       type: Object,
@@ -239,9 +242,10 @@ export default {
     },
 
 
-    onKeyBksp_plain() {  // Backspace on plain <input>-element. Not on autocompl.
-      // If only whitespace and cursor at start, empty first. Then, if empty,
-      // call the real `onKeyBksp()`. (This mimics VsmAutocomplete's behavior).
+    onKeyBksp_plain() {
+      /* Called for Backspace on plain <input>-element; not on autocomplete.
+         If only whitespace and cursor at start, empty first. Then, if empty,
+         call the real `onKeyBksp()`. (Mimics VsmAutocomplete's behavior). */
       var el = this.$refs.input_plain;
       if (el.value && !el.value.trim() && !el.selectionStart) {
         this.emitInput(el.value = '');
@@ -249,9 +253,10 @@ export default {
       if (!el.value)  this.onKeyBksp();
     },
 
-    onKeyCtrlBksp() {  // If empty/whitespace, emit 'key-ctrl-bksp'.
-      // If not empty: if cursor at start, make input get emptied;
-      // else, let browser handle Ctrl+Bksp.
+    onKeyCtrlBksp() {
+      /* If empty/whitespace, emit 'key-ctrl-bksp'.
+         If not empty: if cursor at start, make input get emptied;
+         else, let browser handle Ctrl+Bksp. */
       if (!this.term.str.trim())  this.emit2('key-ctrl-bksp');
       else {
         var el = this.inputElement();
@@ -259,10 +264,23 @@ export default {
       }
     },
 
+    onKeyTab(ev) {  // If `tabListenMode` is 1 or 3, respond to a pure Tab.
+      this.tabHandler(ev, '',      this.tabListenMode & 1);
+    },
+
+    onKeyShiftTab(ev) {  // If `tabListenMode` is 2 or 3, respond to Shift+Tab.
+      this.tabHandler(ev, 'shift', this.tabListenMode & 2);
+    },
+
+    tabHandler(ev, str, consume) {
+      // If we respond to (Shift+/)Tab, then make the browser not respond.
+      if (consume)  ev.preventDefault();
+      this.emit2('key-tab', consume ? str : 'ignore');
+    },
+
     onKeyEsc()        { this.emit2('key-esc') },
     onKeyBksp()       { this.emit2('key-bksp') },
     onKeyCtrlEnter()  { this.emit2('key-ctrl-enter') },
-    onKeyTab(str)     { this.emit2('key-tab', str) },
     onKeyAltUp()      { this.emit2('key-alt-up') },
     onKeyAltDown()    { this.emit2('key-alt-down') },
     onKeyCtrlDelete() { this.emit2('key-ctrl-delete') },
