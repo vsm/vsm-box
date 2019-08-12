@@ -119,6 +119,11 @@
             v-html="strs.queryZ"
           />
           <div
+            v-if="strs.placeholder"
+            class="placeholder"
+            v-html="strs.placeholder"
+          />
+          <div
             v-if="hasWidths"
             class="widths comma-sep"
           >
@@ -347,7 +352,7 @@ export default {
     hasSettings() {
       var o = this.strs;
       return o.queryFilter.length || o.querySort.length ||
-        o.queryFixedTerms.length || o.queryZ || this.hasWidths;
+        o.queryFixedTerms.length || o.queryZ || o.placeholder || this.hasWidths;
     },
 
     hasInfo() {
@@ -544,6 +549,8 @@ export default {
         queryFixedTerms:                                             // }..Strs.
                      this.idts    .map(obj => this.idtsString(obj)),
         queryZ:      this.zString(),
+
+        placeholder: term.placeholder || '',
 
         minWidth:   f(term.minWidth),
         maxWidth:   f(term.maxWidth),
@@ -838,6 +845,10 @@ export default {
 
   .widths::before {
     content: "Widths: ";
+  }
+
+  .placeholder::before {
+    content: "Placeholder: ";
   }
 
   .min-width::before {

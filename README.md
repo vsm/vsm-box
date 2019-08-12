@@ -1213,6 +1213,7 @@ It is called with one argument: an Object with useful properties & subproperties
       results arrived yet; see note below);
     - `queryZ`: describes the z-object-property-filter in `queryOptions.z`,
       if given and not `true`, i.e. if there is an actual filter;
+    - `placeholder`: the Term's `placeholder`,or `''` if absent;
     - `minWidth`: the Term's `minWidth` (as a String);
     - `maxWidth`: the Term's `maxWidth`;
     - `editWidth`: the Term's `editWidth`, i.e. its width when its type is

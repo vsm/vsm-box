@@ -94,6 +94,8 @@ describe('sub/ThePopup', () => {
   const _qIdtsD = () => _sett().findAll('.query-fixedterms div');
   const _qZ     = () => _sett().find   ('.query-z');
 
+  const _plh    = () => _sett().find   ('.placeholder');
+
   const _widths = () => _sett().find('.widths');
   const _iWid   = () => _sett().find('.min-width');
   const _aWid   = () => _sett().find('.max-width');
@@ -167,7 +169,7 @@ describe('sub/ThePopup', () => {
       make({
         str: 'ax', classID: 'http://xy.org/DA/A:01', instID: null,
         descr: 'dd', dictID: 'http://xy.org/DA', type: 'I',
-        minWidth: 30
+        placeholder: 'plh', minWidth: 30
       });
       ///H(_info());
       _str  ().text().should.equal('ax');
@@ -175,6 +177,7 @@ describe('sub/ThePopup', () => {
       _dict ().text().should.equal('[DA]');
       _cid  ().text().should.equal('A:01');
       _iid  ().text().should.equal('…');
+      _plh  ().text().should.equal('plh');
       _iWid ().text().should.equal('30');
       [ _pid(),
         _qFilt(), _qSort(), _qIdts(), _qZ(),
@@ -597,6 +600,12 @@ describe('sub/ThePopup', () => {
     });
 
 
+    it('shows `placeholder`', () => {
+      make({ str: 'ax', type: 'L', placeholder: 'test' });
+      _plh().text().should.equal('test');
+    });
+
+
     it('shows `min/max/editWidth` in their respective sections', () => {
       make({ str: 'ax', type: 'L', minWidth: 10, maxWidth: 20, editWidth: 30 });
       _iWid().text().should.equal('10');
@@ -631,7 +640,7 @@ describe('sub/ThePopup', () => {
     });
 
 
-    it('hides the filter/sort/width if empty, when the z setting ' +
+    it('hides the filter/sort/fts/plh/widths if empty, when the z setting ' +
        'is still given (which keeps settings-panel shown)', () => {
       make({ str: 'ax', type: 'L', queryOptions: { z: [] } });
       _sett  ().exists().should.equal(true);
@@ -639,6 +648,7 @@ describe('sub/ThePopup', () => {
       _qSort ().exists().should.equal(false);
       _qIdts ().exists().should.equal(false);
       _qZ    ().exists().should.equal(true);
+      _plh   ().exists().should.equal(false);
       _widths().exists().should.equal(false);
     });
 
@@ -662,6 +672,7 @@ describe('sub/ThePopup', () => {
         w.setProps({ term: { x: 22, y: 10, width: 20, height: 10,
           str: 'bx', type: 'R',
           classID: 'http://xy.org/DB/B:01', instID: null, parentID: 'pp123',
+          placeholder: 'name',
           maxWidth: 150, editWidth: 200,
           queryOptions: {
             filter: { dictID: [p + 'DA', p + 'DC'] },
@@ -681,6 +692,7 @@ describe('sub/ThePopup', () => {
         _qSortD().at(0).text().should.equal('[DA]');
         _qIdtsD().length.should.equal(1);
         _qZ    ().text().should.equal('abcd');
+        _plh   ().text().should.equal('name');
         _iWid().exists().should.equal(false);
         _aWid  ().text().should.equal('150');
         _eWid  ().text().should.equal('200');
@@ -864,6 +876,7 @@ describe('sub/ThePopup', () => {
             idts: [ { id: 'http://xy.org/DD/D:01' } ],
             z:    ['a']
           },
+          placeholder: 'plh',
           minWidth: 10, maxWidth: 20, editWidth: 30
         },
         { customPopup: function(o) {
@@ -880,6 +893,7 @@ describe('sub/ThePopup', () => {
           o.strs.querySort       = o.strs.querySort      .map(f);
           o.strs.queryFixedTerms = o.strs.queryFixedTerms.map(f);
           o.strs.queryZ = f(o.strs.queryZ),
+          o.strs.placeholder = f(o.strs.placeholder),
           o.strs.minWidth  = f(o.strs.minWidth),
           o.strs.maxWidth  = f(o.strs.maxWidth),
           o.strs.editWidth = f(o.strs.editWidth),
@@ -911,6 +925,7 @@ describe('sub/ThePopup', () => {
       _qSortD().at(0).text().should.equal('_[DC]_');
       _qIdts ().text().should.equal('_[D:01]_');
       _qZ    ().text().should.equal('_a_');
+      _plh() .text().should.equal('_plh_');
       _iWid().text().should.equal('_10_');
       _aWid().text().should.equal('_20_');
       _eWid().text().should.equal('_30_');
