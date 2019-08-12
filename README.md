@@ -53,7 +53,7 @@ For example, the most common type is an 'Instance'-term, which may look like:
 
 These are all the VSM-term types:
 
-| Type               | Required properties               | Optional properties           | Optional properties 2                                    |
+| Type               | Required properties               | Optional properties           | Optional, template-related properties                    |
 |--------------------|-----------------------------------|-------------------------------|----------------------------------------------------------|
 | Literal            | str                               | isFocal, style                | minWidth, maxWidth, editWidth, queryOptions, placeholder |
 | Class              | str, classID                      | isFocal, style, dictID, descr | minWidth, maxWidth, editWidth, queryOptions, placeholder |
@@ -210,6 +210,16 @@ Notes:
   converts it to Edit-type, and then clears the input-field's content.  
   This prop is used both by EI/EC-terms' VsmAutocomplete,
   and with ER/EL-terms' plain input-field.
++ Arbitrary extra properties can be set too, as long as they do not interfere
+  with the inner workings of vsm-box.  
+  Extra properties are kept (i.e. not removed), when received in the vsm-box's
+  `initialValue`, and also when received by the Paste function, and when
+  emitting the state of the vsm-box (see all further below). &ndash;
+  Extra properties are stripped though, when data is sent out by the Copy
+  function, or received as dictionary-data by autocomplete.  
+  This supports, among others: giving a `tag` property to some Edit-type Terms
+  in a VSM-template, and then having an easy way to track what is filled in into
+  what Edit-Term, instead of (more generally) analyzing the graph structure.
 
 
 <br>
