@@ -1275,8 +1275,12 @@ export default {
   }
 
   .inp >>> .list {
-    margin-top: 3.5px;
+    margin-top: 1.5px;
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.23);
+  }
+
+  .inp >>> .item {
+    padding-top: 2px;
   }
 
   .inp >>> .item.item-type-literal .hotkey {
