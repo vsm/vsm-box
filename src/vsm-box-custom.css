@@ -26,7 +26,7 @@ element that Vue is activated on (e.g. after '<div #app>...</div>') :
   line-height: normal;
 }
 .vsm-box .term.inp input {
-  font-size: 16px;  /* As a demo: wmaller font for <input>s. */
+  font-size: 16px;  /* As a demo: smaller font for <input>s. */
   background-color: #ff9;
 }
 .vsm-box .term.inp input:not(.plain) {
