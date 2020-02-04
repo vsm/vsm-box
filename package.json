@@ -1,6 +1,6 @@
 {
   "name": "vsm-box",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Webcomponent for building and showing a VSM-sentence",
   "main": "dist/vsm-box.min.js",
   "scripts": {
@@ -29,7 +29,7 @@
     "url": "git+https://github.com/vsmjs/vsm-box"
   },
   "author": "Steven Vercruysse (http://stcruy.com)",
-  "license": "CC-BY-NC-SA-4.0",
+  "license": "AGPL-3.0",
   "bugs": {
     "url": "https://github.com/vsmjs/vsm-box/issues"
   },
