@@ -1499,3 +1499,34 @@ described in
 This makes that `vsm-box` is built, or can be used as:
 1)&nbsp;a standalone web-component, 2)&nbsp;a slim web-component,
 and 3)&nbsp;a Vue component.
+
+
+<br>
+
+## Contributing
+
+Please read [CONTRIBUTING.md](CONTRIBUTING.md)
+for details on our code of conduct, and the process for submitting pull requests.
+
+
+<br>
+
+## Versioning
+
+We use [SemVer](http://semver.org/) for versioning.
+
+
+<br>
+
+## Authors and contributors
+
+* **Steven Vercruysse** - *Main developer* - [stcruy](https://github.com/stcruy)
+* **John Zobolas** - *Design contributions* - [bblodfon](https://github.com/bblodfon)
+* **Vasundra Touré** - *Design contributions* - [vtoure](https://github.com/vtoure)
+
+<br>
+
+## License
+
+This project is licensed under the AGPL License - see
+the [LICENSE.md](LICENSE.md) file for details.
