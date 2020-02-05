@@ -1518,15 +1518,52 @@ We use [SemVer](http://semver.org/) for versioning.
 
 <br>
 
-## Authors and contributors
+## Author
 
 * **Steven Vercruysse** - *Main developer* - [stcruy](https://github.com/stcruy)
-* **John Zobolas** - *Design contributions* - [bblodfon](https://github.com/bblodfon)
-* **Vasundra Touré** - *Design contributions* - [vtoure](https://github.com/vtoure)
+
+<br>
+
+## Contributors
+
+* John Zobolas - *Design suggestions* - [bblodfon](https://github.com/bblodfon)
+* Vasundra Touré - *Design suggestions* - [vtoure](https://github.com/vtoure)
 
 <br>
 
 ## License
 
-This project is licensed under the AGPL License - see
-the [LICENSE.md](LICENSE.md) file for details.
+This project is licensed under the AGPL license - see
+[LICENSE.md](LICENSE.md).
+
+The AGPL license protects your right to freely use the vsm-box
+and other vsmjs modules. But if you modify the source code, the goal is
+that you have to contribute those modifications back to the community.
+
+Note however that it is NOT required that applications be published if,
+for entering and/or showing VSM-based information,
+they use only unchanged, not-augmented vsmjs-modules.
+
+The copyleft applies only to the vsm-box and vsmjs modules.
+Your application, even though it talks to vsm-box, is a
+separate program and "work".<br><br>
+
+> _Why AGPL3_  
+> With VSM, we aim for unification of life science's efforts towards digital
+> transformation of all its research findings. We want to promote
+> community-building, and move forward with everyone together broadening the
+> application set.  
+> Because the vsm-box software directly reflects the core design of VSM, as a
+> shareable semantic-data / knowledge format, we believe that modifications or
+> enhancements to it must be made public as well. Otherwise a private actor could
+> easily use an "embrace, extend, extinguish" approach to privatize an evolving
+> technology that was originally meant to transform our scientific knowledge into
+> a more open digital form.  
+> We are inspired by the copyleft licensing that contributed to the success of
+> Linux-based systems, for the same reason.
+> We may revise this policy, if along the way we would learn that a most
+> permissive license would give more benefit to society.
+
+> _(We think)_  
+> (That is our interpretation / intention with AGPL, like MongoDB does.  
+> If you know better how to achieve this goal, let us know.)
