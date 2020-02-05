@@ -4,7 +4,7 @@
 
 ## Intro
 
-`vsm-box` is a web-component for building and showing a VSM-sentence.
+`vsm-box` is a web-component for entering or showing a VSM-sentence.
 
 A **VSM-sentence** is a computer-understandable, natural-looking statement,
 where each term is linked to an ID, and terms are organized with VSM-connectors.
@@ -18,20 +18,32 @@ is available on [scicura.org/vsm](http://scicura.org/vsm).
 A **web-component** is something that can be shown in a web page by simply
 inserting an HTML-tag, like a `<button>`, `<input>`, or here a `<vsm-box>`.
 
-See [vsmjs.github.io](http://vsmjs.github.io) for a concise introduction of
-how to use a vsm-box in your curation project's web-interface. - Or
-see a larger intro in this [poster](https://f1000research.com/posters/8-442).
+See:
+- a concise intro on [vsmjs.github.io](http://vsmjs.github.io),
+  on how to use a vsm-box in your web-app;
+- a larger introduction on this
+  [poster](https://f1000research.com/posters/8-442);
+- a [live vsm-box](http://scicura.org/vsm-box) to interact with;
+- many explained [VSM examples](http://scicura.org/vsm/examples.html)
+  (using an earlier vsm-box prototype);
+- **vsm-box examples** (screenshots):
 
-Interact with a live vsm-box [here](http://scicura.org/vsm-box). - Or
-see many explained VSM examples (using an earlier vsm-box prototype)
-[here](http://scicura.org/vsm/examples.html).
+![vsm-box examples](vsm-box-examples.png)
 
-<br>A vsm-box is a lot larger on the inside than it looks on the
-outside. - For users who use it to curate (collect & structure) information,
-it looks compact and easy to use, especially when just filling in
-VSM-templates. - For web-developers who incorporate a vsm-box in some
-web application, it has a large amount of customization possibilities,
-to support the needs of various user groups.
+> - _top:_ an empty vsm-box;
+> - _chicken:_ the meaning is defined by where connector-legs attach;
+> - _Alice:_ terms are added with autocomplete, connectors with mouseclicks;
+> - _proteins:_ a VSM-template, and a filled-in one;
+> - _bottom:_ a longer biomolecular-information example.
+
+<br>`vsm-box` is small on the outside (when empty), and large on the inside
+(in features):  
+&nbsp;&bull; For people who use a vsm-box to curate (collect & structure)
+information, it looks compact and elegant,
+especially when just filling in VSM-templates.  
+&nbsp;&bull; For web-developers who embed a vsm-box in some web application,
+it has lots of **customization** possibilities,
+in order to support the needs of various user groups.
 
 <br>
 
