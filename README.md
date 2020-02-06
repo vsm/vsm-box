@@ -1552,11 +1552,10 @@ The AGPL license protects your right to freely use the vsm-box
 and other vsmjs modules. But if you modify the source code, the goal is
 that you have to contribute those modifications back to the community.
 
-Note however that it is NOT required that applications be published if,
-for entering and/or showing VSM-based information,
-they use only unchanged, not-augmented vsmjs-modules.
-
-The copyleft applies only to the vsm-box and vsmjs modules.
+Note<sup>*</sup> however that it is NOT required that applications be published
+if, for entering and/or showing VSM-based information,
+they use only unchanged, not-augmented vsmjs-modules.  
+The copyleft applies only to the vsm-box and other vsmjs modules.
 Your application, even though it talks to vsm-box, is a
 separate program and "work".<br><br>
 
@@ -1576,6 +1575,6 @@ separate program and "work".<br><br>
 > We may revise this policy, if along the way we would learn that a most
 > permissive license would give more benefit to society.
 
-> _(We think)_  
+> <sup>*</sup>_(We think)_  
 > (That is our interpretation / intention with AGPL, like MongoDB does.  
 > If you know better how to achieve this goal, let us know.)
