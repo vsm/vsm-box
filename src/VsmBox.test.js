@@ -357,8 +357,8 @@ describe('VsmBox', () => {
 
 
 
-  describe.only('a', () => {
-    //*
+  describe('a', () => {
+    /*
     it('a', cb => cb());  /**/
 
 
