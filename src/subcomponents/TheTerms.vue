@@ -1254,9 +1254,6 @@ export default {
   .term:not(.nofade):hover {
     transition: border-color 0.1s ease;
   }
-  .term >>> .vsm-autocomplete input {
-    background-color: transparent;
-  }
 
   .edit {
     color: #000;
@@ -1275,7 +1272,7 @@ export default {
   }
 
   .inp >>> .list {
-    margin-top: 0;
+    margin-top: 3px;
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.23);
   }
 
@@ -1370,7 +1367,9 @@ export default {
     width: 100%;
     height: 100%;
     padding: 0;        /* $ */
+    line-height: normal;
     cursor: text;
+    background-color: transparent;
     border: 0;         /* $ */
     outline: none;     /* $ */
     box-shadow: none;  /* $ */
@@ -1385,17 +1384,15 @@ export default {
   */
   .term >>> .input-wrap {
     position: relative;
+    line-height: 0;
     background-color: transparent;  /* different from vsmAC */
-  }
-
-  .term >>> .input-wrap:not(.plain) {
-    top: -2px;  /* 2px higher than in vsmAC */
   }
 
   .term >>> .placehold {
     position: absolute;
     top: 0;
     left: 0;
+    line-height: normal;
     color: #aaa;
     pointer-events: none;
     transition: 0.2s ease all;
@@ -1411,14 +1408,6 @@ export default {
 
   .term >>> .placehold.hidden {
     display: none;
-  }
-
-  .term >>> .placehold:not(.plain) {
-    top: 2px;  /* 2px lower than in vsmAC */
-  }
-
-  .term >>> .placehold:not(.plain).focus {
-    top: 0;  /*   2px lower than in vsmAC */
   }
 
   .term >>> .label,

@@ -16,23 +16,22 @@ element that Vue is activated on (e.g. after '<div #app>...</div>') :
   padding: 4px;
   background-color: #ffc;
 }
-.vsm-box .term,
-.vsm-box .term.inp .placehold {  /* Use `.term.inp` here and later, for higher
-                                    selector-specificity, e.g. for bkgr-color. */
+.vsm-box .term {  /* Use `.term.inp` here and later, for higher
+                     selector-specificity, e.g. for bkgr-color. */
   font-family: sans-serif;
   font-size: 19px;  /* Note: for a different font-size, the prop-property
                        `sizes.widthScale` will automatically be adjusted, which
                        will scale each Term's `min/max/editWidth` accordingly. */
   line-height: normal;
 }
-.vsm-box .term.inp input {
+.vsm-box .term.inp input,
+.vsm-box .term.inp .placehold {
   font-size: 16px;  /* As a demo: smaller font for <input>s. */
   background-color: #ff9;
 }
-.vsm-box .term.inp input:not(.plain) {
-  margin-top: 3px;
-}
+.vsm-box .term.inp .placehold,
 .vsm-box .term.inp .placehold.focus {
+  top: -2px;
   left: 2.5px;
   font-size: 12px;
 }
