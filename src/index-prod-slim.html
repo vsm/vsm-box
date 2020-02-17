@@ -36,17 +36,10 @@
   <!-- Include the 'slim build' version of 'vsm-box'. -->
   <script src="../dist/vsm-box.min.js"></script>
 
-  <!-- Include two libraries for showing JS-objects in a readable way. -->
-  <script> // Minified, browser-compatible version of json-stringify-pretty-compact@1.2.0:
-    function stringify(n,r){r=r||{};var h=JSON.stringify([1],null,_gt(r,'indent',2)).slice(2,-3),s=_gt(r,'margins',!1),v
-    =''===h?1/0:_gt(r,'maxLength',80);return function f(u,n,r){u&&'function'==typeof u.toJSON&&(u=u.toJSON());var t=JSON
-    .stringify(u);if(void 0===t)return t;var i=v-n.length-r;if(t.length<=i){var e=prettify(t,s);if(e.length<=i)return e}
-    if('object'==typeof u&&null!==u){var g,o=n+h,a=[],l=function(n,r){return r===n.length-1?0:1};if(Array.isArray(u)){
-    for(var c=0;c<u.length;c++)a.push(f(u[c],o,l(u,c))||'null');g='[]'}else Object.keys(u).forEach(function(n,r,t){var i
-    =JSON.stringify(n)+': ',e=f(u[n],o,i.length+l(t,r));void 0!==e&&a.push(i+e)}),g='{}';if(0<a.length)return[g[0],h+a.
-    join(',\n'+o),g[1]].join('\n'+n)}return t}(n,'',0);function prettify(n,r){var soc=/("(?:[^\\"]|\\.)*")|[:,\][}{]/g,t
-    =r?' ':'',i={'{':'{'+t,'[':'['+t,'}':t+'}',']':t+']',',':', ',':':': '};return n.replace(soc,function(n,r){return r?
-    n:i[n]})}function _gt(n,r,t){return r in n?n[r]:t}}</script>
+  <!-- Include a library for showing VSM JS-objects in a readable way, as JSON5. -->
+  <script src="https://unpkg.com/vsm-json-pretty@^1.0.0/dist/vsm-json-pretty.min.js"></script>
+
+  <!-- Include a library for converting JSON5 back to a JS-object. -->
   <script src="https://unpkg.com/json5@^2.1.0/dist/index.min.js"></script>
 </head>
 
@@ -247,16 +240,7 @@
 
 
       boxValueToStateText(value) {              // (See vsm-box's index-dev.js).
-        lastAutoFilledText = this.stateText = stringify(value, { margins: true })
-          .replace(/ "([a-zA-Z]*)": /g, ' $1: ')
-          .replace(/{\n {2}terms:/, '{ terms:')
-          .replace(/, conns:/, ',\n  conns:')
-          .replace(/'/g, '\\\'') .replace(/"/g, '\'')
-          .replace(/\n {4}{\n {6}/g, '\n    { ')
-          .replace(/\n {6,10}([\]}],?\n)/g, ' $1')
-          .replace(/] }$/, ']\n}')
-          .replace(/] ?]\n}$/, ']\n  ]\n}')
-          .replace(/(: \[|\],) ?\[/g, '$1\n    [');
+        lastAutoFilledText = this.stateText = VsmJsonPretty(value);
         this.setMsg(1);
       },
 
@@ -340,7 +324,7 @@
               dictID: 'CW',  descr: 'to be accompanied by' },
             { str: 'cls', classID: 'A:01', dictID: 'A', descr: 'descr-1' },
             { str: 'lit' },
-            { editWidth: 20 },
+            { editWidth: 20, placeholder: 'pl' },
             { type: 'EC', editWidth: 20 },
             { type: 'EL', editWidth: 20 },
             { str: 'and',       classID: 'CW:0005',  instID: null,
