@@ -26,6 +26,16 @@ See:
 - a [**live vsm-box**](http://scicura.org/vsm-box) to interact with;
 - many explained [VSM examples](http://scicura.org/vsm/examples.html)
   (using an earlier vsm-box prototype);
+- this **vsm-box animation** (what you see is: 1. entering two terms, 2.
+  checking one term's definition (by mousehovering), 3. adding a connector
+  that creates an unintended meaning ('chicken with fork') (+ see that
+  connectors are automatically reordered for optimal layout), 4. removing
+  it, 5. adding the second connector correctly) :
+
+<style>img[alt$="-600w"] { width: 600px; display: block; }</style>
+
+![vsm-box-example -600w](vsm-box-example.gif)
+
 - **vsm-box examples** (screenshots + information):
 
 <br>
