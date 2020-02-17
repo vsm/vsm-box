@@ -32,9 +32,7 @@ See:
   connectors are automatically reordered for optimal layout), 4. removing
   it, 5. adding the second connector correctly) :
 
-<style>img[alt$="-600w"] { width: 600px; display: block; }</style>
-
-![vsm-box-example -600w](vsm-box-example.gif)
+<img src="vsm-box-example.gif" width="600" alt="vsm-box example animation">
 
 - **vsm-box examples** (screenshots + information):
 
