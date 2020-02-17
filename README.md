@@ -23,18 +23,16 @@ See:
   on how to use a vsm-box in your web-app;
 - a larger introduction on this
   [poster](https://f1000research.com/posters/8-442);
-- a [live vsm-box](http://scicura.org/vsm-box) to interact with;
+- a [**live vsm-box**](http://scicura.org/vsm-box) to interact with;
 - many explained [VSM examples](http://scicura.org/vsm/examples.html)
   (using an earlier vsm-box prototype);
-- **vsm-box examples** (screenshots):
+- **vsm-box examples** (screenshots + information):
+
+<br>
 
 ![vsm-box examples](vsm-box-examples.png)
 
-> - _top:_ an empty vsm-box;
-> - _chicken:_ the meaning is defined by where connector-legs attach;
-> - _Alice:_ terms are added with autocomplete, connectors with mouseclicks;
-> - _proteins:_ a VSM-template, and a filled-in one;
-> - _bottom:_ a longer biomolecular-information example.
+<br>
 
 <br>`vsm-box` is small on the outside (when empty), and large on the inside
 (in features):  
@@ -43,7 +41,7 @@ information, it looks compact and elegant,
 especially when just filling in VSM-templates.  
 &nbsp;&bull; For web-developers who embed a vsm-box in some web application,
 it has lots of **customization** possibilities,
-in order to support the needs of various user groups.
+to support the needs of various user groups.
 
 <br>
 
