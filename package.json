@@ -14,7 +14,7 @@
     "build-open": "npm run build && opn src/index-prods.html",
     "build-slim": "webpack --config webpack.config.js --env.NODE_ENV=production",
     "build-stan": "webpack --config webpack.config.js --env.NODE_ENV=production --env.standalone=true",
-    "prepublishOnly": "npm run lint && npm run test && npm run build"
+    "prepublishOnly": "npm run lint && npm run test && npm run build-slim && npm run build-stan"
   },
   "files": ["dist/**/*"],
   "keywords": [
