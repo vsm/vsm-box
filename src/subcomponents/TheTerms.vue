@@ -1225,8 +1225,6 @@ export default {
     display: inline-block;
     padding: 0 3px;
     margin: 0 2px;  /* Is later zero'ed, but abs. positioning uses this value */
-    overflow: hidden;
-    text-overflow: ellipsis;
     white-space: nowrap;
     cursor: default;
     border: 1px solid transparent;
@@ -1413,6 +1411,13 @@ export default {
   .term >>> .label,
   span.ruler {
     white-space: pre;
+  }
+
+  .term >>> .label {
+    display: inline-block;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   /* placeholder for Term not having the <input>. Cf.: `.term >>> .placehold` */
