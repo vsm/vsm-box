@@ -65,7 +65,7 @@ See the [Documentation](Documentation.md) for full technical details on:
 - **user interaction**,
 - **customized content** (for term labels, term popups, and autocomplete panel
   items),
-- etc.
+- and more.
 
 <br>
 
@@ -99,8 +99,8 @@ for details on our code of conduct, and the process for submitting pull requests
 
 ## Created by
 
-- **Steven Vercruysse** - *Main developer* - [stcruy](https://github.com/stcruy)
-  <br><br>
+- **Steven Vercruysse** - *Main developer, VSM creator, project leader* -
+  [stcruy](https://github.com/stcruy)
 - Martin Kuiper - *Design feedback, VSM project guidance* -
   [makuintnu](https://github.com/makuintnu)
 - John Zobolas - *Design suggestions* - [bblodfon](https://github.com/bblodfon)
