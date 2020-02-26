@@ -19,7 +19,7 @@ A **web-component** is something that can be shown in a web page by simply
 inserting an HTML-tag, like a `<button>`, `<input>`, or here a `<vsm-box>`.
 
 For web-developers who embed a vsm-box in a web-app, there are lots of
-**customization** features to support the needs of various user groups.  
+**customization** features to support the needs of various user groups.
 For end-users who capture structured information, a vsm-box is an elegant
 and powerful tool; and even more so when they can fill out VSM-templates.
 
@@ -47,7 +47,7 @@ This section shows:
 
 <img src="vsm-box-example.gif" width="600" alt="vsm-box example animation">
 
-- several **vsm-box examples** (screenshots + information):
+- several **vsm-box examples** (screenshots + information) :
 
 <br>
 
