@@ -46,7 +46,7 @@
 <script>
 /**!
  * vsm-box
- * (c) 2012-2019 Steven Vercruysse
+ * By Steven Vercruysse, https://orcid.org/0000-0002-3136-7353
  */
 
 import TheConns from './subcomponents/TheConns.vue';
