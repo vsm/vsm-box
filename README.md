@@ -1509,7 +1509,7 @@ Next:
 
 <br>
 
-### Build configuration
+## Build setup
 
 This project's configuration (webpack + npm + Vue + testing + linting) is as
 described in
@@ -1517,6 +1517,14 @@ described in
 This makes that `vsm-box` is built, or can be used as:
 1)&nbsp;a standalone web-component, 2)&nbsp;a slim web-component,
 and 3)&nbsp;a Vue component.
+
+The latest version's built files are available at [unpkg](https://unpkg.com/browse/vsm-box/dist/):
+- [vsm-box.standalone.min.js](https://unpkg.com/vsm-box/dist/vsm-box.standalone.min.js)
+  &nbsp;(standalone;
+  use it like [here](src/index-prod-standalone.html));
+- [vsm-box.min.js](https://unpkg.com/vsm-box/dist/vsm-box.min.js)
+  &nbsp;(slim, needs Vue etc. as external dependencies;
+  use it like [here](src/index-prod-slim.html)).
 
 
 <br>
