@@ -1,16 +1,18 @@
-<!DOCTYPE html>
+<!doctype html>
 <html>
 <head>
-  <meta charset="utf-8"/>
-
+  <!-- This loads the vsm-box module, a vsm-dictionary that provides terms+identifiers, and an optional cache-layer. -->
+  <script src="../dist/vsm-box.standalone.min.js"></script>
   <script src="https://unpkg.com/vsm-dictionary-local@^2.6.0/dist/vsm-dictionary-local.min.js"></script>
   <script src="https://unpkg.com/vsm-dictionary-cacher@^1.2.0/dist/vsm-dictionary-cacher.min.js"></script>
-  <script src="../dist/vsm-box.standalone.min.js"></script>
 </head>
 
 
 <body>
+
+  <!-- This places one vsm-box component on the web page. -->
   <vsm-box autofocus=true></vsm-box>
+
   <br>
   <textarea readonly></textarea>
 </body>
@@ -19,20 +21,23 @@
 <script>
   var vsmbox = document.getElementsByTagName('vsm-box')[0];
 
+  // This connects the vsm-box to a vsm-dictionary.
+  // Here we create some local dictionary-data, as a demo.
+  // (Alternatively, we could use a real dictionary interface like vsm-dictionary-bioportal).
   vsmbox.vsmDictionary = new (VsmDictionaryCacher(VsmDictionaryLocal)) ({
     dictData: [ { id: 'http://d.org/A',  name: 'Aaa',  entries: [
       { id: 'http://d.org/A/A:01', terms: [{ str: 'aaa' }, { str: 'aab' }] },
       { id: 'http://d.org/A/A:03', terms: [{ str: 'abc' }], descr: 'example' }
     ]}]
-  });  // (Or use another dictionary interface, like vsm-dictionary-bioportal).
+  });
 
 
-  // Fill in something. (Uncomment this:)
+  //// If you un-comment this, it will fill the vsm-box with a template structure:
   //vsmbox.initialValue = {
-  //  terms: [ {}, { str: 'aaa', classID: 'http://d.org/A/A:01', instID: null }, {} ],
+  //  terms: [ { placeholder: 'name' }, { str: 'aaa', classID: 'http://d.org/A/A:01', instID: null }, {} ],
   //  conns: [ { type: 'T', pos: [ 0, 1, 2 ] } ] };
 
-  // Show changes in the textarea.
+  // This also shows the vsm-box's data content live in a textfield below it:
   var text = document.getElementsByTagName('textarea')[0];  text.value = '';
   function showOutput(e) { text.value = JSON.stringify(e.detail[0], null, 2) }
   vsmbox.addEventListener('change', showOutput);
