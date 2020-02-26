@@ -23,16 +23,16 @@ function runDemo() {
 
   var example1 = {
     terms: [
-      { str: 'John',    classID: 'PRS:0510', instID: null },
+      { str: 'John',    classID: 'PRS:0010', instID: null },
       { str: 'eats',    classID: 'CW:0101',  instID: null },
       { str: 'chicken',
         classID: 'http://x.org/BIO/BIO:0042',  // URI, shown in ThePopup as link.
         instID : null,  dictID: 'http://x.org/BIO',  descr: 'the animal',
         queryOptions: { sort: { dictID: [ 'http://x.org/BIO' ] } } },
       { str: 'with',    classID: 'CW:0105',  instID: null,
-        dictID: 'CW',  descr: 'to use' },
+        dictID: 'CW',  descr: 'using' },
       { str: 'fork',    classID: 'CW:0108',  instID: null,
-        queryOptions: { fixedTerms: [ { id: 'CW:0118', str: 'spoon' } ] } }
+        queryOptions: { fixedTerms: [ { id: 'CW:0107', str: 'spoon' } ] } }
     ],
     conns: [
       { type: 'T', pos: [0, 1, 2] },
@@ -43,27 +43,27 @@ function runDemo() {
 
   var example2 = {
     terms: [
-      { str: 'John',      classID: 'PRS:0510', instID: 'db-id20',
-        dictID: 'PRSNS',  descr: 'John Doe',
+      { str: 'John',      classID: 'PRS:0010', instID: 'db-id20',
+        dictID: 'PRSNS',  descr: 'an example John',
         minWidth: 5, maxWidth: 80, editWidth: 50,
         queryOptions: {
           filter: { dictID: [ 'PRSNS', 'CW', 'VAR' ] },
           sort: { dictID: [ 'CW' ] },
           fixedTerms: [
-            { id: 'PRS:0501', str: 'Alice' }, { id: 'BIO:0010' }  ] },
+            { id: 'PRS:0001', str: 'Alice' }, { id: 'BIO:0010' }  ] },
         placeholder: 'person'
       },
       { str: 'activates', classID: 'BIO:0014', instID: null, isFocal: true },
-      { str: 'burnt',     classID: 'CW:0109',  instID: null },
+      { str: 'spicy',     classID: 'CW:0215',  instID: null },
       { str: 'chicken',   classID: 'http://x.org/BIO/BIO:0042', instID : null,
         dictID : 'http://x.org/BIO',  descr: 'the animal',
         queryOptions: { sort: { dictID: ['http://x.org/BIO'] } } },
       { str: 'with',      classID: 'CW:0105',  instID: null,
-        dictID: 'CW',  descr: 'to use' },
+        dictID: 'CW',  descr: 'using' },
       { str: 'Ca2+', style: 'u2-4', descr: 'Calcium ion',
         classID: 'BIO:0010', instID: null },  ///, minWidth: 47},
       { str: 'with',      classID: 'CW:0106',  instID: null,
-        dictID: 'CW',  descr: 'to be accompanied by' },
+        dictID: 'CW',  descr: 'accompanied by' },
       { str: 'cls', classID: 'A:01', dictID: 'A', descr: 'descr-1' },
       { str: 'lit' },
       { editWidth: 20 },
@@ -72,7 +72,7 @@ function runDemo() {
       { type: 'ER', editWidth: 20 },
       { str: 'and',       classID: 'CW:0005',  instID: null,
         dictID: 'CW',  descr: 'a set of items' },
-      { str: 'himself',   classID: 'PRS:0510',
+      { str: 'himself',   classID: 'PRS:0010',
         instID: 'db-id40', parentID: 'db-id20',
         ///instID: 'https://me.org/db-id40', parentID: 'https://me.org/db-id20',
         placeholder: 'person' }
@@ -91,13 +91,13 @@ function runDemo() {
 
   var example3 = {
     terms: [
-      { str: 'John', classID: 'PRS:0510', instID: null },
+      { str: 'John', classID: 'PRS:0010', instID: null },
       { str: 'eats', classID: 'CW:0101', instID: null },
       { str: 'chicken', classID: 'http://x.org/BIO/BIO:0042', instID: null,
         queryOptions: { sort: { dictID: [ 'http://x.org/BIO' ] } } },
       { str: 'with', classID: 'CW:0106', instID: null },
-      { str: 'Alice', classID: 'PRS:0501', instID: null },
-      { str: 'Bob', classID: 'PRS:0502', instID: null },
+      { str: 'Alice', classID: 'PRS:0001', instID: null },
+      { str: 'Bob', classID: 'PRS:0002', instID: null },
       { str: 'and', classID: 'CW:0005', instID: null },
       { str: 'himself', classID: null, instID: null, parentID: null }
     ],
@@ -145,8 +145,8 @@ function runDemo() {
                 filter: { dictID: ['CW', 'VAR', 'http://aaa/qqq'] },
                 sort:   { dictID: ['CW'] },
                 fixedTerms: [
-                  { id: 'PRS:0501', str: 'Alice' },
-                  { id: 'PRS:0502' },
+                  { id: 'PRS:0001', str: 'Alice' },
+                  { id: 'PRS:0002' },
                   { id: 'BIO:0010' },
                   { id: 'PRS:9999' } ],
                 z: ['species', 'color']
@@ -409,13 +409,15 @@ function createData() {
         { id: 'CW:0055', terms: [{str: 'time'}] },
         { id: 'CW:0084', terms: [{str: 'two'}] },
         { id: 'CW:0042', terms: [{str: 'up'}] },
-        { id: 'CW:0083', terms: [{str: 'use'}] },
         { id: 'CW:0093', terms: [{str: 'want'}] },
         { id: 'CW:0090', terms: [{str: 'way'}] },
         { id: 'CW:0087', terms: [{str: 'work'}] },
         { id: 'CW:0063', terms: [{str: 'year'}, {str: 'years'}] },
         { id: 'CW:0101', descr: 'to eat',
-          terms: [{str: 'eat'}, {str: 'eats'}, {str: 'to eat'}] },
+          terms: [
+            {str: 'eat'}, {str: 'eats'}, {str: 'eating'}, {str: 'to eat'}
+          ]
+        },
         { id: 'CW:0069',  descr: 'to see',
           terms: [{str: 'see'}, {str: 'sees'}, {str: 'to see'}] },
         { id: 'CW:0028',  descr: 'to say',
@@ -426,19 +428,23 @@ function createData() {
             {str: 'chicken', style: 'i', descr: 'as in \'coward\''}
           ]
         },
+        { id: 'CW:0107', terms: [{str: 'spoon'}] },
         { id: 'CW:0108', terms: [{str: 'fork'}] },
-        { id: 'CW:0118', terms: [{str: 'spoon'}] },
-        { id: 'CW:0109', terms: [{str: 'burnt'}] },
+        { id: 'CW:0109', terms: [{str: 'knife'}] },
+        { id: 'CW:0214', terms: [{str: 'burnt'}] },
+        { id: 'CW:0215', terms: [{str: 'spicy'}] },
         { id: 'CW:0105', descr: 'to use', terms: [
-          {str: 'with'},
+          {str: 'with', descr: 'using'},
+          {str: 'use'},
+          {str: 'uses'},
           {str: 'using'},
           {str: 'use of'},
           {str: 'to use'}
         ]},
         { id: 'CW:0106', descr: 'to be accompanied by', terms: [
-          {str: 'with'},
+          {str: 'with', descr: 'accompanied by'},
           {str: 'accompanied by'},
-          {str: 'to be accompanied by'}
+          {str: 'is accompanied by'}
         ]},
         { id: 'CW:0020', descr: 'associated with', terms: [{str: 'at'}] },
         { id: 'CW:0007', descr: 'to be located in', terms: [
@@ -461,8 +467,8 @@ function createData() {
           terms: [
             {str: 'to be'},
             {str: 'being'},
-            {str: 'is', descr: '\'to be\', in its 3rd-person avatar'},
-            {str: 'are', descr: '\'to be\', in its plural avatar'}
+            {str: 'is', descr: 'to be, in 3rd-person form'},
+            {str: 'are', descr: 'to be, in plural form'}
           ]
         },
         { id: 'CW:0123', descr: 'belonging to', terms: [{str: 'of'}, {str: '\'s'}] },
@@ -480,43 +486,38 @@ function createData() {
         { id: 'CW:0133', terms: [{str: 'has'}] },
         { id: 'CW:0141', descr: 'being located amongst',
           terms: [{str: 'between'}, {str: 'is between'}, {str: 'are between'}] },
-        { id: 'CW:0142', descr: 'the location amongst some things',
-          terms: [{str: 'between'}]
-        },
+
       ]},
 
       { id: 'PRSNS', abbrev: 'PRS', name: 'Persons', entries: [
-        { id: 'PRS:0004', terms: [{str: 'Brown'}] },
-        { id: 'PRS:0020', terms: [{str: 'Clarke'}] },
-        { id: 'PRS:0008', terms: [{str: 'Davis'}] },
-        { id: 'PRS:0012', terms: [{str: 'Evans'}] },
-        { id: 'PRS:0016', terms: [{str: 'Green'}] },
-        { id: 'PRS:0017', terms: [{str: 'Hall'}] },
-        { id: 'PRS:0019', terms: [{str: 'Jackson'}] },
-        { id: 'PRS:0007', terms: [{str: 'Johnson'}] },
-        { id: 'PRS:0002', terms: [{str: 'Jones'}] },
-        { id: 'PRS:0015', terms: [{str: 'Roberts'}] },
-        { id: 'PRS:0009', terms: [{str: 'Robinson'}] },
-        { id: 'PRS:0001', terms: [{str: 'Smith'}] },
-        { id: 'PRS:0003', terms: [{str: 'Taylor'}] },
-        { id: 'PRS:0011', terms: [{str: 'Thompson'}] },
-        { id: 'PRS:0013', terms: [{str: 'Walker'}] },
-        { id: 'PRS:0014', terms: [{str: 'White'}] },
-        { id: 'PRS:0005', terms: [{str: 'Williams'}] },
-        { id: 'PRS:0006', terms: [{str: 'Wilson'}] },
-        { id: 'PRS:0018', terms: [{str: 'Wood'}] },
-        { id: 'PRS:0010', terms: [{str: 'Wright'}] },
-        { id: 'PRS:0501', terms: [{str: 'Alice'}] },
-        { id: 'PRS:0502', terms: [{str: 'Bob'}] },
-        { id: 'PRS:0510', terms: [{str: 'John'}],
-          descr: 'imaginary person John Doe from Norway' },
-        { id: 'PRS:0256', descr: 'Steven Vercruysse (Cruy), creator of VSM',
+        { id: 'PRS:0001', terms: [{str: 'Alice'}] },
+        { id: 'PRS:0002', terms: [{str: 'Bob'}] },
+        { id: 'PRS:0003', terms: [{str: 'Clara'}] },
+        { id: 'PRS:0004', terms: [{str: 'David'}] },
+        { id: 'PRS:0005', terms: [{str: 'Eve'}] },
+        { id: 'PRS:0006', terms: [{str: 'Frank'}] },
+        { id: 'PRS:0007', terms: [{str: 'Greta'}] },
+        { id: 'PRS:0008', terms: [{str: 'Heidi'}] },
+        { id: 'PRS:0009', terms: [{str: 'Jane'}] },
+        { id: 'PRS:0010', terms: [{str: 'John'}],
+          descr: 'example John' },
+        { id: 'PRS:0011', terms: [{str: 'Joy'}] },
+        { id: 'PRS:0012', terms: [{str: 'Robert'}] },
+        { id: 'PRS:0013', terms: [{str: 'Robin'}] },
+        { id: 'PRS:0014', terms: [{str: 'Taylor'}] },
+        { id: 'PRS:0015', terms: [{str: 'Tom'}] },
+        { id: 'PRS:0016', terms: [{str: 'Wally'}] },
+        { id: 'PRS:0017', terms: [{str: 'Walter'}] },
+        { id: 'PRS:0018', terms: [{str: 'Will'}] },
+        { id: 'PRS:0019', terms: [{str: 'William'}] },
+        { id: 'PRS:0020', terms: [{str: 'Wilson'}] },
+        { id: 'PRS:0021', descr: 'Steven Vercruysse, creator of VSM',
           terms: [{str: 'Steven'}] },
       ]},
 
       { id: 'http://x.org/BIO', name: 'Biological concepts', entries: [
         { id:'BIO:0010', terms: [{str: 'Ca2+', style: 'u2-4'}] },
-        { id:'BIO:0011', terms: [{str: 'Na+Cl-', style: 'u2;u5'}] },
+        { id:'BIO:0011', terms: [{str: 'Na+Cl-', style: 'u2;u5'}], descr: 'dissolved salt' },
         { id:'BIO:0001', terms: [{str: 'beta-Carotene'}, {str: 'β-Carotene'}] },
         { id:'BIO:0002', descr: 'the Human gene ICER', terms: [{str: 'ICER'}] },
         { id:'BIO:0003', descr: 'the Human gene cdc2',
@@ -525,7 +526,7 @@ function createData() {
         },
         { id:'BIO:0903', descr: 'the Mouse gene cdc2', terms: [{str: 'cdc2'}] },
         { id:'BIO:0014',
-          descr: 'To activate (= the activation of) a molecule, by some actor',
+          descr: 'to activate (=activation of) a biomolecule',
           terms: [
             {str: 'activates'},
             {str: 'activation'},

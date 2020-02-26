@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8"/>
 
-  <title>vsm-box: 'slim build' demo</title>
+  <title>vsm-box: 'slim build' demo, connected to a PubDictionaries dictionary</title>
 
   <style>
     body { font-family: tahoma, verdana, arial, sans-serif;  margin: 0; }
@@ -279,15 +279,15 @@
       onButtonExample1() {
         var example1 = {
           terms: [
-            { str: 'John',    classID: 'PRS:0510', instID: null },
+            { str: 'John',    classID: 'PRS:0010', instID: null },
             { str: 'eats',    classID: 'CW:0101',  instID: null },
             { str: 'chicken', classID: 'BIO:0042', instID: null,
               dictID: 'http://x.org/BIO',  descr: 'the animal',
               queryOptions: { sort: { dictID: ['http://x.org/BIO'] } } },
             { str: 'with',    classID: 'CW:0105',  instID: null,
-              dictID: 'CW',  descr: 'to use' },
+              dictID: 'CW',  descr: 'using' },
             { str: 'fork',    classID: 'CW:0108',  instID: null,
-              queryOptions: { fixedTerms: [ { id: 'CW:0118', str: 'spoon' } ] } }
+              queryOptions: { fixedTerms: [ { id: 'CW:0107', str: 'spoon' } ] } }
           ],
           conns: [
             { type: 'T', pos: [0, 1, 2] },
@@ -301,27 +301,27 @@
       onButtonExample2() {
         var example2 = {
           terms: [
-            { str: 'John',      classID: 'PRS:0510', instID: 'db-id20',
-              dictID: 'PRSNS',  descr: 'John Doe',
+            { str: 'John',      classID: 'PRS:0010', instID: 'db-id20',
+              dictID: 'PRSNS',  descr: 'an example John',
               minWidth: 5, maxWidth: 80, editWidth: 50,
               queryOptions: {
                 filter: { dictID: [ 'PRSNS', 'CW', 'VAR' ] },
                 sort: { dictID: [ 'CW' ] },
                 fixedTerms: [
-                  { id: 'PRS:0501', str: 'Alice' }, { id: 'BIO:0010' }  ] }
+                  { id: 'PRS:0001', str: 'Alice' }, { id: 'BIO:0010' }  ] }
             },
             { str: 'activates', classID: 'BIO:0014', instID: null,
               isFocal: true },
-            { str: 'burnt',     classID: 'CW:0109',  instID: null },
+            { str: 'spicy',     classID: 'CW:0215',  instID: null },
             { str: 'chicken',   classID: 'BIO:0042', instID: null,
               dictID: 'http://x.org/BIO',  descr: 'the animal',
               queryOptions: { sort: { dictID: ['http://x.org/BIO'] } } },
             { str: 'with',      classID: 'CW:0105',  instID: null,
-              dictID: 'CW',  descr: 'to use' },
+              dictID: 'CW',  descr: 'using' },
             { str: 'Ca2+', style: 'u2-4', descr: 'Calcium ion',
               classID: 'BIO:0010', instID: null },  ///, minWidth: 47},
             { str: 'with',      classID: 'CW:0106',  instID: null,
-              dictID: 'CW',  descr: 'to be accompanied by' },
+              dictID: 'CW',  descr: 'accompanied by' },
             { str: 'cls', classID: 'A:01', dictID: 'A', descr: 'descr-1' },
             { str: 'lit' },
             { editWidth: 20, placeholder: 'pl' },
@@ -329,7 +329,7 @@
             { type: 'EL', editWidth: 20 },
             { str: 'and',       classID: 'CW:0005',  instID: null,
               dictID: 'CW',  descr: 'a set of items' },
-            { str: 'himself',   classID: 'PRS:0510', instID: 'db-id40',
+            { str: 'himself',   classID: 'PRS:0010', instID: 'db-id40',
               parentID: 'db-id20'}
           ],
           conns: [
