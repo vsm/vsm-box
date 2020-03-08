@@ -3,7 +3,7 @@
 <!-- badges: start -->
 [![Travis build status](https://travis-ci.org/vsmjs/vsm-box.svg?branch=master)](https://travis-ci.org/vsmjs/vsm-box)
 [![npm version](https://img.shields.io/npm/v/vsm-box)](https://www.npmjs.com/package/vsm-box)
-[![Downloads](https://img.shields.io/npm/dm/vsm-box)](https://www.npmjs.com/package/vsm-dictionary-box)
+[![Downloads](https://img.shields.io/npm/dm/vsm-box)](https://www.npmjs.com/package/vsm-box)
 <!-- badges: end -->
 
 ## Intro
