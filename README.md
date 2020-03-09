@@ -4,7 +4,7 @@
 [![Travis build status](https://travis-ci.org/vsmjs/vsm-box.svg?branch=master)](https://travis-ci.com/vsmjs/vsm-box)
 [![(will become a live badge when codecov can see inside webpack-bundled code)](https://img.shields.io/badge/coverage-high-brightgreen.svg)](https://travis-ci.com/vsmjs/vsm-box)
 [![npm version](https://img.shields.io/npm/v/vsm-box)](https://www.npmjs.com/package/vsm-box)
-[![License](https://img.shields.io/badge/license-AGPL-blue.svg)](#license)
+[![License](https://img.shields.io/npm/l/vsm-box?color=blue)](#license)
 [![Downloads](https://img.shields.io/npm/dm/vsm-box)](https://www.npmjs.com/package/vsm-box)
 <!-- badges: end -->
 
@@ -116,7 +116,7 @@ for details on our code of conduct, and the process for submitting pull requests
 
 ## License
 
-This project is licensed under the AGPL license - see
+This project is licensed under the AGPL-3.0 license - see
 [LICENSE.md](LICENSE.md).
 
 The AGPL license protects your right to freely use the vsm-box
@@ -134,7 +134,7 @@ is our interpretation and intention with AGPL, similar to how MongoDB does it.
 If you know a legally better way to achieve this goal,
 let us know.)_</span><br><br>
 
-> _Why AGPL3_  
+> _Why AGPL_  
 > With VSM, we aim for unification of life science's efforts towards digital
 > transformation of all its research findings. We want to promote
 > community-building, and move forward with everyone together broadening the
