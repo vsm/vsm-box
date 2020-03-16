@@ -16,7 +16,9 @@
     "build-stan": "webpack --config webpack.config.js --env.NODE_ENV=production --env.standalone=true",
     "prepublishOnly": "npm run lint && npm run test && npm run build-slim && npm run build-stan"
   },
-  "files": ["dist/**/*"],
+  "files": [
+    "dist/**/*"
+  ],
   "keywords": [
     "VSM",
     "ontology",
