@@ -1415,7 +1415,7 @@ export default {
 
   .term >>> .label {
     display: inline-block;
-    max-width: 100%;
+    width: calc(100% + 1px);
     overflow: hidden;
     text-overflow: ellipsis;
   }
