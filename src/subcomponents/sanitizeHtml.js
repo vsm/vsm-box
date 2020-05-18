@@ -3,5 +3,5 @@
  * against <script> and other injection attacks.
  */
 export default function sanitizeHtml(str) {
-  return str.replace(/<(\s*(script|iframe|style|textarea)\W)/g, '&lt;$1');
+  return str.replace(/<(\s*(script|iframe|style|textarea)\W)/gi, '&lt;$1');
 }
