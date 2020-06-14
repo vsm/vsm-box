@@ -51,13 +51,25 @@ This section shows:
   connectors are automatically reordered for optimal layout), 4. removing
   it, 5. adding the second connector correctly) :
 
-<img src="vsm-box-example.gif" width="600" alt="vsm-box example animation">
+<img src="imgs/vsm-box-example.gif" width="600" alt="vsm-box example animation">
 
 - several **vsm-box examples** (screenshots + information) :
 
 <br>
 
-![vsm-box examples](vsm-box-examples.png)
+![vsm-box examples part 1](imgs/vsm-box-examples-1.png)
+![sep](imgs/sep-0.png)
+![vsm-box examples part 2](imgs/vsm-box-examples-2.png)
+![sep](imgs/sep-1.png)
+![vsm-box examples part 3](imgs/vsm-box-examples-3.png)
+![sep](imgs/sep-1.png)
+![vsm-box examples part 4](imgs/vsm-box-examples-4.png)
+![sep](imgs/sep-2.png)
+![vsm-box examples part 5](imgs/vsm-box-examples-5.png)
+![sep](imgs/sep-0.png)
+![vsm-box examples part 6](imgs/vsm-box-examples-6.png)
+![sep](imgs/sep-1.png)
+![vsm-box examples part 7](imgs/vsm-box-examples-7.png)
 
 <br>
 
