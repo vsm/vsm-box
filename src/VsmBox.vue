@@ -326,8 +326,8 @@ export default {
     },
 
 
-    onConnsChangeInit(newConns) {
-      this.emitValue(newConns, 'change-init');
+    onConnsChangeInit(o) {
+      this.emitValue(o.conns, 'change-init');
     },
 
 
