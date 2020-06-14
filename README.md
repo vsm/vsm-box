@@ -121,9 +121,9 @@ for details on our code of conduct, and the process for submitting pull requests
   [stcruy](https://github.com/stcruy)
 - Martin Kuiper - *Design feedback, VSM project guidance, outreach* -
   [makuintnu](https://github.com/makuintnu)
-- Maria K. Andersen - *Design feedback* - [mariakarand](https://github.com/mariakarand)
 - John Zobolas - *Design suggestions* - [bblodfon](https://github.com/bblodfon)
 - Vasundra Touré - *Design suggestions* - [vtoure](https://github.com/vtoure)
+- Maria K. Andersen - *Design feedback* - [mariakarand](https://github.com/mariakarand)
 
 <br>
 
