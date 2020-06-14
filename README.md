@@ -123,7 +123,8 @@ for details on our code of conduct, and the process for submitting pull requests
   [makuintnu](https://github.com/makuintnu)
 - John Zobolas - *Design suggestions* - [bblodfon](https://github.com/bblodfon)
 - Vasundra Touré - *Design suggestions* - [vtoure](https://github.com/vtoure)
-- Maria K. Andersen - *Design feedback* - [mariakarand](https://github.com/mariakarand)
+- Maria K. Andersen - *Design feedback* -
+  [mariakarand](https://github.com/mariakarand)
 
 <br>
 
