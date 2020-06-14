@@ -368,6 +368,8 @@ export default {
         // + All _remaining_ legs are kept in `pos`, so that conn-(re)stacking
         //   works as if they were still there.
         if (conn.pos.includes(-2))  conn.justRemoved = true;
+
+        if (conn.type == 'L')  co.sortListConnElemPos(conn);
         return conn;
       });
 
@@ -708,7 +710,7 @@ export default {
         else if (!conn.pos.slice(0, n - 1).includes(p))  conn.pos.push(p);
         else {
           conn.pos.pop();
-          co.sortListConnElemPos(conn);
+          co.sortListConnElemPos(conn);  // Only now, as UC-leg must be last leg.
           conn.justAdded = true;
         }
       }
