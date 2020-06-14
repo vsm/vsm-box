@@ -150,7 +150,7 @@
 
 
   function boxValueToStateText(value) {         // (See vsm-box's index-dev.js).
-    elTxt.value = lastAutoFilledText = VsmJsonPretty(value);
+    elTxt.value = lastAutoFilledText = VsmJsonPretty(value, { json5: true });
     setMsg(1);
   }
 

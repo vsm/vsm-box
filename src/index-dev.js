@@ -5,7 +5,7 @@ import Vue from 'vue';  // For fast loads @dev, include Vue in webpack bundle.
 import VsmBox from './VsmBox.vue';
 import VsmDictionaryLocal from 'vsm-dictionary-local';
 import cacher from 'vsm-dictionary-cacher';
-import stringify from 'json-stringify-pretty-compact';
+import vsmJsonPretty from 'vsm-json-pretty';
 import JSON5 from 'json5';
 
 
@@ -301,16 +301,8 @@ function runDemo() {
 
       boxValueToStateText(value) {
         // Make readable & compact JSON output, then change it a bit to JSON5.
-        lastAutoFilledText = this.stateText = stringify(value, { margins: true })
-          .replace(/ "([a-zA-Z]*)": /g, ' $1: ')       // Unquote property-keys.
-          .replace(/{\n {2}terms:/, '{ terms:')        // Merge first two lines.
-          .replace(/, conns:/, ',\n  conns:')    // 'conns:' always on new line.
-          .replace(/'/g, '\\\'') .replace(/"/g, '\'')    // Un-doublequote keys.
-          .replace(/\n {4}{\n {6}/g, '\n    { ')         // Less spacious Terms.
-          .replace(/\n {6,10}([\]}],?\n)/g, ' $1') // Compactify `queryOptions`.
-          .replace(/] }$/, ']\n}')              // Final '}' always on new line.
-          .replace(/] ?]\n}$/, ']\n  ]\n}')    // TheConns's ']' on its own line.
-          .replace(/(: \[|\],) ?\[/g, '$1\n    ['); // Each Conn on its own line.
+        lastAutoFilledText = this.stateText =
+          vsmJsonPretty(value, { json5: true, maxLength: 80 });
         this.setMsg(1);
       },
 

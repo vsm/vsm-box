@@ -240,7 +240,8 @@
 
 
       boxValueToStateText(value) {              // (See vsm-box's index-dev.js).
-        lastAutoFilledText = this.stateText = VsmJsonPretty(value);
+        lastAutoFilledText = this.stateText =
+          VsmJsonPretty(value, { json5: true });
         this.setMsg(1);
       },
 
