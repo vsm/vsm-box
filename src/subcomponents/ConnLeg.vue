@@ -1,5 +1,9 @@
 <template>
-  <g class="conn-leg">
+  <g
+    :class="['conn-leg', {
+      'uc': leg.isUC,
+    }]"
+  >
     <line
       v-if="showFoot"
       :x1="footXM"
