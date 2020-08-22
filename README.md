@@ -19,7 +19,7 @@ where each term is linked to an ID, and terms are organized with VSM-connectors.
 knowledge, no matter its type or complexity, into an elegant form that is
 understandable by both humans and computers. - A full description of this
 general-purpose method for structuring information into a computable form,
-is available on [scicura.org/vsm](http://scicura.org/vsm).
+is available on [vsmjs.github.io](https://vsmjs.github.io).
 
 A **web-component** is something that can be shown in a web page by simply
 inserting an HTML-tag, like a `<button>`, `<input>`, or here a `<vsm-box>`.
@@ -30,12 +30,12 @@ For end-users who capture structured information, a vsm-box is an elegant
 and powerful tool; and even more so when they can fill out VSM-templates.
 
 See:
-- a concise intro on [vsmjs.github.io](http://vsmjs.github.io),
-  on how to use a vsm-box in your web-app;
+- the info on [vsmjs.github.io](http://vsmjs.github.io),
+  with a concise intro on how to use a vsm-box in your web-app;
 - a larger introduction on this
   [poster](https://f1000research.com/posters/8-442);
-- a [live vsm-box](http://scicura.org/vsm-box) to interact with;
-- many explained [VSM examples](http://scicura.org/vsm/examples.html)
+- a [live vsm-box](https://vsmjs.github.io/demo) to interact with;
+- many explained [VSM examples](https://vsmjs.github.io/vsm-pages/examples.html)
   (using an earlier vsm-box prototype);
 - the examples below.
 
