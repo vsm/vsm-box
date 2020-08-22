@@ -2619,6 +2619,28 @@ describe('sub/TheTerms', () => {
     });
 
 
+    it('Backspace on empty EL-Term #2 with L-Term #1 before it: ' +
+       'makes the new EL-Term #1 contain its full label', cb => {
+      // This tests that the Backspace event gets a preventDefault, on bksp'ing
+      // from a plain input to another input before it. Just like vsmAC does.
+      make({
+        origTerms: [{ str: 'aaa' }, { type: 'EL' }]
+      });
+      vueTick(() => {
+        _termClick(1);
+        vueTick(() => {
+          _termITrigBksp(1);   // Apparently in our test-framework, Bksp never..
+          vueTick(() => {      // ..removes a char in an input. So this test..
+            _termIsTypeEL(0);  // ..is currently not useful.
+            _termInput(0).element.value.should.equal('aaa');
+            _emitV(0, 'change').should.deep.equal([{ type: 'EL' }, { type: 'EL' }]);
+            cb();
+          });
+        });
+      });
+    });
+
+
     it('Backspace on endTerm: reuses part of its wide-width when giving the ' +
        'Term before it its required edit-width', cb => {
       make({

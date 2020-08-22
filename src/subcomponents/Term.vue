@@ -242,7 +242,7 @@ export default {
     },
 
 
-    onKeyBksp_plain() {
+    onKeyBksp_plain(ev) {
       /* Called for Backspace on plain <input>-element; not on autocomplete.
          If only whitespace and cursor at start, empty first. Then, if empty,
          call the real `onKeyBksp()`. (Mimics VsmAutocomplete's behavior). */
@@ -250,7 +250,10 @@ export default {
       if (el.value && !el.value.trim() && !el.selectionStart) {
         this.emitInput(el.value = '');
       }
-      if (!el.value)  this.onKeyBksp();
+      if (!el.value) {
+        this.onKeyBksp();
+        ev.preventDefault();
+      }
     },
 
     onKeyCtrlBksp() {
