@@ -5,23 +5,32 @@
     }]"
   >
     <line
-      v-if="showFoot"
+      v-if="!isRef && showFoot"
+      :x1="leg.footX1 + sizes.connFootIndent"
+      :y1="footY"
+      :x2="leg.footX2 - sizes.connFootIndent"
+      :y2="footY"
+      :style="`stroke: ${ footColor }; stroke-width: ${ l.lw };`"
+      class="foot"
+    />
+    <line
+      v-if="isRef && showFoot"
       :x1="footXM"
       :y1="footY"
       :x2="leg.footX1 + sizes.connFootIndent"
       :y2="footY"
       :style="`stroke: ${ footColor }; stroke-width: ${ l.lw };`"
-      :stroke-dasharray="dashes"
+      :stroke-dasharray="sizes.connRefDashes"
       class="foot left"
     />
     <line
-      v-if="showFoot"
+      v-if="isRef && showFoot"
       :x1="footXM"
       :y1="footY"
       :x2="leg.footX2 - sizes.connFootIndent"
       :y2="footY"
       :style="`stroke: ${ footColor }; stroke-width: ${ l.lw };`"
-      :stroke-dasharray="dashes"
+      :stroke-dasharray="sizes.connRefDashes"
       class="foot right"
     />
     <line
@@ -30,7 +39,7 @@
       :x2="x"
       :y2="leg.y1 - l.lwh + (leg.isUC ? l.lw : 0)"
       :style="`stroke: ${ legColor }; stroke-width: ${ l.lw };`"
-      :stroke-dasharray="dashes"
+      :stroke-dasharray="isRef ? sizes.connRefDashes : false"
       class="leg"
     />
     <!-- eslint-disable -->
@@ -100,9 +109,8 @@ export default {
 
 
   computed: {
-    dashes()  {
-      return ['P', 'C'].includes(this.leg.type) ?
-        this.sizes.connRefDashes : 'none';
+    isRef() {
+      return [ 'C', 'P' ].includes(this.leg.type);
     },
 
     x() {
@@ -147,7 +155,7 @@ export default {
     footColor() {
       return this.leg.isUC ?
         this.sizes.connUCFootColor : this.sizes.connFootColor;
-    },
+    }
   }
 };
 </script>

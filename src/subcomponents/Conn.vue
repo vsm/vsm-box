@@ -1,24 +1,20 @@
 <template>
-  <g class="conn">
+  <g
+    :class="['conn', {
+      't' : !isList && !isRef,
+      'l' : isList,
+      'r' : isRef,
+      'uc': isUC,
+    }]"
+  >
     <line
-      v-if="drawBack"
+      v-if="!isRef && drawBack"
       :x1="backX1 - lwh"
       :y1="backY + h"
-      :x2="backXM + 0.5"
+      :x2="backX2 + lwh + h + h"
       :y2="backY + h"
       :style="backStyle"
-      :stroke-dasharray="isRef ? sizes.connRefDashes : 'none'"
-      class="back left"
-    />
-    <line
-      v-if="drawBack"
-      :x1="backX2 + lwh + h + h"
-      :y1="backY + h"
-      :x2="backXM - 0.5"
-      :y2="backY + h"
-      :style="backStyle"
-      :stroke-dasharray="isRef ? sizes.connRefDashes : 'none'"
-      class="back right"
+      class="back"
     />
     <line
       v-if="isList && drawBack"
@@ -28,6 +24,26 @@
       :y2="backY + h + sizes.connListBackSep"
       :style="backStyle"
       class="back two"
+    />
+    <line
+      v-if="isRef && drawBack"
+      :x1="backX1 - lwh"
+      :y1="backY + h"
+      :x2="backXM"
+      :y2="backY + h"
+      :style="backStyle"
+      :stroke-dasharray="sizes.connRefDashes"
+      class="back left"
+    />
+    <line
+      v-if="isRef && drawBack"
+      :x1="backX2 + lwh + h + h"
+      :y1="backY + h"
+      :x2="backXM"
+      :y2="backY + h"
+      :style="backStyle"
+      :stroke-dasharray="sizes.connRefDashes"
+      class="back right"
     />
     <conn-leg
       v-for="(leg, i) in legs"
@@ -112,6 +128,7 @@ export default {
 
     isRef () { return this.conn.type == 'R' },
     isList() { return this.conn.type == 'L' },
+    isUC  () { return this.legs.filter(o => o.isUC).length > 0 },
 
     realPos() { return this.conn.pos.filter(p => p >= 0) },
     posA() { return Math.min(...this.realPos) },  // Outer left Term position.
