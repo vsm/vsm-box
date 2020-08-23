@@ -16,23 +16,28 @@
       width="100%"
       class="terms-top-margin"
     />
-    <rect
-      v-if="hlPosNr >= 0 && hlPosNr < colX1s.length - 1"
-      :x="colX1s[hlPosNr]"
-      :width="colX1s[hlPosNr + 1] - colX1s[hlPosNr]"
-      :style="`fill: ${ sizes.connHLColorLight };`"
-      y="0"
-      height="100%"
-      class="pos-highlight"
-    />
-    <conn-highlight
-      v-if="showConnHighlight"
-      :conn="conns[hlConnNr]"
-      :sizes="sizes"
-      :level-top="levelTop"
-      :termX1s="termX1s"
-      :termX2s="termX2s"
-    />
+    <transition name="fade">
+      <rect
+        v-if="hlPosNr >= 0 && hlPosNr < colX1s.length - 1"
+        :key="`phl0`"
+        :x="colX1s[hlPosNr]"
+        :width="colX1s[hlPosNr + 1] - colX1s[hlPosNr]"
+        :style="`fill: ${ sizes.connHLColorLight };`"
+        y="0"
+        height="100%"
+        class="pos-highlight"
+      />
+      <conn-highlight
+        v-if="showConnHighlight"
+        :key="`chl${ hlConnNr }`"
+        :conn="conns[hlConnNr]"
+        :sizes="sizes"
+        :level-top="levelTop"
+        :termX1s="termX1s"
+        :termX2s="termX2s"
+        :class="hasJustRemovedConn ? 'rm' : false"
+      />
+    </transition>
     <g
       v-for="(conn, index) in conns"
       :key="index"
@@ -46,15 +51,19 @@
         :termX2s="termX2s"
       />
     </g>
-    <conn-remove-icon
-      v-if="showConnHighlight"
-      :conn="conns[hlConnNr]"
-      :connNr="hlConnNr"
-      :sizes="sizes"
-      :level-top="levelTop"
-      :termX2s="termX2s"
-      @remove="onConnRemove"
-    />
+    <transition name="fade">
+      <conn-remove-icon
+        v-if="showConnHighlight"
+        :key="`cri${ hlConnNr }`"
+        :conn="conns[hlConnNr]"
+        :connNr="hlConnNr"
+        :sizes="sizes"
+        :level-top="levelTop"
+        :termX2s="termX2s"
+        :class="hasJustRemovedConn ? 'rm' : false"
+        @remove="onConnRemove"
+      />
+    </transition>
   </svg>
 </template>
 
@@ -187,6 +196,15 @@ export default {
 
 
     /**
+     * Tells if there is a conn that was very recently instructed to be removed,
+     * but that is still present (invisibly) until the resort-delay passes.
+     */
+    hasJustRemovedConn() {
+      return this.conns.filter(c => c.justRemoved).length > 0;
+    },
+
+
+    /**
      * Calculates TheConns-panel's current height in pixels.
      */
     height() {
@@ -212,7 +230,6 @@ export default {
      */
     showConnHighlight() {
       return this.hlConnNr >= 0  &&  this.hlConnNr < this.conns.length
-        &&  !this.conns[this.hlConnNr].justRemoved
         &&  !this.conns[this.hlConnNr].justAdded
         &&  !this.conns[this.hlConnNr].isUC
         &&  !this.hasActiveUCConn;
@@ -575,19 +592,25 @@ export default {
 
 
     updateHLConnNr(cell) {
+      if (this.hasActiveUCConn)  return -1;
       var connNr = this.cellOwner[cell.pos][cell.level];
-      this.hlConnNr =
-        (connNr < 0  ||  this.conns[connNr].isUC  ||  this.hasActiveUCConn) ?
-          -1 : connNr;
+      var conn   = this.conns[connNr];
+      this.hlConnNr = (!conn || conn.justRemoved || conn.isUC) ?  -1 :  connNr;
     },
 
 
     onConnRemove(index) {
       if (!this.enabled)  return;
-      this.hlConnNr = -1;
       this.$set(this.conns[index], 'justRemoved', true);
-      this.emitValue();
-      this.delayedFinalizeChanges();
+      // Setting 'justRemoved' also makes conn-highlight get an extra CSS-class
+      // that prevents it from fading-out, so it will immediately disappear when
+      // its conn is deleted. We have to wait until the next vue-tick though,
+      // before that class is added. After that, the conn-hl can be removed.
+      this.$nextTick(() => {
+        this.hlConnNr = -1;
+        this.emitValue();
+        this.delayedFinalizeChanges();
+      });
     },
 
 
@@ -598,6 +621,9 @@ export default {
     },
 
 
+    /**
+     * Is called after adding or removing a conn, or changing terms' positions.
+     */
     finalizeChanges() {
       clearTimeout(this.finalizeTimer);
       this.hlConnNr = -1;  // Because a Conn may be removed, invalidating this.
@@ -802,5 +828,23 @@ export default {
      which could leave a connector highlighted after the mouse left TheConns. */
   .conns *:not(.conn-remove-icon) {
     pointer-events: none;
+  }
+
+  .fade-enter,
+  .fade-leave.rm,
+  .fade-leave-to {
+    opacity: 0;
+  }
+
+  .fade-enter-active {
+    transition: opacity 0.09s ease-in;
+  }
+
+  .fade-enter-active.conn-remove-icon {
+    transition-duration: 0.18s;
+  }
+
+  .fade-leave-active:not(.rm) {
+    transition: opacity 0.15s ease-in;
   }
 </style>
