@@ -16,28 +16,39 @@
       width="100%"
       class="terms-top-margin"
     />
-    <transition name="fade">
-      <rect
-        v-if="hlPosNr >= 0 && hlPosNr < colX1s.length - 1"
-        :key="`phl0`"
-        :x="colX1s[hlPosNr]"
-        :width="colX1s[hlPosNr + 1] - colX1s[hlPosNr]"
-        :style="`fill: ${ sizes.connHLColorLight };`"
-        y="0"
-        height="100%"
-        class="pos-highlight"
-      />
-      <conn-highlight
-        v-if="showConnHighlight"
-        :key="`chl${ hlConnNr }`"
-        :conn="conns[hlConnNr]"
-        :sizes="sizes"
-        :level-top="levelTop"
-        :termX1s="termX1s"
-        :termX2s="termX2s"
-        :class="hasJustRemovedConn ? 'rm' : false"
-      />
-    </transition>
+    <g v-if="showAnyHighlight">
+      <transition
+        name="fade"
+        appear
+      >
+        <rect
+          v-if="showPosHighlight"
+          :key="`phl${ 0 }`"
+          :x="colX1s[hlPosNr]"
+          :width="colX1s[hlPosNr + 1] - colX1s[hlPosNr]"
+          :style="`fill: ${ sizes.connHLColorLight };`"
+          y="0"
+          height="100%"
+          class="pos-highlight"
+        />
+      </transition>
+    </g>
+    <g v-if="showAnyHighlight">
+      <transition
+        name="fade"
+        appear
+      >
+        <conn-highlight
+          v-if="showConnHighlight"
+          :key="`chl${ hlConnNr }`"
+          :conn="conns[hlConnNr]"
+          :sizes="sizes"
+          :level-top="levelTop"
+          :termX1s="termX1s"
+          :termX2s="termX2s"
+        />
+      </transition>
+    </g>
     <g
       v-for="(conn, index) in conns"
       :key="index"
@@ -51,19 +62,23 @@
         :termX2s="termX2s"
       />
     </g>
-    <transition name="fade">
-      <conn-remove-icon
-        v-if="showConnHighlight"
-        :key="`cri${ hlConnNr }`"
-        :conn="conns[hlConnNr]"
-        :connNr="hlConnNr"
-        :sizes="sizes"
-        :level-top="levelTop"
-        :termX2s="termX2s"
-        :class="hasJustRemovedConn ? 'rm' : false"
-        @remove="onConnRemove"
-      />
-    </transition>
+    <g v-if="showAnyHighlight">
+      <transition
+        name="fade"
+        appear
+      >
+        <conn-remove-icon
+          v-if="showConnHighlight"
+          :key="`cri${ hlConnNr }`"
+          :conn="conns[hlConnNr]"
+          :connNr="hlConnNr"
+          :sizes="sizes"
+          :level-top="levelTop"
+          :termX2s="termX2s"
+          @remove="onConnRemove"
+        />
+      </transition>
+    </g>
   </svg>
 </template>
 
@@ -100,9 +115,43 @@
  *   bottom of each leg. The foot makes it easier to see which Term a leg is
  *   connected to, as legs do not always extend all the way down to their Term.
  *
+ * In addition:
+ * - it can be an 'under-construction' (UC) connector, and then have one UC-leg;
+ * - it can have a 'pos-highlight' (posHL): a full-column highlighted background
+ *   drawn under its UC-leg;
+ * - or when it is a non-UC-conn and mousehovered: it will have a 'connector-
+ *   highlight' (connHL) under it, and possibly below it extending to TheTerms,
+ *   with also a remove-icon (RI) above it.
+ *
  * Note that coordinate-calculations are fairly complex, so that they can
  * support different linewidths, while also being drawn sharply (i.e. without
  * anti-alias blur) at integer widths. See the explanation in 'Conn.vue'.
+ *
+ *
+ * About connHL and posHL 'fade'-transitions:
+ * - Fade-in and -outs prevent that quick mousemoves across TheConns would cause
+ *   flickering due to several briefly appearing full-opacity conn/posHLs.
+ * - A connHL fades-in upon mousehovering onto its associated conn.
+ * - A connHL fades-out when mousehovering onto another connHL, or posHL.
+ *   + Fade-outs are made slower than fade-ins, as otherwise any 'hl-leg-under's
+ *     that overlap between the 2 HLs could flicker (lightColor->none->light).
+ * - A posHL does not fade-in but is shown immediately, just like the
+ *   immediately shown UC-conn-leg that it accompanies, so the UC-leg never has
+ *   a background that appears later.
+ * - A posHL does not fade-out when mousehovering to another column. In fact
+ *   there is only one, reused posHL element (achieved via `:key="<const>"`).
+ *   This avoids a trail of posHLs when mousemoving left or right.
+ * - A posHL fades-out when mousehovering onto a connHL.
+ * - Any ongoing (and about-to-be-started) fade-ins and fade-outs are aborted as
+ *   soon as mousehovering makes that no more connHL nor posHL is present.
+ *   Aborting these (esp. already fired fadeouts) is achieved in the html
+ *   by wrapping the `<transition>` inside a `<g v-if="showAnyHighlight">`. This
+ *   makes any fading elements that Vue 'fires & forgets' will still get deleted.
+ * + We use <transition appear> so that fade-in also happens at 1st mouseeenter.
+ * + Important: this makes a 'justRemoved' conn's connHL to be immediately
+ *   removed, so it won't temporarily stay behind as a fading-out ghost.
+ * + Note: posHL and connHL each have a separate <transition>-block instead of
+ *   one, so that fading-out posHLs remain shown behind an active connHL.
  */
 
 import Conn from './Conn.vue';
@@ -196,15 +245,6 @@ export default {
 
 
     /**
-     * Tells if there is a conn that was very recently instructed to be removed,
-     * but that is still present (invisibly) until the resort-delay passes.
-     */
-    hasJustRemovedConn() {
-      return this.conns.filter(c => c.justRemoved).length > 0;
-    },
-
-
-    /**
      * Calculates TheConns-panel's current height in pixels.
      */
     height() {
@@ -226,13 +266,39 @@ export default {
 
 
     /**
+     * Tells if a pos-highlight component (column at UC-conn-leg) may be shown.
+     */
+    showPosHighlight() {
+      return this.hlPosNr >= 0  &&  this.hlPosNr < this.colX1s.length - 1;
+    },
+
+
+    /**
      * Tells if a connector-highlight component (and remove-icon) may be shown.
      */
     showConnHighlight() {
       return this.hlConnNr >= 0  &&  this.hlConnNr < this.conns.length
+        &&  !this.conns[this.hlConnNr].justRemoved
         &&  !this.conns[this.hlConnNr].justAdded
         &&  !this.conns[this.hlConnNr].isUC
         &&  !this.hasActiveUCConn;
+    },
+
+
+    /**
+     * Tells if any highlight-component is currently shown.
+     */
+    showAnyHighlight() {
+      return this.showPosHighlight || this.showConnHighlight;
+    },
+
+
+    /**
+     * Tells if any conn is currently marked as justAdded or justRemoved. (If so,
+     * mousemove won't cause the creation of a new UC-conn and posHL, or connHL).
+     */
+    anyConnJustAddedOrRemoved() {
+      return this.conns.filter(c => c.justRemoved || c.justAdded).length;
     }
   },
 
@@ -562,7 +628,7 @@ export default {
 
 
     onMousemove(event) {
-      if (!this.enabled)  return;
+      if (!this.enabled || this.anyConnJustAddedOrRemoved)  return;
       var cell = this.eventToCell(event);
       this.updateHLConnNr(cell);
       this.handleUCConnAfterMousemove(event, cell);
@@ -592,25 +658,19 @@ export default {
 
 
     updateHLConnNr(cell) {
-      if (this.hasActiveUCConn)  return -1;
       var connNr = this.cellOwner[cell.pos][cell.level];
       var conn   = this.conns[connNr];
-      this.hlConnNr = (!conn || conn.justRemoved || conn.isUC) ?  -1 :  connNr;
+      this.hlConnNr = (!conn || conn.justRemoved || conn.isUC ||
+        this.hasActiveUCConn) ?  -1 :  connNr;
     },
 
 
     onConnRemove(index) {
       if (!this.enabled)  return;
+      this.hlConnNr = -1;
       this.$set(this.conns[index], 'justRemoved', true);
-      // Setting 'justRemoved' also makes conn-highlight get an extra CSS-class
-      // that prevents it from fading-out, so it will immediately disappear when
-      // its conn is deleted. We have to wait until the next vue-tick though,
-      // before that class is added. After that, the conn-hl can be removed.
-      this.$nextTick(() => {
-        this.hlConnNr = -1;
-        this.emitValue();
-        this.delayedFinalizeChanges();
-      });
+      this.emitValue();
+      this.delayedFinalizeChanges();
     },
 
 
@@ -622,7 +682,8 @@ export default {
 
 
     /**
-     * Is called after adding or removing a conn, or changing terms' positions.
+     * Is called after the resort-delay. Continues processing the addition or
+     * removal of a connector, or a change in term positions.
      */
     finalizeChanges() {
       clearTimeout(this.finalizeTimer);
@@ -826,17 +887,16 @@ export default {
 
   /* This seems to prevent the problem of sometimes not receiving a 'mouseleave',
      which could leave a connector highlighted after the mouse left TheConns. */
-  .conns *:not(.conn-remove-icon) {
+  .conns *:not(g.conn-remove-icon) {
     pointer-events: none;
   }
 
-  .fade-enter,
-  .fade-leave.rm,
+  .fade-enter:not(.pos-highlight),
   .fade-leave-to {
     opacity: 0;
   }
 
-  .fade-enter-active {
+  .fade-enter-active:not(.pos-highlight) {
     transition: opacity 0.09s ease-in;
   }
 
@@ -844,7 +904,7 @@ export default {
     transition-duration: 0.18s;
   }
 
-  .fade-leave-active:not(.rm) {
+  .fade-leave-active {
     transition: opacity 0.15s ease-in;
   }
 </style>
