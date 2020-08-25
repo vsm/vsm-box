@@ -887,8 +887,12 @@ export default {
 
   /* This seems to prevent the problem of sometimes not receiving a 'mouseleave',
      which could leave a connector highlighted after the mouse left TheConns. */
-  .conns *:not(g.conn-remove-icon) {
+  .conns * {
     pointer-events: none;
+  }
+
+  .conns g.conn-remove-icon:not([class*="fade-leave"]) {
+    pointer-events: auto;
   }
 
   .fade-enter:not(.pos-highlight),
