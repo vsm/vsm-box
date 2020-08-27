@@ -84,7 +84,7 @@ Notes:
   property, to indicate that it is the sentence's head (= focal term).
 + The optional `style` property is used to apply custom styling to `str` (e.g.
   to stylize parts of `str` in superscript, in a charged ion's name);
-  see [`string-style-html`](https://github.com/vsmjs/string-style-html).
+  see [`string-style-html`](https://github.com/vsm/string-style-html).
 + A Class/Instance/Referring-term's properties `dictID` and `descr` are optional.
   They are used to make extra information about the VSM-term available, as soon
   as its VSM-sentence gets loaded into a new user-interface component.
@@ -137,8 +137,8 @@ Notes:
         of auto-scaling.
 + The `queryOptions` property is used by a VSM-term's autocomplete, when it
   sends a query to `VsmDictionary.getMatchesForString()`.  
-  (See also [`vsm-dictionary`](https://github.com/vsmjs/vsm-dictionary)'s
-  [`spec`](https://github.com/vsmjs/vsm-dictionary/blob/master/Dictionary.spec.md),
+  (See also [`vsm-dictionary`](https://github.com/vsm/vsm-dictionary)'s
+  [`spec`](https://github.com/vsm/vsm-dictionary/blob/master/Dictionary.spec.md),
   in particular for `getEntryMatchesForString()` and `getMatchesForString()`).  
   Used with VSM-templates (see an example further below), this enables
   targeted term-lookup, customizable per Edit-type term.  
@@ -424,9 +424,9 @@ VsmBox
     or for enabling Ctrl+Click to cycle through Term-types based on backed-up
     class/inst/etc.-IDs (see later)).
 - `vsm-dictionary`: {Object}:  
-  the [`vsm-dictionary`](https://github.com/vsmjs/vsm-dictionary) subclass that
+  the [`vsm-dictionary`](https://github.com/vsm/vsm-dictionary) subclass that
   will be used by this VsmBox's
-  [`vsm-autocomplete`](https://github.com/vsmjs/vsm-autocomplete) component.
+  [`vsm-autocomplete`](https://github.com/vsm/vsm-autocomplete) component.
 - `query-options`: {Object|Boolean} (default `false`):  
   given as prop to VsmAutocomplete, which uses it when querying string-matches.  
   This can e.g. be used to make all the Edit-Terms in a VSM-template
@@ -437,7 +437,7 @@ VsmBox
   overrides that of the VsmBox.
 - `autofocus`: {Boolean} (default `false`):  
   given as prop to VsmAutocomplete,
-  see [`there`](https://github.com/vsmjs/vsm-autocomplete).
+  see [`there`](https://github.com/vsm/vsm-autocomplete).
 - `placeholder`: {String|Boolean} (default `false`):  
   given as prop to VsmAutocomplete.  
   Defines what text should be shown in an empty VsmBox (in its empty 'endTerm').
@@ -1218,7 +1218,7 @@ those properties it needs to.
 
 Items in autocomplete's selection-panel can be customized
 via the two props `custom-item` and `custom-item-literal`.  
-See [`vsm-autocomplete`](https://github.com/vsmjs/vsm-autocomplete)'s
+See [`vsm-autocomplete`](https://github.com/vsm/vsm-autocomplete)'s
 description of its props with the same name.
 
 
