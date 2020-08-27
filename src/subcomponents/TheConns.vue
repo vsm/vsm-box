@@ -901,14 +901,14 @@ export default {
   }
 
   .fade-enter-active:not(.pos-highlight) {
-    transition: opacity 0.09s ease-in;
+    transition: opacity 0.08s ease-in;
   }
 
   .fade-enter-active.conn-remove-icon {
-    transition-duration: 0.18s;
+    transition-duration: 0.16s;
   }
 
   .fade-leave-active {
-    transition: opacity 0.15s ease-in;
+    transition: opacity 0.14s ease-in;
   }
 </style>
