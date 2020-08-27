@@ -30,14 +30,14 @@
   ],
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/vsmjs/vsm-box"
+    "url": "git+https://github.com/vsm/vsm-box"
   },
   "author": "Steven Vercruysse (http://stcruy.com)",
   "license": "AGPL-3.0",
   "bugs": {
-    "url": "https://github.com/vsmjs/vsm-box/issues"
+    "url": "https://github.com/vsm/vsm-box/issues"
   },
-  "homepage": "https://github.com/vsmjs/vsm-box#readme",
+  "homepage": "https://github.com/vsm/vsm-box#readme",
   "devDependencies": {
     "@babel/core": "^7.2.2",
     "@babel/preset-env": "^7.3.1",

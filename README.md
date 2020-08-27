@@ -1,8 +1,8 @@
 # vsm-box
 
 <!-- badges: start -->
-[![Travis build status](https://travis-ci.org/vsmjs/vsm-box.svg?branch=master)](https://travis-ci.com/vsmjs/vsm-box)
-[![(will become a live badge when codecov can see inside webpack-bundled code)](https://img.shields.io/badge/coverage-high-brightgreen.svg)](https://travis-ci.com/vsmjs/vsm-box)
+[![Travis build status](https://travis-ci.org/vsm/vsm-box.svg?branch=master)](https://travis-ci.com/vsm/vsm-box)
+[![(will become a live badge when codecov can see inside webpack-bundled code)](https://img.shields.io/badge/coverage-high-brightgreen.svg)](https://travis-ci.com/vsm/vsm-box)
 [![npm version](https://img.shields.io/npm/v/vsm-box)](https://www.npmjs.com/package/vsm-box)
 [![License](https://img.shields.io/npm/l/vsm-box?color=blue)](#license)
 [![Downloads](https://img.shields.io/npm/dm/vsm-box)](https://www.npmjs.com/package/vsm-box)
@@ -19,7 +19,7 @@ where each term is linked to an ID, and terms are organized with VSM-connectors.
 knowledge, no matter its type or complexity, into an elegant form that is
 understandable by both humans and computers. - A full description of this
 general-purpose method for structuring information into a computable form,
-is available on [vsmjs.github.io](https://vsmjs.github.io).
+is available on [vsm.github.io](https://vsm.github.io).
 
 A **web-component** is something that can be shown in a web page by simply
 inserting an HTML-tag, like a `<button>`, `<input>`, or here a `<vsm-box>`.
@@ -30,12 +30,12 @@ For end-users who capture structured information, a vsm-box is an elegant
 and powerful tool; and even more so when they can fill out VSM-templates.
 
 See:
-- the info on [vsmjs.github.io](http://vsmjs.github.io),
+- the info on [vsm.github.io](http://vsm.github.io),
   with a concise intro on how to use a vsm-box in your web-app;
 - a larger introduction on this
   [poster](https://f1000research.com/posters/8-442);
-- a [live vsm-box](https://vsmjs.github.io/demo) to interact with;
-- many explained [VSM examples](https://vsmjs.github.io/vsm-pages/examples.html)
+- a [live vsm-box](https://vsm.github.io/demo) to interact with;
+- many explained [VSM examples](https://vsm.github.io/vsm-pages/examples.html)
   (using an earlier vsm-box prototype);
 - the examples below.
 
@@ -134,13 +134,13 @@ This project is licensed under the AGPL-3.0 license - see
 [LICENSE.md](LICENSE.md).
 
 The AGPL license protects your right to freely use the vsm-box
-and other vsmjs modules. But if you modify the source code, the goal is
+and other vsm modules. But if you modify the source code, the goal is
 that you have to contribute those modifications back to the community.
 
 Note* however that it is NOT required that applications be published
 if, for entering and/or showing VSM-based information,
-they use only unchanged, not-augmented vsmjs-modules.  
-The copyleft applies only to the vsm-box and other vsmjs modules.
+they use only unchanged, not-augmented vsm modules.  
+The copyleft applies only to the vsm-box and other vsm modules.
 Your application, even though it talks to vsm-box, is a
 separate program and "work".  
 *<span style="font-size:smaller;">_(That
