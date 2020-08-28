@@ -80,7 +80,7 @@
     "webpack-node-externals": "^1.7.2"
   },
   "dependencies": {
-    "string-style-html": "^1.1.4",
+    "string-style-html": "^1.1.6",
     "vsm-autocomplete": "^1.9.2"
   }
 }
