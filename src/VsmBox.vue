@@ -411,10 +411,10 @@ export default {
   .vsm-box >>> input,  /* '>>>' overrides scoped child CSS */
   .vsm-box >>> .placehold {
     /* This sets both vsm-autocomplete and plain <input>'s style */
-    font-family: tahoma, verdana, arial, sans-serif;
+    font-family: tahoma, arial, sans-serif;
 
     /* 'font-size' should equal TheTerms's `defaultFontSize`. External CSS may
-       may override this CSS-value; if so then `widthScale` will automatically
+       override this CSS-value; if so then `widthScale` will automatically
        update accordingly. */
     font-size: 11px;
   }
@@ -427,5 +427,22 @@ export default {
   .terms,
   .conns {
     margin: 0;
+  }
+
+  /* If Tahoma is not installed, then use a metric-compatible, free alternative
+     from the Wine project. But don't use its faulty bold version. */
+  @font-face {
+    font-family: 'Tahoma';
+    src: local('Tahoma'), local('WineTahoma'),
+      url('https://vsm.github.io/font/wine-tahoma.woff') format('woff');
+    font-weight: normal;
+    font-style: normal;
+  }
+
+  @font-face {
+    font-family: 'Tahoma';
+    src: local('Tahoma Bold'), local('Verdana Bold');
+    font-weight: bold;
+    font-style: normal;
   }
 </style>
