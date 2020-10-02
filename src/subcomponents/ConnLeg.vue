@@ -65,7 +65,7 @@
     <path
       v-if="leg.type == 'L'"
       :d="
-        `M${ x - sizes.connListRelW }, ${ y2lwh - sizes.connListRelH } `+
+        `M${ x - sizes.connListRelW } ${ y2lwh - sizes.connListRelH } `+
         `H${ x + sizes.connListRelW } ` +
         `V${ y2lwh                  } ` +
         `H${ x - sizes.connListRelW } Z`"
