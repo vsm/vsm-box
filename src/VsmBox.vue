@@ -434,7 +434,7 @@ export default {
   @font-face {
     font-family: 'Tahoma';
     src: local('Tahoma'), local('WineTahoma'),
-      url('https://vsm.github.io/font/wine-tahoma.woff') format('woff');
+      url('https://vsm.github.io/bin/font/wine-tahoma.woff') format('woff');
     font-weight: normal;
     font-style: normal;
   }
