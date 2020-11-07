@@ -22,7 +22,7 @@
 - **VSM** (Visual Syntax Method) is an intuitive method to represent any knowledge
   – on any topic, and with any amount of context details – into an elegant form
   that is easy to understand by both humans and computers.  
-  _In more detail:_
+  _In more detail:_  
   VSM is the combination of a **user-interface** and a **semantic model**,
   that enables people to represent **diverse** and **context-rich**
   knowledge with precision, and that enables them
@@ -52,8 +52,8 @@ This is a vsm-box **animated example**. Here, a user:
 • enters two terms (linked to an ID),  
 • checks a term's definition etc. by mousehovering so a popup appears,  
 • adds a second connector – but by doing so, creates an unintended meaning
-  ('chicken with fork') (note also: connectors get auto-sorted for optimal
-  layout),  
+  ('chicken with fork')  
+  &nbsp; (note also: connectors get auto-sorted for optimal layout),  
 • removes that connector again,  
 • adds the second connector correctly.
 
@@ -71,7 +71,7 @@ A concise example of how to place a vsm-box in a web-app is shown on
 
 More elaborate examples are in the 'index*.html' files in the
 [src](https://github.com/vsm/vsm-box/tree/master/src) folder
-(see also [Build](#build) below),
+(see also [Build](#build) below),  
 and in the vsm [demo](https://github.com/vsm/demo) repository
 (which can be used live [here](https://vsm.github.io/demo)).
 
@@ -82,7 +82,7 @@ and in the vsm [demo](https://github.com/vsm/demo) repository
 
 See [Documentation.md](Documentation.md) for full technical details, including:
 
-- VSM-sentence **data-model** and examples,
+- VSM-sentence **data-model** (and examples),
 - VsmBox input **props** (i.e. html-attributes),
 - VsmBox **emitted events**,
 - **user interaction**,
@@ -96,6 +96,7 @@ See [Documentation.md](Documentation.md) for full technical details, including:
 This project's configuration (webpack + npm + Vue + testing + linting) is as
 described in
 [github.com/stcruy/building-a-reusable-vue-web-component](https://github.com/stcruy/building-a-reusable-vue-web-component).  
+
 This makes `vsm-box` available as:
 1)&nbsp;a standalone web-component, 2)&nbsp;a slim web-component,
 and 3)&nbsp;a Vue component.
