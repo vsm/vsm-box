@@ -114,13 +114,15 @@ The latest version's built files are available at [unpkg](https://unpkg.com/brow
 
 ## Creators
 
-Created by **[Steven Vercruysse](https://github.com/stcruy)**
-(designer of VSM, main developer of vsm-box).  
-Contributions (design suggestions or feedback) by:
-[Martin Kuiper](https://github.com/makuintnu) (also project guidance and outreach),
-[John Zobolas](https://github.com/bblodfon),
-[Vasundra Touré](https://github.com/vtoure),
-and [Maria K. Andersen](https://github.com/mariakarand).
+- Created by:
+  **[Steven Vercruysse](https://github.com/stcruy)**
+  (designer of VSM, main developer of vsm-box).  
+- Contributions (design suggestions and feedback) by:  
+  [Martin Kuiper](https://github.com/makuintnu) (also project guidance and 
+  outreach),
+  [John Zobolas](https://github.com/bblodfon),
+  [Vasundra Touré](https://github.com/vtoure),
+  [Maria K. Andersen](https://github.com/mariakarand).
 
 
 <br>
