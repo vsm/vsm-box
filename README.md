@@ -1,8 +1,8 @@
 # vsm-box
 
 <!-- badges: start -->
-[![Travis build status](https://travis-ci.org/vsm/vsm-box.svg?branch=master)](https://travis-ci.com/vsm/vsm-box)
-[![(will become a live badge when codecov can see inside webpack-bundled code)](https://img.shields.io/badge/coverage-high-brightgreen.svg)](https://travis-ci.com/vsm/vsm-box)
+[![Node.js CI](https://github.com/vsm/vsm-box/workflows/Node.js%20CI/badge.svg)](https://github.com/vsm/vsm-box/actions)
+[![(will become a live badge when codecov can see inside webpack-bundled code)](https://img.shields.io/badge/coverage-high-brightgreen.svg)](https://github.com/vsm/vsm-box/actions)
 [![npm version](https://img.shields.io/npm/v/vsm-box)](https://www.npmjs.com/package/vsm-box)
 [![License](https://img.shields.io/npm/l/vsm-box?color=blue)](#license)
 [![Downloads](https://img.shields.io/npm/dm/vsm-box)](https://www.npmjs.com/package/vsm-box)
