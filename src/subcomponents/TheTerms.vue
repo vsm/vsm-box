@@ -998,6 +998,7 @@ export default {
         // reached), then check if the mouse is past the threshold now.
         // If not, abort; if so, start dragging and make the first move-response.
         if (this.dragIndex < 0) {
+          if (term.isEndTerm)  return;  // Abort for endTerm: can't be dragged.
           var dx = loc.x - dragOffset.x;
           var dy = loc.y - dragOffset.y;
           if (dx * dx + dy * dy < threshSqr)  return;  // Abort if < threshold.

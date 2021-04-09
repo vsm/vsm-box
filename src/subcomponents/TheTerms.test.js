@@ -4004,6 +4004,18 @@ describe('sub/TheTerms', () => {
     });
 
 
+    it('the endTerm can not be dragged', cb => {
+      var co3 = _termCoos(3);  // Get coordinates of endTerm.
+      _termCSMDown(3, co3.x + 5, co3.y + 3);
+      _windMMove(-1000, 0);
+      _termCoos(3)  .should.deep.equal(co3);   // EndTerm didn't move.
+      _dragPlh().exists().should.equal(false);
+      _emitV(0, 'change').should.equal(false);
+      _emit (0, 'drag-start').should.equal(false);
+      cb();
+    });
+
+
     it('limits a dragged Term\'s movement to max. where it "sticks to" ' +
        'the series of Terms excluding the endTerm', cb => {
       // Note: this feature keeps a dragged Term visually closer to where its
