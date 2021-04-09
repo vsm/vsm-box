@@ -433,16 +433,18 @@ export default {
      from the Wine project. But don't use its faulty bold version. */
   @font-face {
     font-family: 'Tahoma';
-    src: local('Tahoma'), local('WineTahoma'),
+    src:
+      local('Tahoma'),
+      local('WineTahoma'),
       url('https://vsm.github.io/bin/font/wine-tahoma.woff') format('woff');
-    font-weight: normal;
     font-style: normal;
+    font-weight: normal;
   }
 
   @font-face {
     font-family: 'Tahoma';
     src: local('Tahoma Bold'), local('Verdana Bold');
-    font-weight: bold;
     font-style: normal;
+    font-weight: bold;
   }
 </style>
